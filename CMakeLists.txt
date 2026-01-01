@@ -95,28 +95,73 @@ if(APPLE)
     target_link_libraries(imgui PUBLIC ${PLATFORM_LIBS})
 endif()
 
-# FFmpeg - TODO: Add FFmpeg integration in Phase 2
-# For now, we'll create a placeholder
-# find_package(FFmpeg COMPONENTS avcodec avformat avutil swscale REQUIRED)
+# FFmpeg integration
+if(APPLE)
+    set(FFMPEG_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/external/ffmpeg/macos)
+    set(FFMPEG_INCLUDE_DIR ${FFMPEG_ROOT}/include)
+    set(FFMPEG_LIB_DIR ${FFMPEG_ROOT}/lib)
+    
+    # Find FFmpeg libraries (with version suffixes)
+    find_library(AVCODEC_LIBRARY NAMES avcodec.62 avcodec PATHS ${FFMPEG_LIB_DIR} NO_DEFAULT_PATH)
+    find_library(AVFORMAT_LIBRARY NAMES avformat.62 avformat PATHS ${FFMPEG_LIB_DIR} NO_DEFAULT_PATH)
+    find_library(AVUTIL_LIBRARY NAMES avutil.60 avutil PATHS ${FFMPEG_LIB_DIR} NO_DEFAULT_PATH)
+    find_library(SWSCALE_LIBRARY NAMES swscale.9 swscale PATHS ${FFMPEG_LIB_DIR} NO_DEFAULT_PATH)
+    find_library(SWRESAMPLE_LIBRARY NAMES swresample.6 swresample PATHS ${FFMPEG_LIB_DIR} NO_DEFAULT_PATH)
+    
+    set(FFMPEG_LIBRARIES
+        ${AVCODEC_LIBRARY}
+        ${AVFORMAT_LIBRARY}
+        ${AVUTIL_LIBRARY}
+        ${SWSCALE_LIBRARY}
+        ${SWRESAMPLE_LIBRARY}
+    )
+    
+    message(STATUS "FFmpeg libraries: ${FFMPEG_LIBRARIES}")
+    
+elseif(WIN32)
+    # Windows FFmpeg setup (will be added later)
+    set(FFMPEG_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/external/ffmpeg/windows)
+    set(FFMPEG_INCLUDE_DIR ${FFMPEG_ROOT}/include)
+    # Windows specific setup here
+endif()
 
 # Main executable
 add_executable(MediaPlayer
     src/main.cpp
+    src/VideoDecoder.cpp
+    src/VideoDecoder.h
+    src/AudioOutput.cpp
+    src/AudioOutput.h
 )
 
 target_include_directories(MediaPlayer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${FFMPEG_INCLUDE_DIR}
 )
 
 target_link_libraries(MediaPlayer PRIVATE
     imgui
     ${PLATFORM_LIBS}
+    ${FFMPEG_LIBRARIES}
 )
 
 if(APPLE)
     # Enable Objective-C++ for macOS
     set_source_files_properties(src/main.cpp PROPERTIES
         COMPILE_FLAGS "-x objective-c++"
+    )
+    
+    # Set rpath for FFmpeg dynamic libraries
+    set_target_properties(MediaPlayer PROPERTIES
+        BUILD_RPATH "${FFMPEG_LIB_DIR}"
+        INSTALL_RPATH "@executable_path/../Frameworks"
+    )
+    
+    # Copy FFmpeg dylibs to build directory
+    add_custom_command(TARGET MediaPlayer POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${FFMPEG_LIB_DIR} $<TARGET_FILE_DIR:MediaPlayer>
+        COMMENT "Copying FFmpeg libraries to build directory"
     )
 endif()
 
