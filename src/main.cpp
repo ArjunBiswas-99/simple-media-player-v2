@@ -60,10 +60,38 @@ struct AppState {
     bool showSkipAnimation = false;
     float skipAnimationTimer = 0.0f;
     int skipAnimationDirection = 0;  // -1 = backward, +1 = forward
+    int skipAnimationSeconds = 5;    // How many seconds to show (5s for arrow keys)
+    
+    // 2x speed mode (click and hold)
+    bool is2xSpeedMode = false;
+    bool show2xSpeedIndicator = false;
+    float normalPlaybackSpeed = 1.0f;  // Store original speed
     
     // Subtitle/audio selection
     bool showSubtitleMenu = false;
     bool showAudioMenu = false;
+    
+    // Hover states for animations
+    bool playButtonHovered = false;
+    bool skipBackHovered = false;
+    bool skipForwardHovered = false;
+    bool volumeHovered = false;
+    bool playlistHovered = false;
+    bool settingsHovered = false;
+    bool audioButtonHovered = false;
+    bool subtitlesHovered = false;
+    bool fullscreenHovered = false;
+    
+    // Hover animation timers (0.0 to 1.0)
+    float playButtonHoverAnim = 0.0f;
+    float skipBackHoverAnim = 0.0f;
+    float skipForwardHoverAnim = 0.0f;
+    float volumeHoverAnim = 0.0f;
+    float playlistHoverAnim = 0.0f;
+    float settingsHoverAnim = 0.0f;
+    float audioButtonHoverAnim = 0.0f;
+    float subtitlesHoverAnim = 0.0f;
+    float fullscreenHoverAnim = 0.0f;
     
     // Video playback
     VideoDecoder* decoder = nullptr;
@@ -105,7 +133,11 @@ std::string openFileDialog() {
 // Forward declarations
 void SetupNetflixTheme();
 void RenderMenuBar(AppState& state);
+#ifdef __APPLE__
+void RenderNetflixUI(AppState& state, NSWindow* window);
+#else
 void RenderNetflixUI(AppState& state);
+#endif
 std::string FormatTime(float seconds);
 void DrawGradientOverlay(ImDrawList* draw, ImVec2 start, ImVec2 end, ImU32 colorTop, ImU32 colorBottom);
 void DrawPlayIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
@@ -118,6 +150,20 @@ void DrawAudioIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
 void DrawFullscreenIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
 void DrawPlaylistIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
 void RenderPlaylistPanel(AppState& state, ImVec2 screenSize);
+
+#ifdef __APPLE__
+void ToggleFullscreen(NSWindow* window, bool& isFullscreen);
+#endif
+
+// Platform-specific fullscreen toggle
+#ifdef __APPLE__
+void ToggleFullscreen(NSWindow* window, bool& isFullscreen) {
+    if (window) {
+        [window toggleFullScreen:nil];
+        isFullscreen = !isFullscreen;
+    }
+}
+#endif
 
 // Scan directory for media files
 void ScanDirectoryForMediaFiles(AppState& state, const std::string& filePath) {
@@ -325,10 +371,12 @@ void ScanDirectoryForMediaFiles(AppState& state, const std::string& filePath) {
             if (useAudioSync) {
                 drift = videoPTS - audioClock;
                 
-                // More aggressive thresholds for better sync
-                const double SYNC_THRESHOLD = 0.040;  // 40ms - one frame at 25fps
-                const double DROP_THRESHOLD = 0.100;  // 100ms - drop if too far behind
-                const double NOSYNC_THRESHOLD = 0.5;  // 500ms - force resync
+                // Adjust thresholds based on playback speed
+                // At 2x speed, frames arrive faster so we need tighter sync
+                const double speedMultiplier = state.playbackSpeed;
+                const double SYNC_THRESHOLD = 0.040 / speedMultiplier;  // Tighter at higher speeds
+                const double DROP_THRESHOLD = 0.100 / speedMultiplier;
+                const double NOSYNC_THRESHOLD = 0.5;  // Keep this absolute
                 
                 // Check if we need to resync (after seek, audio glitch, etc)
                 if (fabs(drift) > NOSYNC_THRESHOLD) {
@@ -454,7 +502,11 @@ void ScanDirectoryForMediaFiles(AppState& state, const std::string& filePath) {
 
     // Render UI
     RenderMenuBar(state);
+#ifdef __APPLE__
+    RenderNetflixUI(state, view.window);
+#else
     RenderNetflixUI(state);
+#endif
     RenderPlaylistPanel(state, ImVec2((float)view.bounds.size.width, (float)view.bounds.size.height));
 
     // Rendering
@@ -1133,6 +1185,12 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
 }
 
 void RenderMenuBar(AppState& state) {
+    // Hide menu bar in fullscreen mode
+    if (state.isFullscreen) {
+        state.showMenuBar = false;
+        return;
+    }
+    
     ImGuiIO& io = ImGui::GetIO();
     
     // Check if mouse is in top 50px
@@ -1360,7 +1418,12 @@ void RenderMenuBar(AppState& state) {
     }
 }
 
+#ifdef __APPLE__
+void RenderNetflixUI(AppState& state, NSWindow* window) {
+#else
 void RenderNetflixUI(AppState& state) {
+    NSWindow* window = nullptr;  // Not available on other platforms
+#endif
     ImGuiIO& io = ImGui::GetIO();
     ImVec2 screenSize = io.DisplaySize;
     ImDrawList* drawList = ImGui::GetBackgroundDrawList();
@@ -1437,6 +1500,8 @@ void RenderNetflixUI(AppState& state) {
     ImVec2 clickableSize = ImVec2(screenSize.x, screenSize.y - 150);
     ImGui::SetCursorPos(ImVec2(0, 0));
     ImGui::InvisibleButton("##VideoSurface", clickableSize);
+    
+    // Click: Play/Pause
     if (ImGui::IsItemClicked(0)) {
         state.isPlaying = !state.isPlaying;
         state.showControls = true;
@@ -1458,6 +1523,70 @@ void RenderNetflixUI(AppState& state) {
         }
     }
     
+    // Click-and-hold: 2x speed (YouTube-style)
+    // Need to exclude double-clicks which trigger fullscreen
+    static bool wasDoubleClick = false;
+    static double doubleClickTime = 0.0;
+    
+    // Detect double-click first
+    bool isDoubleClick = ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0);
+    if (isDoubleClick) {
+        wasDoubleClick = true;
+        doubleClickTime = ImGui::GetTime();
+    }
+    
+    // Clear double-click flag after 500ms
+    if (wasDoubleClick && (ImGui::GetTime() - doubleClickTime) > 0.5) {
+        wasDoubleClick = false;
+    }
+    
+    bool wasHoldingMouse = state.is2xSpeedMode;
+    // Only enable 2x speed if:
+    // 1. Mouse is held down on the video surface
+    // 2. Video is playing
+    // 3. NOT during/after a double-click (which triggers fullscreen)
+    state.is2xSpeedMode = ImGui::IsItemActive() && ImGui::IsMouseDown(0) && 
+                          state.isPlaying && !wasDoubleClick;
+    
+    // Entering 2x speed mode
+    if (state.is2xSpeedMode && !wasHoldingMouse && state.fileLoaded) {
+        state.normalPlaybackSpeed = state.playbackSpeed;
+        state.playbackSpeed = 2.0f;
+        state.show2xSpeedIndicator = true;
+        // Apply 2x speed to audio
+        if (state.audioOutput) {
+            state.audioOutput->setPlaybackRate(2.0f);
+        }
+    }
+    
+    // Exiting 2x speed mode
+    if (!state.is2xSpeedMode && wasHoldingMouse) {
+        state.playbackSpeed = state.normalPlaybackSpeed;
+        state.show2xSpeedIndicator = false;
+        // Restore normal speed to audio
+        if (state.audioOutput) {
+            state.audioOutput->setPlaybackRate(1.0f);
+        }
+    }
+    
+    // Double-click: Toggle fullscreen
+    // Use static to prevent repeated toggles
+    static bool fullscreenTogglePending = false;
+    static double lastFullscreenToggle = 0.0;
+    
+    if (isDoubleClick) {
+        double currentTime = ImGui::GetTime();
+        // Only toggle if at least 500ms has passed since last toggle
+        if (currentTime - lastFullscreenToggle > 0.5) {
+#ifdef __APPLE__
+            ToggleFullscreen(window, state.isFullscreen);
+#else
+            state.isFullscreen = !state.isFullscreen;
+#endif
+            lastFullscreenToggle = currentTime;
+        }
+    }
+    
     // Detect mouse movement
     static ImVec2 lastMousePos = io.MousePos;
     if (io.MousePos.x != lastMousePos.x || io.MousePos.y != lastMousePos.y) {
@@ -1465,6 +1594,137 @@ void RenderNetflixUI(AppState& state) {
         state.showMenuBar = true;
         state.controlsTimer = 3.0f;
         lastMousePos = io.MousePos;
+    }
+    
+    // ===== KEYBOARD SHORTCUTS (Netflix-style) =====
+    if (state.fileLoaded) {
+        // Space bar: Play/Pause
+        if (ImGui::IsKeyPressed(ImGuiKey_Space)) {
+            state.isPlaying = !state.isPlaying;
+            if (state.decoder) {
+                if (state.isPlaying) {
+                    state.decoder->play();
+                    if (state.audioOutput) state.audioOutput->play();
+                } else {
+                    state.decoder->pause();
+                    if (state.audioOutput) state.audioOutput->pause();
+                }
+            }
+            state.showControls = true;
+            state.controlsTimer = 3.0f;
+        }
+        
+        // Left Arrow: Skip backward 5s
+        if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) {
+            state.currentTime = fmaxf(state.currentTime - 5.0f, 0.0f);
+            if (state.pendingFrame) {
+                delete state.pendingFrame;
+                state.pendingFrame = nullptr;
+            }
+            if (state.decoder) {
+                state.decoder->seek(state.currentTime);
+                if (state.audioOutput) {
+                    state.audioOutput->clearQueue();
+                    state.audioOutput->setAudioClock(state.currentTime);
+                }
+                state.lastVideoFramePTS = state.currentTime;
+            }
+            // Show skip animation for 0.8s
+            state.showSkipAnimation = true;
+            state.skipAnimationTimer = 0.8f;
+            state.skipAnimationDirection = -1;
+            state.skipAnimationSeconds = 5;
+            state.showControls = true;
+            state.controlsTimer = 3.0f;
+        }
+        
+        // Right Arrow: Skip forward 5s
+        if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) {
+            state.currentTime = fminf(state.currentTime + 5.0f, state.duration);
+            if (state.pendingFrame) {
+                delete state.pendingFrame;
+                state.pendingFrame = nullptr;
+            }
+            if (state.decoder) {
+                state.decoder->seek(state.currentTime);
+                if (state.audioOutput) {
+                    state.audioOutput->clearQueue();
+                    state.audioOutput->setAudioClock(state.currentTime);
+                }
+                state.lastVideoFramePTS = state.currentTime;
+            }
+            // Show skip animation for 0.8s
+            state.showSkipAnimation = true;
+            state.skipAnimationTimer = 0.8f;
+            state.skipAnimationDirection = 1;
+            state.skipAnimationSeconds = 5;
+            state.showControls = true;
+            state.controlsTimer = 3.0f;
+        }
+        
+        // Up Arrow: Volume up
+        if (ImGui::IsKeyPressed(ImGuiKey_UpArrow)) {
+            state.volume = fminf(state.volume + 0.1f, 1.0f);
+            if (state.audioOutput) {
+                state.audioOutput->setVolume(state.volume);
+            }
+            state.showControls = true;
+            state.controlsTimer = 3.0f;
+        }
+        
+        // Down Arrow: Volume down
+        if (ImGui::IsKeyPressed(ImGuiKey_DownArrow)) {
+            state.volume = fmaxf(state.volume - 0.1f, 0.0f);
+            if (state.audioOutput) {
+                state.audioOutput->setVolume(state.volume);
+            }
+            state.showControls = true;
+            state.controlsTimer = 3.0f;
+        }
+        
+        // M key: Mute/Unmute
+        if (ImGui::IsKeyPressed(ImGuiKey_M)) {
+            state.isMuted = !state.isMuted;
+            if (state.audioOutput) {
+                state.audioOutput->setVolume(state.isMuted ? 0.0f : state.volume);
+            }
+            state.showControls = true;
+            state.controlsTimer = 3.0f;
+        }
+        
+        // F key: Fullscreen toggle
+        static double lastFKeyToggle = 0.0;
+        if (ImGui::IsKeyPressed(ImGuiKey_F)) {
+            double currentTime = ImGui::GetTime();
+            // Prevent rapid toggling - at least 500ms between toggles
+            if (currentTime - lastFKeyToggle > 0.5) {
+#ifdef __APPLE__
+                ToggleFullscreen(window, state.isFullscreen);
+#else
+                state.isFullscreen = !state.isFullscreen;
+#endif
+                lastFKeyToggle = currentTime;
+            }
+            state.showControls = true;
+            state.controlsTimer = 3.0f;
+        }
+        
+        // Escape key: Exit fullscreen
+        static double lastEscapeToggle = 0.0;
+        if (ImGui::IsKeyPressed(ImGuiKey_Escape) && state.isFullscreen) {
+            double currentTime = ImGui::GetTime();
+            // Prevent rapid toggling
+            if (currentTime - lastEscapeToggle > 0.5) {
+#ifdef __APPLE__
+                ToggleFullscreen(window, state.isFullscreen);
+#else
+                state.isFullscreen = false;
+#endif
+                lastEscapeToggle = currentTime;
+            }
+            state.showControls = true;
+            state.controlsTimer = 3.0f;
+        }
     }
     
     // Track time since file loaded
@@ -1551,13 +1811,16 @@ void RenderNetflixUI(AppState& state) {
             screenSize,
             gradMid, gradBot);
         
-        // Title (top of controls area)
-        float titleY = screenSize.y - 260;
-        controlDrawList->AddText(ImGui::GetFont(), 28.0f,
-            ImVec2(50, titleY),
-            IM_COL32(255, 255, 255, (int)(255 * alpha)),
-            state.currentTitle.c_str()
-        );
+        // Title (top of controls area) - MUCH BIGGER for Netflix feel
+        // Only show title in windowed mode, not in fullscreen
+        if (!state.isFullscreen) {
+            float titleY = screenSize.y - 260;
+            controlDrawList->AddText(ImGui::GetFont(), 54.0f,  // Increased from 28px to 54px
+                ImVec2(50, titleY),
+                IM_COL32(255, 255, 255, (int)(255 * alpha)),
+                state.currentTitle.c_str()
+            );
+        }
         
         // Progress bar (80px from bottom, 50px from sides)
         float progressY = screenSize.y - 80;
@@ -1635,9 +1898,12 @@ void RenderNetflixUI(AppState& state) {
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.1f));
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.15f));
         
-        // Play/Pause button (48x48)
+        // Play/Pause button (64x64 - bigger for Netflix feel)
         ImVec2 playButtonPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##PlayPause", ImVec2(48, 48))) {
+        
+        // Update hover animation
+        state.playButtonHovered = false;
+        if (ImGui::Button("##PlayPause", ImVec2(64, 64))) {
             state.isPlaying = !state.isPlaying;
             
             // Control decoder and audio
@@ -1655,24 +1921,33 @@ void RenderNetflixUI(AppState& state) {
                 }
             }
         }
-        ImVec2 playIconCenter = ImVec2(playButtonPos.x + 24, playButtonPos.y + 24);
+        state.playButtonHovered = ImGui::IsItemHovered();
+        
+        // Smooth hover animation
+        float targetAnim = state.playButtonHovered ? 1.0f : 0.0f;
+        state.playButtonHoverAnim += (targetAnim - state.playButtonHoverAnim) * io.DeltaTime * 10.0f;
+        float scale = 1.0f + state.playButtonHoverAnim * 0.15f;  // Scale up 15% on hover
+        
+        ImVec2 playIconCenter = ImVec2(playButtonPos.x + 32, playButtonPos.y + 32);
+        float iconSize = 28.0f * scale;  // Bigger icon
         if (state.isPlaying) {
-            DrawPauseIcon(controlDrawList, playIconCenter, 24.0f, IM_COL32(255, 255, 255, (int)(255 * alpha)));
+            DrawPauseIcon(controlDrawList, playIconCenter, iconSize, IM_COL32(255, 255, 255, (int)(255 * alpha)));
         } else {
-            DrawPlayIcon(controlDrawList, playIconCenter, 24.0f, IM_COL32(255, 255, 255, (int)(255 * alpha)));
+            DrawPlayIcon(controlDrawList, playIconCenter, iconSize, IM_COL32(255, 255, 255, (int)(255 * alpha)));
         }
         
-        ImGui::SameLine(0, 8);
+        ImGui::SameLine(0, 12);
         
-        // Skip backward button (40x40)
+        // Skip backward button (56x56 - bigger)
         ImVec2 skipBackPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##SkipBack", ImVec2(40, 40))) {
-            state.currentTime = fmaxf(state.currentTime - 10.0f, 0.0f);
+        if (ImGui::Button("##SkipBack", ImVec2(56, 56))) {
+            state.currentTime = fmaxf(state.currentTime - 5.0f, 0.0f);
             
             // Trigger skip animation
             state.showSkipAnimation = true;
             state.skipAnimationTimer = 0.8f;  // Show for 0.8 seconds
             state.skipAnimationDirection = -1;  // Backward
+            state.skipAnimationSeconds = 5;  // 5 seconds
             
             // CRITICAL: Clear pending frame BEFORE seek
             if (state.pendingFrame) {
@@ -1691,20 +1966,26 @@ void RenderNetflixUI(AppState& state) {
                 state.lastVideoFramePTS = state.currentTime;
             }
         }
-        DrawSkipIcon(controlDrawList, ImVec2(skipBackPos.x + 20, skipBackPos.y + 20), 16.0f, false,
+        state.skipBackHovered = ImGui::IsItemHovered();
+        float targetSkipBackAnim = state.skipBackHovered ? 1.0f : 0.0f;
+        state.skipBackHoverAnim += (targetSkipBackAnim - state.skipBackHoverAnim) * io.DeltaTime * 10.0f;
+        float skipBackScale = 1.0f + state.skipBackHoverAnim * 0.15f;
+        
+        DrawSkipIcon(controlDrawList, ImVec2(skipBackPos.x + 28, skipBackPos.y + 28), 20.0f * skipBackScale, false,
             IM_COL32(255, 255, 255, (int)(255 * alpha)));
         
-        ImGui::SameLine(0, 8);
+        ImGui::SameLine(0, 12);
         
-        // Skip forward button (40x40)
+        // Skip forward button (56x56 - bigger)
         ImVec2 skipForwardPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##SkipForward", ImVec2(40, 40))) {
-            state.currentTime = fminf(state.currentTime + 10.0f, state.duration);
+        if (ImGui::Button("##SkipForward", ImVec2(56, 56))) {
+            state.currentTime = fminf(state.currentTime + 5.0f, state.duration);
             
             // Trigger skip animation
             state.showSkipAnimation = true;
             state.skipAnimationTimer = 0.8f;  // Show for 0.8 seconds
             state.skipAnimationDirection = 1;  // Forward
+            state.skipAnimationSeconds = 5;  // 5 seconds
             
             // CRITICAL: Clear pending frame BEFORE seek
             if (state.pendingFrame) {
@@ -1723,7 +2004,12 @@ void RenderNetflixUI(AppState& state) {
                 state.lastVideoFramePTS = state.currentTime;
             }
         }
-        DrawSkipIcon(controlDrawList, ImVec2(skipForwardPos.x + 20, skipForwardPos.y + 20), 16.0f, true,
+        state.skipForwardHovered = ImGui::IsItemHovered();
+        float targetSkipForwardAnim = state.skipForwardHovered ? 1.0f : 0.0f;
+        state.skipForwardHoverAnim += (targetSkipForwardAnim - state.skipForwardHoverAnim) * io.DeltaTime * 10.0f;
+        float skipForwardScale = 1.0f + state.skipForwardHoverAnim * 0.15f;
+        
+        DrawSkipIcon(controlDrawList, ImVec2(skipForwardPos.x + 28, skipForwardPos.y + 28), 20.0f * skipForwardScale, true,
             IM_COL32(255, 255, 255, (int)(255 * alpha)));
         
         ImGui::SameLine(0, 16);
@@ -1753,68 +2039,104 @@ void RenderNetflixUI(AppState& state) {
         
         ImGui::SameLine(0, 24);
         
-        // Time display
+        // Time display - BIGGER font
         std::string timeStr = FormatTime(state.currentTime) + " / " + FormatTime(state.duration);
-        controlDrawList->AddText(ImVec2(ImGui::GetCursorScreenPos().x, controlsY - 8),
+        controlDrawList->AddText(ImGui::GetFont(), 20.0f,  // Increased from default to 20px
+            ImVec2(ImGui::GetCursorScreenPos().x, controlsY - 6),
             IM_COL32(255, 255, 255, (int)(230 * alpha)), timeStr.c_str());
         
         // Right-side controls
-        float rightControlsX = screenSize.x - 250;
-        ImGui::SetCursorPos(ImVec2(rightControlsX, controlsY - 16));
+        float rightControlsX = screenSize.x - 320;  // More space for bigger buttons
+        ImGui::SetCursorPos(ImVec2(rightControlsX, controlsY - 22));
         
-        // Playlist/Episodes button (disabled when no file loaded)
+        // Playlist/Episodes button (44x44 - bigger, disabled when no file loaded)
         ImVec2 playlistPos = ImGui::GetCursorScreenPos();
         bool playlistEnabled = state.fileLoaded && !state.playlistFiles.empty();
         if (!playlistEnabled) {
             ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha * 0.3f);  // Dim when disabled
         }
-        if (ImGui::Button("##Playlist", ImVec2(32, 32)) && playlistEnabled) {
+        if (ImGui::Button("##Playlist", ImVec2(44, 44)) && playlistEnabled) {
             state.showPlaylistPanel = !state.showPlaylistPanel;
         }
-        DrawPlaylistIcon(controlDrawList, ImVec2(playlistPos.x + 16, playlistPos.y + 16), 18.0f,
+        state.playlistHovered = ImGui::IsItemHovered() && playlistEnabled;
+        float targetPlaylistAnim = state.playlistHovered ? 1.0f : 0.0f;
+        state.playlistHoverAnim += (targetPlaylistAnim - state.playlistHoverAnim) * io.DeltaTime * 10.0f;
+        float playlistScale = 1.0f + state.playlistHoverAnim * 0.15f;
+        
+        DrawPlaylistIcon(controlDrawList, ImVec2(playlistPos.x + 22, playlistPos.y + 22), 22.0f * playlistScale,
             IM_COL32(255, 255, 255, (int)(255 * alpha * (playlistEnabled ? 1.0f : 0.3f))));
         if (!playlistEnabled) {
             ImGui::PopStyleVar();
         }
         
-        ImGui::SameLine(0, 8);
+        ImGui::SameLine(0, 12);
         
-        // Settings button
+        // Settings button (44x44)
         ImVec2 settingsPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##Settings", ImVec2(32, 32))) {
+        if (ImGui::Button("##Settings", ImVec2(44, 44))) {
             // TODO: Open settings
         }
-        DrawSettingsIcon(controlDrawList, ImVec2(settingsPos.x + 16, settingsPos.y + 16), 20.0f,
+        state.settingsHovered = ImGui::IsItemHovered();
+        float targetSettingsAnim = state.settingsHovered ? 1.0f : 0.0f;
+        state.settingsHoverAnim += (targetSettingsAnim - state.settingsHoverAnim) * io.DeltaTime * 10.0f;
+        float settingsScale = 1.0f + state.settingsHoverAnim * 0.15f;
+        
+        DrawSettingsIcon(controlDrawList, ImVec2(settingsPos.x + 22, settingsPos.y + 22), 24.0f * settingsScale,
             IM_COL32(255, 255, 255, (int)(255 * alpha)));
         
-        ImGui::SameLine(0, 8);
+        ImGui::SameLine(0, 12);
         
-        // Audio button
+        // Audio button (44x44)
         ImVec2 audioPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##Audio", ImVec2(32, 32))) {
+        if (ImGui::Button("##Audio", ImVec2(44, 44))) {
             state.showAudioMenu = !state.showAudioMenu;
         }
-        DrawAudioIcon(controlDrawList, ImVec2(audioPos.x + 16, audioPos.y + 16), 20.0f,
+        state.audioButtonHovered = ImGui::IsItemHovered();
+        float targetAudioAnim = state.audioButtonHovered ? 1.0f : 0.0f;
+        state.audioButtonHoverAnim += (targetAudioAnim - state.audioButtonHoverAnim) * io.DeltaTime * 10.0f;
+        float audioScale = 1.0f + state.audioButtonHoverAnim * 0.15f;
+        
+        DrawAudioIcon(controlDrawList, ImVec2(audioPos.x + 22, audioPos.y + 22), 24.0f * audioScale,
             IM_COL32(255, 255, 255, (int)(255 * alpha)));
         
-        ImGui::SameLine(0, 8);
+        ImGui::SameLine(0, 12);
         
-        // Subtitles button
+        // Subtitles button (44x44)
         ImVec2 subtitlesPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##Subtitles", ImVec2(32, 32))) {
+        if (ImGui::Button("##Subtitles", ImVec2(44, 44))) {
             state.showSubtitleMenu = !state.showSubtitleMenu;
         }
-        DrawSubtitlesIcon(controlDrawList, ImVec2(subtitlesPos.x + 16, subtitlesPos.y + 16), 20.0f,
+        state.subtitlesHovered = ImGui::IsItemHovered();
+        float targetSubtitlesAnim = state.subtitlesHovered ? 1.0f : 0.0f;
+        state.subtitlesHoverAnim += (targetSubtitlesAnim - state.subtitlesHoverAnim) * io.DeltaTime * 10.0f;
+        float subtitlesScale = 1.0f + state.subtitlesHoverAnim * 0.15f;
+        
+        DrawSubtitlesIcon(controlDrawList, ImVec2(subtitlesPos.x + 22, subtitlesPos.y + 22), 24.0f * subtitlesScale,
             IM_COL32(255, 255, 255, (int)(255 * alpha)));
         
-        ImGui::SameLine(0, 8);
+        ImGui::SameLine(0, 12);
         
-        // Fullscreen button
+        // Fullscreen button (44x44)
+        static double lastButtonToggle = 0.0;
         ImVec2 fullscreenPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##Fullscreen", ImVec2(32, 32))) {
-            // TODO: Toggle fullscreen
+        if (ImGui::Button("##Fullscreen", ImVec2(44, 44))) {
+            double currentTime = ImGui::GetTime();
+            // Prevent rapid toggling
+            if (currentTime - lastButtonToggle > 0.5) {
+#ifdef __APPLE__
+                ToggleFullscreen(window, state.isFullscreen);
+#else
+                state.isFullscreen = !state.isFullscreen;
+#endif
+                lastButtonToggle = currentTime;
+            }
         }
-        DrawFullscreenIcon(controlDrawList, ImVec2(fullscreenPos.x + 16, fullscreenPos.y + 16), 18.0f,
+        state.fullscreenHovered = ImGui::IsItemHovered();
+        float targetFullscreenAnim = state.fullscreenHovered ? 1.0f : 0.0f;
+        state.fullscreenHoverAnim += (targetFullscreenAnim - state.fullscreenHoverAnim) * io.DeltaTime * 10.0f;
+        float fullscreenScale = 1.0f + state.fullscreenHoverAnim * 0.15f;
+        
+        DrawFullscreenIcon(controlDrawList, ImVec2(fullscreenPos.x + 22, fullscreenPos.y + 22), 22.0f * fullscreenScale,
             IM_COL32(255, 255, 255, (int)(255 * alpha)));
         
         ImGui::PopStyleColor(3);
@@ -1850,13 +2172,37 @@ void RenderNetflixUI(AppState& state) {
                 state.skipAnimationDirection > 0,
                 IM_COL32(255, 255, 255, (int)(255 * animAlpha)));
             
-            // "+10" or "-10" text below icon
-            const char* skipText = state.skipAnimationDirection > 0 ? "+10" : "-10";
+            // "+5" or "-5" or "+10" or "-10" text below icon
+            char skipText[8];
+            snprintf(skipText, sizeof(skipText), "%s%d", 
+                state.skipAnimationDirection > 0 ? "+" : "-",
+                state.skipAnimationSeconds);
             ImVec2 textSize = ImGui::CalcTextSize(skipText);
             ImVec2 textPos = ImVec2(center.x - textSize.x * 0.5f, center.y + 15);
             animDrawList->AddText(ImGui::GetFont(), 18.0f, textPos,
                 IM_COL32(255, 255, 255, (int)(255 * animAlpha)), skipText);
         }
+    }
+    
+    // 2x Speed indicator (when holding mouse on video)
+    if (state.show2xSpeedIndicator) {
+        ImVec2 center = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.5f);
+        ImDrawList* speedDrawList = ImGui::GetWindowDrawList();
+        
+        // Semi-transparent background
+        float bgWidth = 180.0f;
+        float bgHeight = 60.0f;
+        ImVec2 bgMin = ImVec2(center.x - bgWidth * 0.5f, center.y - bgHeight * 0.5f);
+        ImVec2 bgMax = ImVec2(center.x + bgWidth * 0.5f, center.y + bgHeight * 0.5f);
+        speedDrawList->AddRectFilled(bgMin, bgMax, IM_COL32(0, 0, 0, 180), 8.0f);
+        speedDrawList->AddRect(bgMin, bgMax, IM_COL32(255, 255, 255, 200), 8.0f, 0, 2.0f);
+        
+        // "2x" text
+        const char* speedText = "2.0x";
+        ImVec2 textSize = ImGui::CalcTextSize(speedText);
+        speedDrawList->AddText(ImGui::GetFont(), 32.0f,
+            ImVec2(center.x - textSize.x, center.y - 16),
+            IM_COL32(255, 255, 255, 255), speedText);
     }
     
     ImGui::End();

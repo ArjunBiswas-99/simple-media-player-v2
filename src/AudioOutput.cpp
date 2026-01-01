@@ -6,6 +6,7 @@ AudioOutput::AudioOutput()
     : m_sampleRate(0)
     , m_channels(0)
     , m_volume(1.0f)
+    , m_playbackRate(1.0f)
     , m_playing(false)
     , m_audioClock(0.0)
     , m_lastClockUpdate(0.0)
@@ -121,6 +122,17 @@ void AudioOutput::setVolume(float volume) {
 #ifdef __APPLE__
     if (m_audioQueue) {
         AudioQueueSetParameter(m_audioQueue, kAudioQueueParam_Volume, m_volume);
+    }
+#endif
+}
+
+void AudioOutput::setPlaybackRate(float rate) {
+    m_playbackRate = std::max(0.5f, std::min(2.0f, rate));
+    
+#ifdef __APPLE__
+    if (m_audioQueue) {
+        // Set playback rate using CoreAudio
+        AudioQueueSetParameter(m_audioQueue, kAudioQueueParam_PlayRate, m_playbackRate);
     }
 #endif
 }

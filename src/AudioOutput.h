@@ -22,6 +22,8 @@ public:
     void pause();
     void setVolume(float volume); // 0.0 to 1.0
     float getVolume() const { return m_volume; }
+    void setPlaybackRate(float rate); // 0.5 to 2.0
+    float getPlaybackRate() const { return m_playbackRate; }
     
     void pushAudioFrame(AudioFrame* frame);
     
@@ -47,6 +49,7 @@ private:
     int m_sampleRate;
     int m_channels;
     float m_volume;
+    float m_playbackRate;
     std::atomic<bool> m_playing;
     std::atomic<double> m_audioClock;
     std::atomic<double> m_lastClockUpdate;  // Time when clock was last updated
