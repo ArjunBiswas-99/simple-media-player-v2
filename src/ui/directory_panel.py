@@ -9,8 +9,8 @@ Responsibilities:
 - Netflix visual styling
 """
 
-from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QListWidget, 
-                               QListWidgetItem, QGraphicsOpacityEffect)
+from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QListWidget, 
+                               QListWidgetItem, QGraphicsOpacityEffect, QPushButton)
 from PySide6.QtCore import Qt, Signal, QPropertyAnimation, QEasingCurve, QPoint
 from PySide6.QtGui import QFont
 import sys
@@ -73,20 +73,52 @@ class DirectoryPanel(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
-        # Header
+        # Header with close button
+        header_widget = QWidget()
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(Dimensions.PANEL_ITEM_PADDING, Dimensions.PANEL_ITEM_PADDING, 
+                                         Dimensions.PANEL_ITEM_PADDING, Dimensions.PANEL_ITEM_PADDING)
+        
         header = QLabel("📁 Current Folder")
         header.setStyleSheet(f"""
             QLabel {{
-                background: rgba(0, 0, 0, 0.5);
+                background: transparent;
                 color: {Colors.TEXT_PRIMARY};
                 font-size: {Fonts.DIRECTORY_ITEM}px;
                 font-weight: {Fonts.MEDIUM};
                 font-family: {Fonts.FAMILY};
-                padding: {Dimensions.PANEL_ITEM_PADDING}px;
+            }}
+        """)
+        header_layout.addWidget(header)
+        header_layout.addStretch()
+        
+        # Close button
+        close_btn = QPushButton("✕")
+        close_btn.setFixedSize(30, 30)
+        close_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        close_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: transparent;
+                color: {Colors.TEXT_SECONDARY};
+                border: none;
+                border-radius: 4px;
+                font-size: 16px;
+            }}
+            QPushButton:hover {{
+                background: {Colors.HOVER_GRAY};
+                color: {Colors.NETFLIX_RED};
+            }}
+        """)
+        close_btn.clicked.connect(self.toggle_visibility)
+        header_layout.addWidget(close_btn)
+        
+        header_widget.setStyleSheet(f"""
+            QWidget {{
+                background: rgba(0, 0, 0, 0.5);
                 border-bottom: 1px solid {Colors.MENU_SEPARATOR};
             }}
         """)
-        layout.addWidget(header)
+        layout.addWidget(header_widget)
         
         # File list
         self._file_list = QListWidget()
