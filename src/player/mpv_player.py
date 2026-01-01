@@ -90,26 +90,17 @@ class MPVPlayer(QObject):
         
         # Create MPV instance with optimized configuration
         try:
-            logger.debug('Creating MPV instance with parameters')
+            logger.debug('Creating MPV instance with minimal parameters')
             self._player = mpv.MPV(
-                # Video output
                 vo='gpu',
-                
-                # Hardware decoding
-                hwdec='auto-safe',
-                
-                # Keep window open
-                keep_open='yes',
-                idle='yes',
-                
-                # Disable OSD (we have our own UI)
-                osd_level='0',
-                
-                # Input handling
-                input_default_bindings='no',
-                input_vo_keyboard='no',
+                hwdec='auto',
             )
             logger.info('MPV instance created successfully')
+            
+            # Set properties after creation
+            self._player['keep-open'] = 'yes'
+            self._player['idle'] = 'yes'
+            logger.debug('MPV properties set')
         except Exception as e:
             logger.exception(f'Failed to initialize MPV: {e}')
             self._player = None
