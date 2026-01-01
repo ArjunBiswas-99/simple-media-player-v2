@@ -1,509 +1,436 @@
 # Simple Media Player V2
 
-A modern, high-performance desktop media player with Netflix-inspired UI and VLC-style functionality. Built for Windows, macOS, and Linux.
+A high-performance, Netflix-inspired media player for Windows and macOS with GPU-accelerated playback and modern UI/UX.
 
 ---
 
-## 📋 Functional Requirements
+## 📋 Functional Specification
 
 ### Core Playback Features
-- **Media Playback Control**
-  - Play, pause, and stop media files
-  - Seek/scrub through media timeline with instant response
-  - **Lightning-fast seeking in .ts (Transport Stream) files** - A major improvement over VLC's slow .ts seeking
-  - Smooth frame-accurate seeking across all formats
-  - Real-time scrubbing during click-and-hold
-  
-- **Audio Control**
-  - Volume adjustment with slider
-  - Mute/unmute toggle
-  - Multiple audio track selection
-  - Audio device selection (default, headphones, HDMI, etc.)
-  - Stereo mode options (stereo, mono, left, right)
-  
-- **Video Control**
-  - Multiple video track selection
-  - Change aspect ratio (16:9, 4:3, 1:1, 16:10, 2.35:1, custom)
-  - Video cropping options
-  - Deinterlacing
-  - Zoom levels (1:4, 1:2, 1:1, 2:1, fill screen)
-  - Take snapshots
-  
-- **Display Modes**
-  - Full-screen mode with auto-hide controls
-  - Always on top option
-  - Minimal interface mode
+- **Playback Controls**: Play, pause, and seek through media files with frame-accurate precision
+- **Volume Control**: Adjust volume levels and mute/unmute audio
+- **Video Controls**: Change aspect ratio (16:9, 4:3, custom) and crop video
+- **Full-Screen Mode**: Seamless full-screen playback experience
 
-### Supported Media Formats
-- **Video:** `.mp4`, `.mov`, `.wmv`, `.ts`, `.mpeg`
-- **Audio:** `.mp3`, `.wav`
+### Supported Formats
+**Video Formats:**
+- `.mp4` - MPEG-4 Video
+- `.mov` - QuickTime Movie
+- `.wmv` - Windows Media Video
+- `.ts` - MPEG Transport Stream (optimized for fast seeking)
+- `.mpeg` - MPEG Video
 
-### Advanced Features
+**Audio Formats:**
+- `.mp3` - MPEG Audio Layer 3
+- `.wav` - Waveform Audio File
 
-#### Netflix-Inspired UI Behavior
-- **Auto-Hide Controls:** Player controls automatically hide during playback and reappear on mouse movement
-- **Smooth Animations:** All UI transitions use Netflix-style fade and slide animations
-- **Progress Bar:** 
-  - Hover to enlarge scrubber
-  - Visual feedback during seeking
-  - Shows current time and total duration
-  
+### User Interface & Behavior
+
+#### Netflix-Inspired UI
+- **Pixel-Perfect Controls**: Play/pause, seek bar, volume slider, and progress bar designed to match Netflix's aesthetic
+- **Auto-Hide Controls**: Controls fade out during playback and reappear on mouse movement
+- **Smooth Animations**: Fade-in/fade-out transitions matching Netflix's timing (3-second delay)
+- **Dark Theme**: Netflix's signature dark background with red accent colors (#E50914)
+
 #### YouTube-Inspired Interactions
-- **Click-to-Play:** Clicking anywhere on the video surface toggles play/pause
-- **Keyboard Navigation:**
-  - `Left Arrow` / `Right Arrow`: Seek backward/forward 10 seconds
-  - `Ctrl+Left` / `Ctrl+Right`: Seek backward/forward 1 minute
-  - `Space`: Play/pause toggle
-  - `F`: Fullscreen toggle
-  - `M`: Mute toggle
-  - `Up Arrow` / `Down Arrow`: Volume control
-  - `[` / `]`: Decrease/increase playback speed
-- **Click-and-Hold Scrubbing:** Press and hold mouse on video to rapidly skim/fast-forward through content
+- **Click-to-Play**: Clicking anywhere on the video surface toggles play/pause
+- **Keyboard Shortcuts**: 
+  - `Left Arrow` - Seek backward 10 seconds
+  - `Right Arrow` - Seek forward 10 seconds
+  - `Space` - Toggle play/pause
+  - `F` - Toggle full-screen
+  - `M` - Mute/unmute
+- **Click-and-Hold Scrubbing**: Hold mouse button on video to rapidly skim through content
 
 #### Directory Playlist
-- **Quick Access Panel:** Netflix-style "Next Episode" button opens a side panel
-- **File Browser:** Displays all playable media files from the current file's directory
-- **One-Click Switching:** Click any file to immediately start playback
-- **Visual Indicators:** Shows currently playing file
+- **"Next in Folder" Button**: Styled like Netflix's "Next Episode" button in bottom-right corner
+- **Playlist Panel**: Opens a side panel showing all playable media files from the current file's directory
+- **Auto-Navigation**: Easily jump between files in the same folder
 
-#### VLC-Style Menu Bar
-Comprehensive native menu bar providing access to all features:
+### Menu Bar (VLC-Style)
+Comprehensive native menu bar for advanced features:
 
-- **Media Menu**
-  - Open File, Open Multiple Files, Open Folder
-  - Recent Media list
-  - Save Playlist
-  - Quit application
+**Media Menu:**
+- Open File (Ctrl/Cmd+O)
+- Open Folder (Ctrl/Cmd+Shift+O)
+- Quit (Ctrl/Cmd+Q)
 
-- **Playback Menu**
-  - Play/Pause, Stop, Previous, Next
-  - Jump forward/backward (10s, 1min)
-  - Playback speed control (0.25x - 2.0x)
-  - Recording functionality
+**Playback Menu:**
+- Control playback speed (0.25x - 2x)
+- Jump forward/backward
+- Stop playback
 
-- **Audio Menu**
-  - Audio track selection
-  - Audio device selection
-  - Stereo mode options
-  - Volume controls
-  - Audio visualizations (spectrum, waveform)
+**Audio Menu:**
+- Select audio tracks (for multi-track files)
+- Audio delay adjustment
 
-- **Video Menu**
-  - Video track selection
-  - Fullscreen and always on top
-  - Aspect ratio and crop settings
-  - Deinterlacing options
-  - Snapshot capture
-  - Zoom controls
+**Video Menu:**
+- Select video tracks
+- Change aspect ratio (16:9, 4:3, 1:1, Original)
+- Crop video (Top/Bottom/Left/Right)
+- Zoom controls
 
-- **Subtitles Menu**
-  - Subtitle track selection
-  - Load external subtitle files
-  - Download subtitles
-  - Subtitle synchronization
-  - Text size adjustment
-
-- **Tools Menu**
-  - Audio and video effects/filters
-  - Track synchronization
-  - Media information and codec details
-  - Messages and logs
-  - Preferences/Settings
-
-- **View Menu**
-  - Playlist view
-  - Directory view
-  - Minimal interface toggle
-  - Advanced controls
-  - Status bar
-
-- **Help Menu**
-  - Documentation
-  - Keyboard shortcuts reference
-  - Check for updates
-  - About
+**Tools Menu:**
+- Codec Information
+- Media Information
+- Preferences (placeholder for future features)
 
 ### Performance Requirements
-
-**Critical Performance Goals:**
-- **Ultra-Fast .ts File Seeking:** Near-instantaneous seeking in Transport Stream files
-  - Current VLC has notoriously slow .ts seeking (often 2-5+ seconds)
-  - **Our target: < 100ms seek response time** for .ts files
-  - Achieved through optimized libmpv configuration and stream indexing
-  
-- **Hardware-Accelerated Playback:**
-  - GPU-accelerated video decoding (NVDEC, VideoToolbox, VA-API, DXVA2)
-  - Smooth 4K playback with minimal CPU usage
-  - Automatic hardware decoder detection and selection
-  
-- **Responsive User Interface:**
-  - < 50ms response time for all UI interactions
-  - Smooth 60fps animations for control transitions
-  - No UI blocking during file operations
-  
-- **Efficient Resource Usage:**
-  - Low memory footprint (< 200MB for 1080p playback)
-  - Minimal CPU usage when hardware decoding is active
-  - Fast application startup time (< 1 second)
+- **GPU-Accelerated Decoding**: Hardware-accelerated H.264/H.265 decoding using:
+  - Windows: Direct3D 11 with DXVA2
+  - macOS: Metal with VideoToolbox
+- **Fast Seeking**: Extremely responsive seeking, especially in `.ts` (Transport Stream) files
+- **Low Memory**: Target < 200MB RAM usage during playback
+- **Smooth Playback**: Locked 60fps UI with zero dropped frames
 
 ---
 
-## 🛠️ Tech Stack
+## 🔧 Technical Specification
 
-### Core Technologies
-- **Language:** Python 3.10+
-- **UI Framework:** PySide6 (Qt for Python)
-- **Media Backend:** python-mpv (libmpv bindings)
-  - MPV provides excellent hardware-accelerated playback
-  - Superior format support and codec handling
-  - Fast seeking performance
-  - Cross-platform compatibility
+### Technology Stack
 
-### Key Libraries
-- **PySide6:** Qt-based UI framework for native desktop applications
-  - QtWidgets for UI components
-  - QtCore for signals/slots and core functionality
-  - QtGui for graphics and styling
-  - QtMultimedia (fallback/supplementary)
-  
-- **python-mpv:** Python bindings for libmpv
-  - Hardware-accelerated video decoding
-  - Extensive format support
-  - Advanced playback control
-  - Low-level access to video rendering
+| Component | Technology | Rationale |
+|-----------|-----------|-----------|
+| **Language** | C++20 | Native performance, direct hardware access, mature ecosystem |
+| **UI Framework** | Dear ImGui | Immediate-mode GUI for pixel-perfect custom controls, GPU-accelerated rendering |
+| **Media Decoder** | FFmpeg (libavcodec, libavformat, libavutil) | Industry-standard codec support, optimized TS demuxer, 20+ years of development |
+| **Video Rendering** | Direct3D 11 (Windows), Metal (macOS) | Zero-copy GPU rendering, hardware decode acceleration |
+| **Audio Output** | WASAPI (Windows), CoreAudio (macOS) | Low-latency audio, native OS integration |
+| **Build System** | CMake + Ninja | Fast incremental builds (2-3 seconds), cross-platform |
+| **CI/CD** | GitHub Actions | Automated multi-platform builds |
 
-### Platform Support
-1. **Windows** (Primary target)
-   - Native Windows UI integration
-   - DirectX/D3D11 hardware acceleration
-   
-2. **macOS** (Secondary target)
-   - Native macOS menu bar
-   - Metal/VideoToolbox hardware acceleration
-   
-3. **Linux** (Tertiary target)
-   - Native Linux desktop integration
-   - VA-API/VDPAU hardware acceleration
+### Why This Stack?
+
+#### ❌ Rejected Technologies
+- **Qt**: Requires login/licensing, bloated, difficult setup
+- **Electron/Web Tech**: High memory usage (300MB+), poor TS support, startup lag
+- **.NET/WPF**: Windows-only, not preferred by developer
+- **Python/PyQt**: Not native performance, dependency hell
+- **Java/JavaFX**: Not native performance, large runtime
+- **VLC Libraries Direct**: Avoided to build custom solution
+
+#### ✅ Why C++ + ImGui + FFmpeg?
+1. **Native Performance**: Direct GPU access, no abstraction layers
+2. **Cross-Platform**: Single codebase for Windows + macOS (85% shared code)
+3. **Fast Iteration**: Hot-reload architecture enables 1-2 second UI updates
+4. **Full Control**: Pixel-perfect Netflix UI without framework limitations
+5. **Small Binary**: ~50MB app size (vs 200MB+ for Electron)
+6. **No Setup Hell**: Pre-built FFmpeg binaries, header-only ImGui
+
+### Architecture
+
+```
+┌─────────────────────────────────────────┐
+│   Dear ImGui UI Layer                   │
+│   - Netflix-style controls              │
+│   - Auto-hide animations                │
+│   - Hot-reloadable (.dll/.dylib)        │
+└──────────────┬──────────────────────────┘
+               │
+┌──────────────▼──────────────────────────┐
+│   Application Core (C++)                │
+│   - Event handling                      │
+│   - State management                    │
+│   - File system operations              │
+└──────────────┬──────────────────────────┘
+               │
+     ┌─────────┴─────────┐
+     ▼                   ▼
+┌──────────┐      ┌──────────────┐
+│ FFmpeg   │      │ GPU Renderer │
+│ Decoder  │─────▶│ D3D11/Metal  │
+└──────────┘      └──────────────┘
+     │                   │
+     └─────────┬─────────┘
+               ▼
+     ┌──────────────────┐
+     │ OS Audio/Video   │
+     │ WASAPI/CoreAudio │
+     └──────────────────┘
+```
+
+### Performance Optimizations
+
+**Compilation Speed:**
+- Precompiled headers (PCH) - compile once
+- Unity builds - batch compile files
+- Incremental linking - link only changed files
+- Hot reload DLL - update UI without restart
+
+**Runtime Performance:**
+- Zero-copy video rendering (GPU memory → Screen)
+- Multi-threaded decode pipeline
+- Hardware decode acceleration (DXVA2/VideoToolbox)
+- Custom TS demuxer with keyframe indexing
+
+### Platform-Specific Code
+
+| Feature | Windows | macOS | Shared |
+|---------|---------|-------|--------|
+| UI (ImGui) | ✅ | ✅ | 100% |
+| FFmpeg | ✅ | ✅ | 100% |
+| Video Output | D3D11 (~200 lines) | Metal (~200 lines) | Interface |
+| Audio Output | WASAPI (~150 lines) | CoreAudio (~150 lines) | Interface |
+| File Dialogs | Win32 (~50 lines) | Cocoa (~50 lines) | Interface |
+
+**Total platform-specific code: ~15% of codebase**
 
 ---
 
-## 🎨 UX Design Specification
+## 🛠️ Development Steps
 
-### Design Philosophy
-**"VLC functionality with Netflix aesthetics"** - Combine the comprehensive feature set of VLC with the polished, modern user experience of Netflix.
+### Phase 1: GUI Foundation (Week 1)
 
-### Visual Design System
+**Goal**: Build Netflix-style UI with mock data (no video playback yet)
 
-#### Color Palette
-```
-Primary Colors:
-- Background Overlay:      rgba(0, 0, 0, 0.7)
-- Control Background:      rgba(20, 20, 20, 0.9)
-- Text Primary:            #FFFFFF
-- Text Secondary:          #E5E5E5
+#### Step 1.1: Project Setup
+- [ ] Create directory structure (`src/`, `external/`, `scripts/`)
+- [ ] Download and integrate Dear ImGui (header-only)
+- [ ] Create basic CMake configuration
+- [ ] Setup GitHub repository and `.gitignore`
 
-Accent Colors:
-- Netflix Red (Primary):   #E50914
-- Active Red (Pressed):    #B20710
-- Hover Gray:              rgba(255, 255, 255, 0.1)
+#### Step 1.2: Window and Rendering Context
+- [ ] Create main window (Win32/Cocoa)
+- [ ] Initialize Direct3D 11 (Windows) or Metal (macOS)
+- [ ] Setup ImGui rendering backend
+- [ ] Implement main render loop (60fps)
 
-UI Elements:
-- Progress Bar Background: rgba(255, 255, 255, 0.3)
-- Progress Bar Filled:     #E50914
-- Progress Bar Buffered:   rgba(255, 255, 255, 0.5)
-- Scrubber Dot:            #E50914 (12px diameter)
+#### Step 1.3: Netflix UI Components
+- [ ] **Video Surface**: Fullscreen black rectangle (mock video)
+- [ ] **Control Overlay**: Bottom gradient with controls container
+- [ ] **Play/Pause Button**: Custom icon rendering (triangle/bars)
+- [ ] **Progress Bar**: Netflix-style thin red line with scrubber
+- [ ] **Time Display**: Current time / Duration format
+- [ ] **Volume Control**: Icon + hover slider
+- [ ] **Full-Screen Button**: Icon + click handler
 
-Shadows:
-- Control Bar Shadow:      0px -10px 30px rgba(0, 0, 0, 0.8)
-- Button Hover Shadow:     0px 2px 8px rgba(229, 9, 20, 0.5)
-```
+#### Step 1.4: UI Interactions
+- [ ] Auto-hide controls (3-second timer on mouse move)
+- [ ] Fade in/out animations
+- [ ] Click anywhere to toggle play/pause
+- [ ] Progress bar hover effects
+- [ ] "Next in Folder" button (bottom-right)
 
-#### Typography
-```
-Font Family: "Netflix Sans" (fallback: "Segoe UI", "Roboto", sans-serif)
+#### Step 1.5: Netflix Styling
+- [ ] Load custom fonts (Netflix Sans equivalent)
+- [ ] Apply Netflix color scheme (#E50914 red, dark grays)
+- [ ] Implement smooth transitions
+- [ ] Add hover states for all interactive elements
 
-Hierarchy:
-- Video Title:             18px, Medium (500), White
-- Control Labels:          14px, Regular (400), White
-- Time Stamps:             14px, Regular (400), White
-- Directory Items:         16px, Regular (400), White
-- Menu Items:              14px, Regular (400), Off-white
-- Hover States:            Bold (700)
-```
-
-#### Iconography
-- **Style:** Material Design inspired, Netflix-refined
-- **Line Weight:** 2px strokes
-- **Sizes:** 24x24px (controls), 32x32px (main play button)
-- **Colors:** White default, Netflix Red on hover
-
-**Icon Set:**
-- ▶ Play, ❚❚ Pause, ⏮ Back 10s, ⏭ Forward 10s
-- 🔊 Volume, 🔇 Mute, ⚙ Settings
-- □ Fullscreen, ⛶ Exit Fullscreen
-- 📁 Directory/Playlist, ← Back
-
-#### Layout Structure
-
-**Screen Regions:**
-```
-┌────────────────────────────────────────────────────────┐
-│ Media  Playback  Audio  Video  Subtitles  Tools  Help │ ← Menu Bar (32px)
-├────────────────────────────────────────────────────────┤
-│                                                        │
-│                  VIDEO PLAYBACK AREA                   │
-│                                                        │
-│ ┌──────────────────────────────────────────────────┐  │
-│ │ ← Title                      [□] [📁] [⚙]       │  │ ← Top Overlay
-│ └──────────────────────────────────────────────────┘  │
-│                                                        │
-│ ┌──────────────────────────────────────────────────┐  │
-│ │ ━━━━━━━●━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │  │ ← Progress Bar
-│ │ 0:45:23                              1:32:45    │  │
-│ │ [▶] [⏮10] [⏭10] [🔊━●━] [⚙] [□] [⛶]           │  │ ← Bottom Controls
-│ └──────────────────────────────────────────────────┘  │
-└────────────────────────────────────────────────────────┘
-```
-
-**Control Bar Specifications:**
-- Height: 80px
-- Padding: 20px horizontal, 16px vertical
-- Button spacing: 16px between controls
-- Progress bar margin: 12px from edges
-- Progress bar height: 4px (6px on hover)
-
-**Menu Bar Styling:**
-- Background: rgba(0, 0, 0, 0.95)
-- Height: 32px (Windows/Linux), Native (macOS)
-- Dropdown background: rgba(20, 20, 20, 0.98)
-- Dropdown shadow: 0px 8px 24px rgba(0, 0, 0, 0.9)
-- Menu item height: 32px
-- Hover background: rgba(229, 9, 20, 0.15)
-
-#### Animation Timing
-```
-Control Bar Fade:
-- Fade in:              200ms ease-out
-- Fade out:             300ms ease-in
-- Auto-hide delay:      3000ms (3 seconds)
-
-Button Interactions:
-- Hover scale:          1.1 (100ms ease-out)
-- Click scale:          0.95 (50ms ease-in)
-- Color transition:     150ms ease-out
-
-Progress Bar:
-- Scrubber hover scale: 1.5 (150ms ease-out)
-- Preview appear:       200ms ease-out
-
-Directory Panel:
-- Slide in from right:  300ms ease-out
-- Slide out:            250ms ease-in
-
-Menu Animations:
-- Dropdown open:        200ms ease-out
-- Hover highlight:      150ms ease-out
-```
-
-### Interaction Patterns
-
-#### Auto-Hide Behavior
-1. Controls visible on mouse movement
-2. Auto-hide after 3 seconds of inactivity
-3. Controls stay visible when hovering over them
-4. Pause state shows controls persistently
-5. Menu bar auto-hides in fullscreen (shows on mouse-to-top)
-
-#### Keyboard Shortcuts
-```
-Playback:
-  Space          Play/Pause
-  S              Stop
-  N              Next
-  P              Previous
-  [              Slower
-  ]              Faster
-  =              Normal speed
-
-Seeking:
-  Left/Right     -10s / +10s
-  Ctrl+Left      -1min
-  Ctrl+Right     +1min
-
-Display:
-  F              Fullscreen
-  F11            Fullscreen Interface
-  Ctrl+H         Minimal Interface
-  Ctrl+T         Always on Top
-
-Audio:
-  M              Mute
-  Up/Down        Volume Up/Down
-  Ctrl+Up        Increase Volume
-  Ctrl+Down      Decrease Volume
-
-File Operations:
-  Ctrl+O         Open File
-  Ctrl+F         Open Folder
-  Ctrl+D         Open Directory
-  Ctrl+L         Playlist
-  Ctrl+Q         Quit
-
-Tools:
-  Ctrl+E         Effects and Filters
-  Ctrl+I         Media Information
-  Ctrl+J         Codec Information
-  Shift+S        Take Snapshot
-```
-
-#### Mouse Interactions
-- **Single Click on Video:** Play/Pause toggle
-- **Click and Hold:** Fast scrubbing/skimming
-- **Progress Bar Click:** Jump to position
-- **Progress Bar Hover:** Enlarge scrubber, show preview
-- **Volume Slider:** Click or drag to adjust
-- **Button Hover:** Scale up + red highlight
-
-### Directory Panel Design
-```
-┌──────────────────────────┐
-│  📁 Current Folder       │ ← Header
-│  ────────────────────    │
-│  ▶ video1.mp4           │
-│  ▶ video2.ts     ← Now  │ ← Currently playing (highlighted)
-│  ▶ video3.mov           │
-│  ▶ audio1.mp3           │
-│  ▶ movie.wmv            │
-│  ...                     │
-└──────────────────────────┘
-```
-
-**Styling:**
-- Width: 320px
-- Background: rgba(20, 20, 20, 0.95)
-- Item height: 48px
-- Item padding: 12px
-- Active item background: rgba(229, 9, 20, 0.2)
-- Hover background: rgba(255, 255, 255, 0.05)
+**Deliverable**: Fully functional Netflix-style UI with mock video playback (static image or gradient)
 
 ---
 
-## 📁 Project Structure (Planned)
+### Phase 2: FFmpeg Integration (Week 2)
 
-```
-simple-media-player-v2/
-├── src/
-│   ├── main.py                 # Application entry point
-│   ├── player/
-│   │   ├── __init__.py
-│   │   ├── mpv_player.py       # MPV backend integration
-│   │   ├── video_widget.py     # Video rendering widget
-│   │   └── playback_manager.py # Playback state management
-│   ├── ui/
-│   │   ├── __init__.py
-│   │   ├── main_window.py      # Main application window
-│   │   ├── controls.py         # Bottom control bar
-│   │   ├── top_bar.py          # Top overlay bar
-│   │   ├── menu_bar.py         # VLC-style menu
-│   │   ├── directory_panel.py  # Playlist/directory panel
-│   │   └── dialogs.py          # Settings, effects, etc.
-│   ├── utils/
-│   │   ├── __init__.py
-│   │   ├── file_manager.py     # File operations
-│   │   ├── shortcuts.py        # Keyboard shortcut handler
-│   │   └── settings.py         # Application settings
-│   └── resources/
-│       ├── icons/              # UI icons
-│       ├── fonts/              # Netflix Sans font
-│       └── styles/             # QSS stylesheets
-├── tests/
-│   └── ...                     # Unit tests
-├── requirements.txt            # Python dependencies
-├── README.md                   # This file
-└── .gitignore
-```
+**Goal**: Replace mock video with actual media playback
+
+#### Step 2.1: FFmpeg Setup
+- [ ] Download pre-built FFmpeg binaries
+- [ ] Link FFmpeg libraries (libavcodec, libavformat, libavutil)
+- [ ] Test basic video decode (file → frames)
+
+#### Step 2.2: Video Decoder
+- [ ] Implement `VideoDecoder` class
+- [ ] Open media file and read streams
+- [ ] Decode video frames to RGB/YUV
+- [ ] Upload frames to GPU texture (D3D11/Metal)
+
+#### Step 2.3: Audio Playback
+- [ ] Implement `AudioOutput` class (WASAPI/CoreAudio)
+- [ ] Decode audio frames
+- [ ] Sync audio with video (A/V sync)
+- [ ] Implement volume control
+
+#### Step 2.4: Playback Controls
+- [ ] Wire play/pause to decoder state
+- [ ] Implement seeking (frame-accurate)
+- [ ] Handle end-of-file (loop or stop)
+- [ ] Display actual video duration
+
+**Deliverable**: Media player that can play MP4 files with audio/video sync
+
+---
+
+### Phase 3: Advanced Features (Week 3)
+
+#### Step 3.1: Format Support
+- [ ] Add support for `.ts` files (MPEG-TS demuxer)
+- [ ] Add support for `.mov`, `.wmv`, `.mpeg`
+- [ ] Add support for `.mp3`, `.wav` audio
+- [ ] Optimize TS seeking performance
+
+#### Step 3.2: Directory Playlist
+- [ ] Scan current file's directory for media files
+- [ ] Build playlist UI panel (side drawer)
+- [ ] Implement "Next in Folder" button
+- [ ] Auto-play next file on completion
+
+#### Step 3.3: Keyboard Shortcuts
+- [ ] Left/Right arrow keys (seek ±10 seconds)
+- [ ] Space bar (play/pause)
+- [ ] F key (full-screen toggle)
+- [ ] M key (mute toggle)
+
+#### Step 3.4: Click-and-Hold Scrubbing
+- [ ] Detect mouse hold on video surface
+- [ ] Implement rapid seek while held
+- [ ] Show timestamp preview
+
+**Deliverable**: Fully functional player with all formats and interactions
+
+---
+
+### Phase 4: Menu Bar & Polish (Week 4)
+
+#### Step 4.1: Native Menu Bar
+- [ ] Create platform-specific menu (Win32/Cocoa)
+- [ ] Implement Media menu (Open File/Folder, Quit)
+- [ ] Implement Playback menu (Speed control)
+- [ ] Implement Audio menu (Track selection)
+- [ ] Implement Video menu (Aspect ratio, Crop)
+
+#### Step 4.2: Advanced Video Controls
+- [ ] Aspect ratio presets (16:9, 4:3, Original)
+- [ ] Crop controls (Top/Bottom/Left/Right)
+- [ ] Zoom controls
+
+#### Step 4.3: Hardware Acceleration
+- [ ] Enable DXVA2 (Windows) for H.264/H.265
+- [ ] Enable VideoToolbox (macOS) for H.264/H.265
+- [ ] Fallback to software decode if unavailable
+
+#### Step 4.4: Performance Optimization
+- [ ] Multi-threaded decode
+- [ ] Frame buffer pool (reduce allocations)
+- [ ] GPU upload optimization
+
+**Deliverable**: Production-ready media player with all features
+
+---
+
+### Phase 5: Development Tools (Ongoing)
+
+#### Hot Reload Setup
+- [ ] Create UI as separate DLL/dylib
+- [ ] Implement file watcher (Windows/Mac)
+- [ ] Auto-reload on UI code changes
+- [ ] Preserve app state during reload
+
+#### CI/CD Pipeline
+- [ ] GitHub Actions workflow for Windows builds
+- [ ] GitHub Actions workflow for macOS builds
+- [ ] Automated testing (basic smoke tests)
+- [ ] Release artifact generation
+
+#### Build Scripts
+- [ ] `dev_mac.sh` - Auto-rebuild on file change (Mac)
+- [ ] `dev_windows.bat` - Auto-rebuild on file change (Windows)
+- [ ] `build.sh` / `build.bat` - One-command build
+
+**Deliverable**: Fast development workflow with 1-2 second iteration times
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.10 or higher
-- libmpv installed on your system
-  - **Windows:** Download from https://mpv.io
-  - **macOS:** `brew install mpv`
-  - **Linux:** `sudo apt install libmpv-dev` (Ubuntu/Debian)
 
-### Installation
+**macOS:**
 ```bash
-# Clone the repository
+brew install cmake ninja ffmpeg
+```
+
+**Windows:**
+```powershell
+winget install Kitware.CMake Ninja-build.Ninja
+# Download FFmpeg from: https://github.com/BtbN/FFmpeg-Builds/releases
+```
+
+### Build Instructions
+
+```bash
+# Clone repository
 git clone https://github.com/ArjunBiswas-99/simple-media-player-v2.git
 cd simple-media-player-v2
 
-# Install dependencies
-pip install -r requirements.txt
+# Download Dear ImGui
+git clone https://github.com/ocornut/imgui.git external/imgui
 
-# Run the application
-python src/main.py
+# Build
+cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+
+# Run
+./build/MediaPlayer  # macOS
+./build/MediaPlayer.exe  # Windows
+```
+
+### Development Mode (Hot Reload)
+
+**macOS:**
+```bash
+./scripts/dev_mac.sh
+# Edit files in src/ui/ → Auto-rebuilds in 1-2 seconds
+```
+
+**Windows:**
+```powershell
+.\scripts\dev_windows.bat
+# Edit files in src\ui\ → Auto-rebuilds in 2-3 seconds
 ```
 
 ---
 
-## 📝 Development Roadmap
+## 📦 Project Structure
 
-### Phase 1: Core Foundation
-- [ ] Project setup and structure
-- [ ] MPV integration and basic playback
-- [ ] Main window and video widget
-- [ ] Basic play/pause/seek controls
-
-### Phase 2: Netflix-Style UI
-- [ ] Bottom control bar with auto-hide
-- [ ] Top overlay bar
-- [ ] Progress bar with hover effects
-- [ ] Custom styling (colors, fonts, shadows)
-
-### Phase 3: YouTube-Style Interactions
-- [ ] Click-to-play functionality
-- [ ] Keyboard shortcuts (arrows, space, etc.)
-- [ ] Click-and-hold scrubbing
-- [ ] Volume controls
-
-### Phase 4: VLC-Style Menu Bar
-- [ ] Native menu bar implementation
-- [ ] All menu items and submenus
-- [ ] Menu functionality integration
-- [ ] Keyboard shortcut display
-
-### Phase 5: Advanced Features
-- [ ] Directory playlist panel
-- [ ] Audio/video track selection
-- [ ] Aspect ratio and crop options
-- [ ] Effects and filters
-- [ ] Settings/preferences dialog
-
-### Phase 6: Performance & Polish
-- [ ] Hardware acceleration optimization
-- [ ] Fast seeking optimization (.ts files)
-- [ ] Animation polish
-- [ ] Bug fixes and testing
-
-### Phase 7: Distribution
-- [ ] Windows installer (PyInstaller/Nuitka)
-- [ ] macOS .app bundle
-- [ ] Linux AppImage/deb package
-- [ ] Documentation and user guide
+```
+simple-media-player-v2/
+├── src/
+│   ├── main.cpp                    # Entry point
+│   ├── video_decoder.cpp           # FFmpeg video decoding
+│   ├── audio_output.cpp            # WASAPI/CoreAudio
+│   ├── platform_window.cpp         # Win32/Cocoa window
+│   └── ui/                         # Hot-reloadable UI
+│       ├── player_ui.cpp           # Main UI renderer
+│       ├── controls.cpp            # Control bar components
+│       ├── progress_bar.cpp        # Netflix-style progress bar
+│       └── playlist_panel.cpp      # Directory playlist
+├── external/
+│   └── imgui/                      # Dear ImGui (git submodule)
+├── scripts/
+│   ├── dev_mac.sh                  # Mac hot reload script
+│   └── dev_windows.bat             # Windows hot reload script
+├── .github/
+│   └── workflows/
+│       ├── build-windows.yml       # Windows CI
+│       └── build-macos.yml         # macOS CI
+├── CMakeLists.txt                  # Main build configuration
+└── README.md                       # This file
+```
 
 ---
 
-## 🤝 Contributing
-Contributions are welcome! Please feel free to submit a Pull Request.
+## 🎯 Roadmap
+
+- [x] Technical specification complete
+- [x] Development plan finalized
+- [ ] Phase 1: GUI Foundation (In Progress)
+- [ ] Phase 2: FFmpeg Integration
+- [ ] Phase 3: Advanced Features
+- [ ] Phase 4: Menu Bar & Polish
+- [ ] Phase 5: Development Tools
+
+---
 
 ## 📄 License
-[To be determined]
+
+MIT License - Feel free to use and modify
+
+---
 
 ## 🙏 Acknowledgments
-- **MPV:** For the excellent media playback engine
-- **Qt/PySide6:** For the powerful UI framework
-- **Netflix:** For UI/UX inspiration
-- **VLC:** For comprehensive feature set inspiration
+
+- **Dear ImGui** by Omar Cornut - Fantastic immediate-mode GUI
+- **FFmpeg** - The backbone of media playback
+- **Netflix** - UI/UX inspiration
