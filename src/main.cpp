@@ -24,6 +24,9 @@
 #include <cmath>
 #include <string>
 #include <vector>
+#include <filesystem>
+#include <algorithm>
+#include <numeric>
 
 #include "VideoDecoder.h"
 #include "AudioOutput.h"
@@ -47,15 +50,20 @@ struct AppState {
     float timeSinceFileLoad = 0.0f;  // Track time since file opened
     bool isFullscreen = false;  // Fullscreen state
     
-    // Mock playlist
-    std::vector<std::string> playlistFiles = {
-        "Episode 1 - Pilot.mp4",
-        "Episode 2 - The Beginning.mp4",
-        "Episode 3 - Rising Action.mp4",
-        "Episode 4 - Climax.mp4",
-        "Episode 5 - Finale.mp4"
-    };
-    int currentPlaylistIndex = 0;
+    // Directory playlist (files in same folder as current video)
+    std::vector<std::string> playlistFiles;  // Full paths
+    std::vector<std::string> playlistNames;  // Display names (filenames only)
+    int currentPlaylistIndex = -1;
+    std::string currentDirectory = "";
+    
+    // Skip animation state
+    bool showSkipAnimation = false;
+    float skipAnimationTimer = 0.0f;
+    int skipAnimationDirection = 0;  // -1 = backward, +1 = forward
+    
+    // Subtitle/audio selection
+    bool showSubtitleMenu = false;
+    bool showAudioMenu = false;
     
     // Video playback
     VideoDecoder* decoder = nullptr;
@@ -106,9 +114,77 @@ void DrawSkipIcon(ImDrawList* draw, ImVec2 center, float size, bool forward, ImU
 void DrawVolumeIcon(ImDrawList* draw, ImVec2 pos, float volume, bool muted, ImU32 color);
 void DrawSettingsIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
 void DrawSubtitlesIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
+void DrawAudioIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
 void DrawFullscreenIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
 void DrawPlaylistIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
 void RenderPlaylistPanel(AppState& state, ImVec2 screenSize);
+
+// Scan directory for media files
+void ScanDirectoryForMediaFiles(AppState& state, const std::string& filePath) {
+    namespace fs = std::filesystem;
+    
+    // Clear existing playlist
+    state.playlistFiles.clear();
+    state.playlistNames.clear();
+    state.currentPlaylistIndex = -1;
+    
+    try {
+        fs::path currentFile(filePath);
+        fs::path directory = currentFile.parent_path();
+        state.currentDirectory = directory.string();
+        
+        // Supported video extensions
+        std::vector<std::string> videoExtensions = {
+            ".mp4", ".mov", ".avi", ".mkv", ".wmv", ".ts", ".mpeg", ".mpg", ".m4v", ".flv"
+        };
+        
+        // Iterate through files in directory
+        for (const auto& entry : fs::directory_iterator(directory)) {
+            if (entry.is_regular_file()) {
+                std::string ext = entry.path().extension().string();
+                // Convert extension to lowercase for comparison
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                
+                // Check if file has video extension
+                if (std::find(videoExtensions.begin(), videoExtensions.end(), ext) != videoExtensions.end()) {
+                    state.playlistFiles.push_back(entry.path().string());
+                    state.playlistNames.push_back(entry.path().filename().string());
+                    
+                    // Check if this is the current file
+                    if (entry.path() == currentFile) {
+                        state.currentPlaylistIndex = state.playlistFiles.size() - 1;
+                    }
+                }
+            }
+        }
+        
+        // Sort by filename if we have files
+        if (!state.playlistFiles.empty()) {
+            std::vector<size_t> indices(state.playlistFiles.size());
+            std::iota(indices.begin(), indices.end(), 0);
+            std::sort(indices.begin(), indices.end(), [&](size_t a, size_t b) {
+                return state.playlistNames[a] < state.playlistNames[b];
+            });
+        
+            std::vector<std::string> sortedFiles, sortedNames;
+            int newCurrentIndex = -1;
+            for (size_t i = 0; i < indices.size(); i++) {
+                sortedFiles.push_back(state.playlistFiles[indices[i]]);
+                sortedNames.push_back(state.playlistNames[indices[i]]);
+                if (indices[i] == (size_t)state.currentPlaylistIndex) {
+                    newCurrentIndex = i;
+                }
+            }
+        
+            state.playlistFiles = sortedFiles;
+            state.playlistNames = sortedNames;
+            state.currentPlaylistIndex = newCurrentIndex;
+        }
+        
+    } catch (const std::exception& e) {
+        std::cerr << "Error scanning directory: " << e.what() << std::endl;
+    }
+}
 
 #ifdef __APPLE__
 // macOS-specific implementation
@@ -218,78 +294,82 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize);
         
         if (state.audioOutput && state.decoder->hasAudio()) {
             audioClock = state.audioOutput->getAudioClock();
-            // Only use audio sync if audio has actually started (clock > 0)
-            useAudioSync = (audioClock > 0.001);
+            // Only use audio sync if audio has actually started (clock > 0.01s)
+            useAudioSync = (audioClock > 0.01);
         }
         
-        if (!useAudioSync) {
-            // No audio or audio hasn't started - use video PTS directly
-            // This allows video to play immediately
-            audioClock = state.lastVideoFramePTS;
-        }
-        
-        // Try to get a new frame if we don't have a pending one
+        // CRITICAL FIX: Only fetch new frame if we don't have a pending one
+        // This prevents draining the queue too fast
         if (!state.pendingFrame) {
             state.pendingFrame = state.decoder->getNextVideoFrame();
+            
+            // Check if we reached end of stream
+            if (!state.pendingFrame) {
+                // No more frames - check if decoder is done
+                if (!state.decoder->isPlaying()) {
+                    state.isPlaying = false;
+                    if (state.audioOutput) {
+                        state.audioOutput->pause();
+                    }
+                }
+            }
         }
         
         // Process the pending frame
         if (state.pendingFrame && state.pendingFrame->data && state.pendingFrame->width > 0 && state.pendingFrame->height > 0) {
             double videoPTS = state.pendingFrame->pts;
-            double drift = videoPTS - audioClock;
-            
-            // A/V sync thresholds (relaxed for smoother playback)
-            const double SYNC_THRESHOLD_MIN = 0.100;  // 100ms - display if within this (more forgiving)
-            const double SYNC_THRESHOLD_MAX = 0.200;  // 200ms - drop if behind by this much
-            const double NOSYNC_THRESHOLD = 1.0;      // 1s - resync if drift is large
-            
+            double drift = 0.0;
             bool shouldDisplay = false;
             
-            // If not using audio sync, just display frames in order
-            if (!useAudioSync) {
-                shouldDisplay = true;
-                state.lastVideoFramePTS = videoPTS;
-            }
-            // Check if we need to resync (large drift, likely after seek or initial startup)
-            else if (fabs(drift) > NOSYNC_THRESHOLD) {
-                shouldDisplay = true;
-                state.lastVideoFramePTS = videoPTS;
-                // Reset audio clock to video PTS to get back in sync
-                if (state.audioOutput) {
-                    state.audioOutput->setAudioClock(videoPTS);
+            // Calculate drift based on sync mode
+            if (useAudioSync) {
+                drift = videoPTS - audioClock;
+                
+                // More aggressive thresholds for better sync
+                const double SYNC_THRESHOLD = 0.040;  // 40ms - one frame at 25fps
+                const double DROP_THRESHOLD = 0.100;  // 100ms - drop if too far behind
+                const double NOSYNC_THRESHOLD = 0.5;  // 500ms - force resync
+                
+                // Check if we need to resync (after seek, audio glitch, etc)
+                if (fabs(drift) > NOSYNC_THRESHOLD) {
+                    // Large drift - force resync by setting audio clock to video
+                    if (state.audioOutput) {
+                        state.audioOutput->setAudioClock(videoPTS);
+                    }
+                    shouldDisplay = true;
                 }
-            }
-            // Video is ahead of audio - wait to display (but be more lenient)
-            else if (drift > SYNC_THRESHOLD_MIN) {
-                shouldDisplay = false;
-                // Keep frame in pending state, will try again next render loop
-            }
-            // Video is behind audio - drop frame and get next one
-            else if (drift < -SYNC_THRESHOLD_MAX) {
-                // Safely delete and null the frame
-                if (state.pendingFrame) {
+                // Video is too far behind - drop this frame to catch up
+                else if (drift < -DROP_THRESHOLD) {
+                    // Drop frame
                     delete state.pendingFrame;
                     state.pendingFrame = nullptr;
+                    state.droppedFrames++;
+                    shouldDisplay = false;
                 }
-                state.droppedFrames++;
-                shouldDisplay = false;
-                
-                if (state.droppedFrames % 10 == 0) {
-                    std::cout << "Dropped frames: " << state.droppedFrames 
-                              << " (drift: " << drift << "s)" << std::endl;
+                // Video is slightly ahead - wait a bit (but still display after threshold)
+                else if (drift > SYNC_THRESHOLD) {
+                    // Display it anyway to prevent freeze
+                    // The slight ahead is tolerable and better than stuttering
+                    shouldDisplay = true;
                 }
-            }
-            // Video is in sync - display frame
-            else {
+                // In sync range - display it
+                else {
+                    shouldDisplay = true;
+                }
+            } else {
+                // No audio sync - display all frames immediately
                 shouldDisplay = true;
-                state.lastVideoFramePTS = videoPTS;
-                state.displayedFrames++;
             }
             
             // Display the frame if it's time
             if (shouldDisplay && state.pendingFrame) {
                 VideoFrame* frame = state.pendingFrame;
                 state.pendingFrame = nullptr;  // Frame consumed
+                
+                // Update tracking
+                state.lastVideoFramePTS = videoPTS;
+                state.currentTime = (float)videoPTS;
+                state.displayedFrames++;
                 
                 // Validate frame data before processing
                 if (!frame || !frame->data || frame->width <= 0 || frame->height <= 0) {
@@ -803,6 +883,44 @@ void DrawSubtitlesIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color)
         color, "CC");
 }
 
+void DrawAudioIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color) {
+    float radius = size * 0.4f;
+    
+    // Speaker cone (left side)
+    ImVec2 speakerPoints[4] = {
+        ImVec2(center.x - radius * 0.8f, center.y - radius * 0.5f),
+        ImVec2(center.x - radius * 0.3f, center.y - radius * 0.5f),
+        ImVec2(center.x - radius * 0.3f, center.y + radius * 0.5f),
+        ImVec2(center.x - radius * 0.8f, center.y + radius * 0.5f)
+    };
+    draw->AddConvexPolyFilled(speakerPoints, 4, color);
+    
+    // Speaker base (small rectangle)
+    draw->AddRectFilled(
+        ImVec2(center.x - radius, center.y - radius * 0.3f),
+        ImVec2(center.x - radius * 0.8f, center.y + radius * 0.3f),
+        color
+    );
+    
+    // Sound waves (three arcs)
+    for (int i = 0; i < 3; i++) {
+        float arcRadius = radius * 0.4f + i * radius * 0.3f;
+        float startAngle = -0.5f;
+        float endAngle = 0.5f;
+        int segments = 8;
+        
+        for (int j = 0; j < segments; j++) {
+            float angle1 = startAngle + (endAngle - startAngle) * j / segments;
+            float angle2 = startAngle + (endAngle - startAngle) * (j + 1) / segments;
+            
+            ImVec2 p1 = ImVec2(center.x + cosf(angle1) * arcRadius, center.y + sinf(angle1) * arcRadius);
+            ImVec2 p2 = ImVec2(center.x + cosf(angle2) * arcRadius, center.y + sinf(angle2) * arcRadius);
+            
+            draw->AddLine(p1, p2, color, 1.5f);
+        }
+    }
+}
+
 void DrawFullscreenIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color) {
     float cornerSize = size * 0.25f;
     float gap = size * 0.4f;
@@ -879,8 +997,15 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
     // Header
     ImGui::SetCursorPos(ImVec2(24, 24));
     ImGui::PushFont(ImGui::GetIO().Fonts->Fonts.Size > 1 ? ImGui::GetIO().Fonts->Fonts[1] : ImGui::GetFont());
-    ImGui::Text("Episodes");
+    ImGui::Text("Playlist");
     ImGui::PopFont();
+    
+    // File count
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(120);
+    char countText[32];
+    snprintf(countText, sizeof(countText), "(%zu files)", state.playlistFiles.size());
+    ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "%s", countText);
     
     // Close button
     ImGui::SetCursorPos(ImVec2(panelWidth - 50, 20));
@@ -909,7 +1034,7 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
     for (size_t i = 0; i < state.playlistFiles.size(); i++) {
         ImGui::PushID((int)i);
         
-        bool isPlaying = (i == state.currentPlaylistIndex);
+        bool isPlaying = (state.currentPlaylistIndex >= 0 && i == (size_t)state.currentPlaylistIndex);
         
         // Item background
         ImVec2 itemPos = ImGui::GetCursorScreenPos();
@@ -924,10 +1049,43 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
         // Clickable area
         ImGui::SetCursorPos(ImVec2(0, ImGui::GetCursorPosY()));
         if (ImGui::InvisibleButton("##Item", itemSize)) {
-            state.currentPlaylistIndex = (int)i;
-            state.currentTitle = state.playlistFiles[i];
-            state.currentTime = 0.0f;
-            // TODO: Load actual file
+            // Load the selected file
+            if (state.decoder) {
+                std::string filepath = state.playlistFiles[i];
+                if (state.decoder->open(filepath)) {
+                    state.currentPlaylistIndex = (int)i;
+                    state.fileLoaded = true;
+                    state.duration = (float)state.decoder->getDuration();
+                    state.currentTime = 0.0f;
+                    state.currentTitle = state.playlistNames[i];
+                    state.currentFile = state.currentTitle;
+                    
+                    // Reset A/V sync state
+                    state.lastVideoFramePTS = 0.0;
+                    state.videoStartTime = 0.0;
+                    state.droppedFrames = 0;
+                    state.displayedFrames = 0;
+                    if (state.pendingFrame) {
+                        delete state.pendingFrame;
+                        state.pendingFrame = nullptr;
+                    }
+                    
+                    // Initialize audio if available
+                    if (state.decoder->hasAudio() && state.audioOutput) {
+                        state.audioOutput->clearQueue();
+                        state.audioOutput->setAudioClock(0.0);
+                    }
+                    
+                    // Auto-start playback
+                    state.isPlaying = true;
+                    state.decoder->play();
+                    if (state.audioOutput) {
+                        state.audioOutput->play();
+                    }
+                    
+                    state.timeSinceFileLoad = 0.0f;
+                }
+            }
         }
         
         bool hovered = ImGui::IsItemHovered();
@@ -937,18 +1095,14 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
                 IM_COL32(255, 255, 255, 15));
         }
         
-        // Episode number and title
-        ImGui::SetCursorPos(ImVec2(24, itemPos.y - ImGui::GetWindowPos().y + 20));
+        // File name
+        ImGui::SetCursorPos(ImVec2(24, itemPos.y - ImGui::GetWindowPos().y + 25));
         
         if (isPlaying) {
             ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.898f, 0.035f, 0.078f, 1.0f));
         }
         
-        char episodeNum[16];
-        snprintf(episodeNum, sizeof(episodeNum), "Episode %d", (int)i + 1);
-        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "%s", episodeNum);
-        ImGui::SetCursorPosX(24);
-        ImGui::Text("%s", state.playlistFiles[i].c_str());
+        ImGui::Text("%s", state.playlistNames[i].c_str());
         
         if (isPlaying) {
             ImGui::PopStyleColor();
@@ -1016,6 +1170,15 @@ void RenderMenuBar(AppState& state) {
                             ? filepath.substr(lastSlash + 1) 
                             : filepath;
                         state.currentFile = state.currentTitle;
+                        
+                        // Scan directory for playlist
+                        ScanDirectoryForMediaFiles(state, filepath);
+                        
+                        // CRITICAL: Clear any stale pending frame
+                        if (state.pendingFrame) {
+                            delete state.pendingFrame;
+                            state.pendingFrame = nullptr;
+                        }
                         
                         // Initialize audio if available
                         if (state.decoder->hasAudio()) {
@@ -1357,9 +1520,12 @@ void RenderNetflixUI(AppState& state) {
     
     // Controls overlay
     if (state.showControls) {
+        // Smooth fade out animation (ease-out cubic)
         float alpha = 1.0f;
         if (state.controlsTimer < 0.5f && state.controlsTimer > 0.0f) {
-            alpha = state.controlsTimer * 2.0f;
+            float t = state.controlsTimer / 0.5f;  // 0 to 1
+            // Ease-out cubic: 1 - (1-t)^3
+            alpha = 1.0f - powf(1.0f - t, 3.0f);
         }
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
         
@@ -1411,12 +1577,14 @@ void RenderNetflixUI(AppState& state) {
         if (ImGui::SliderFloat("##Progress", &state.currentTime, 0.0f, state.duration, "")) {
             // Seeking - decode frames until we reach exact position
             if (state.decoder) {
-                state.decoder->seek(state.currentTime);
-                // Clear pending frame on seek
+                // CRITICAL: Clear pending frame BEFORE seek to prevent stale data
                 if (state.pendingFrame) {
                     delete state.pendingFrame;
                     state.pendingFrame = nullptr;
                 }
+                
+                state.decoder->seek(state.currentTime);
+                
                 // Reset audio clock to match seek position
                 if (state.audioOutput) {
                     state.audioOutput->clearQueue();
@@ -1424,21 +1592,6 @@ void RenderNetflixUI(AppState& state) {
                 }
                 // Reset video timing
                 state.lastVideoFramePTS = state.currentTime;
-                
-                // Decode a few frames to get closer to exact position
-                // (FFmpeg seeks to keyframe, we need to decode forward)
-                for (int i = 0; i < 5; i++) {
-                    VideoFrame* tempFrame = state.decoder->getNextVideoFrame();
-                    if (tempFrame) {
-                        if (tempFrame->pts >= state.currentTime) {
-                            // Found frame at or after seek position, keep it
-                            state.pendingFrame = tempFrame;
-                            break;
-                        }
-                        // Frame is before seek position, discard it
-                        delete tempFrame;
-                    }
-                }
             }
         }
         progressHovered = ImGui::IsItemHovered();
@@ -1515,13 +1668,20 @@ void RenderNetflixUI(AppState& state) {
         ImVec2 skipBackPos = ImGui::GetCursorScreenPos();
         if (ImGui::Button("##SkipBack", ImVec2(40, 40))) {
             state.currentTime = fmaxf(state.currentTime - 10.0f, 0.0f);
+            
+            // Trigger skip animation
+            state.showSkipAnimation = true;
+            state.skipAnimationTimer = 0.8f;  // Show for 0.8 seconds
+            state.skipAnimationDirection = -1;  // Backward
+            
+            // CRITICAL: Clear pending frame BEFORE seek
+            if (state.pendingFrame) {
+                delete state.pendingFrame;
+                state.pendingFrame = nullptr;
+            }
+            
             if (state.decoder) {
                 state.decoder->seek(state.currentTime);
-                // Clear pending frame on seek
-                if (state.pendingFrame) {
-                    delete state.pendingFrame;
-                    state.pendingFrame = nullptr;
-                }
                 // Reset audio clock to match seek position
                 if (state.audioOutput) {
                     state.audioOutput->clearQueue();
@@ -1529,18 +1689,6 @@ void RenderNetflixUI(AppState& state) {
                 }
                 // Reset video timing
                 state.lastVideoFramePTS = state.currentTime;
-                
-                // Decode forward to exact position
-                for (int i = 0; i < 5; i++) {
-                    VideoFrame* tempFrame = state.decoder->getNextVideoFrame();
-                    if (tempFrame) {
-                        if (tempFrame->pts >= state.currentTime) {
-                            state.pendingFrame = tempFrame;
-                            break;
-                        }
-                        delete tempFrame;
-                    }
-                }
             }
         }
         DrawSkipIcon(controlDrawList, ImVec2(skipBackPos.x + 20, skipBackPos.y + 20), 16.0f, false,
@@ -1552,13 +1700,20 @@ void RenderNetflixUI(AppState& state) {
         ImVec2 skipForwardPos = ImGui::GetCursorScreenPos();
         if (ImGui::Button("##SkipForward", ImVec2(40, 40))) {
             state.currentTime = fminf(state.currentTime + 10.0f, state.duration);
+            
+            // Trigger skip animation
+            state.showSkipAnimation = true;
+            state.skipAnimationTimer = 0.8f;  // Show for 0.8 seconds
+            state.skipAnimationDirection = 1;  // Forward
+            
+            // CRITICAL: Clear pending frame BEFORE seek
+            if (state.pendingFrame) {
+                delete state.pendingFrame;
+                state.pendingFrame = nullptr;
+            }
+            
             if (state.decoder) {
                 state.decoder->seek(state.currentTime);
-                // Clear pending frame on seek
-                if (state.pendingFrame) {
-                    delete state.pendingFrame;
-                    state.pendingFrame = nullptr;
-                }
                 // Reset audio clock to match seek position
                 if (state.audioOutput) {
                     state.audioOutput->clearQueue();
@@ -1566,18 +1721,6 @@ void RenderNetflixUI(AppState& state) {
                 }
                 // Reset video timing
                 state.lastVideoFramePTS = state.currentTime;
-                
-                // Decode forward to exact position
-                for (int i = 0; i < 5; i++) {
-                    VideoFrame* tempFrame = state.decoder->getNextVideoFrame();
-                    if (tempFrame) {
-                        if (tempFrame->pts >= state.currentTime) {
-                            state.pendingFrame = tempFrame;
-                            break;
-                        }
-                        delete tempFrame;
-                    }
-                }
             }
         }
         DrawSkipIcon(controlDrawList, ImVec2(skipForwardPos.x + 20, skipForwardPos.y + 20), 16.0f, true,
@@ -1619,13 +1762,20 @@ void RenderNetflixUI(AppState& state) {
         float rightControlsX = screenSize.x - 250;
         ImGui::SetCursorPos(ImVec2(rightControlsX, controlsY - 16));
         
-        // Playlist/Episodes button
+        // Playlist/Episodes button (disabled when no file loaded)
         ImVec2 playlistPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##Playlist", ImVec2(32, 32))) {
+        bool playlistEnabled = state.fileLoaded && !state.playlistFiles.empty();
+        if (!playlistEnabled) {
+            ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha * 0.3f);  // Dim when disabled
+        }
+        if (ImGui::Button("##Playlist", ImVec2(32, 32)) && playlistEnabled) {
             state.showPlaylistPanel = !state.showPlaylistPanel;
         }
         DrawPlaylistIcon(controlDrawList, ImVec2(playlistPos.x + 16, playlistPos.y + 16), 18.0f,
-            IM_COL32(255, 255, 255, (int)(255 * alpha)));
+            IM_COL32(255, 255, 255, (int)(255 * alpha * (playlistEnabled ? 1.0f : 0.3f))));
+        if (!playlistEnabled) {
+            ImGui::PopStyleVar();
+        }
         
         ImGui::SameLine(0, 8);
         
@@ -1639,10 +1789,20 @@ void RenderNetflixUI(AppState& state) {
         
         ImGui::SameLine(0, 8);
         
+        // Audio button
+        ImVec2 audioPos = ImGui::GetCursorScreenPos();
+        if (ImGui::Button("##Audio", ImVec2(32, 32))) {
+            state.showAudioMenu = !state.showAudioMenu;
+        }
+        DrawAudioIcon(controlDrawList, ImVec2(audioPos.x + 16, audioPos.y + 16), 20.0f,
+            IM_COL32(255, 255, 255, (int)(255 * alpha)));
+        
+        ImGui::SameLine(0, 8);
+        
         // Subtitles button
         ImVec2 subtitlesPos = ImGui::GetCursorScreenPos();
         if (ImGui::Button("##Subtitles", ImVec2(32, 32))) {
-            // TODO: Open subtitles menu
+            state.showSubtitleMenu = !state.showSubtitleMenu;
         }
         DrawSubtitlesIcon(controlDrawList, ImVec2(subtitlesPos.x + 16, subtitlesPos.y + 16), 20.0f,
             IM_COL32(255, 255, 255, (int)(255 * alpha)));
@@ -1660,6 +1820,43 @@ void RenderNetflixUI(AppState& state) {
         ImGui::PopStyleColor(3);
         
         ImGui::PopStyleVar(); // Alpha
+    }
+    
+    // Skip animation (±10 seconds overlay)
+    if (state.showSkipAnimation) {
+        state.skipAnimationTimer -= io.DeltaTime;
+        if (state.skipAnimationTimer <= 0.0f) {
+            state.showSkipAnimation = false;
+        } else {
+            // Animation parameters
+            float animAlpha = fminf(state.skipAnimationTimer / 0.8f, 1.0f);  // Fade out
+            float circleRadius = 60.0f;
+            ImVec2 center = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.5f);
+            
+            // Use window draw list for overlay (safe to use here)
+            ImDrawList* animDrawList = ImGui::GetWindowDrawList();
+            
+            // Semi-transparent circle background
+            animDrawList->AddCircleFilled(center, circleRadius, 
+                IM_COL32(0, 0, 0, (int)(180 * animAlpha)), 32);
+            
+            // Circle outline
+            animDrawList->AddCircle(center, circleRadius, 
+                IM_COL32(255, 255, 255, (int)(200 * animAlpha)), 32, 3.0f);
+            
+            // Skip icon
+            float iconSize = 24.0f;
+            DrawSkipIcon(animDrawList, center, iconSize, 
+                state.skipAnimationDirection > 0,
+                IM_COL32(255, 255, 255, (int)(255 * animAlpha)));
+            
+            // "+10" or "-10" text below icon
+            const char* skipText = state.skipAnimationDirection > 0 ? "+10" : "-10";
+            ImVec2 textSize = ImGui::CalcTextSize(skipText);
+            ImVec2 textPos = ImVec2(center.x - textSize.x * 0.5f, center.y + 15);
+            animDrawList->AddText(ImGui::GetFont(), 18.0f, textPos,
+                IM_COL32(255, 255, 255, (int)(255 * animAlpha)), skipText);
+        }
     }
     
     ImGui::End();
