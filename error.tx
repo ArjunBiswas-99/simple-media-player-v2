@@ -1,7 +1,3 @@
-jun\OneDrive\Desktop\Test\simple-media-player-v2> python main.py
-Error loading file: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x000001D3FE10C040>, <mpv.LP_MpvNode object at 0x000001D3FE11ED40>, <mpv.LP_MpvNode object at 0x000001D3FE11ECC0>))
-file:///C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/src/ControlBar.qml:240: TypeError: Cannot read property 'volume' of null
-file:///C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/src/ControlBar.qml:85: TypeError: Cannot read property 'duration' of null
-file:///C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/src/ControlBar.qml:42: TypeError: Cannot read property 'position' of null
-file:///C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/src/ControlBar.qml:56:21: TypeError: Cannot read property 'duration' of null
-file:///C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/src/ControlBar.qml:127: TypeError: Cannot read property 'playing' of null
+sers\arjun\OneDrive\Desktop\Test\simple-media-player-v2> python main.py        
+Error loading file: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x0000015E2ED3C040>, <mpv.LP_MpvNode object at 0x0000015E2ED4ED40>, <mpv.LP_MpvNode object at 0x0000015E2ED4ECC0>))
+PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> 
