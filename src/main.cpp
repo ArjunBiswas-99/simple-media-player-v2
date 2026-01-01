@@ -40,6 +40,17 @@ struct AppState {
     int cropIndex = 0;
     std::string currentFile = "Demo_Video_2024.mp4";
     std::string currentTitle = "Simple Media Player V2";
+    bool showPlaylistPanel = false;
+    
+    // Mock playlist
+    std::vector<std::string> playlistFiles = {
+        "Episode 1 - Pilot.mp4",
+        "Episode 2 - The Beginning.mp4",
+        "Episode 3 - Rising Action.mp4",
+        "Episode 4 - Climax.mp4",
+        "Episode 5 - Finale.mp4"
+    };
+    int currentPlaylistIndex = 0;
 };
 
 // Forward declarations
@@ -55,6 +66,8 @@ void DrawVolumeIcon(ImDrawList* draw, ImVec2 pos, float volume, bool muted, ImU3
 void DrawSettingsIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
 void DrawSubtitlesIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
 void DrawFullscreenIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
+void DrawPlaylistIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
+void RenderPlaylistPanel(AppState& state, ImVec2 screenSize);
 
 #ifdef __APPLE__
 // macOS-specific implementation
@@ -98,6 +111,29 @@ void DrawFullscreenIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     
+    // Load fonts - Netflix Sans alternative (SF Pro on macOS)
+    // Try to load system font, fallback to default
+    io.Fonts->Clear();
+    
+    // Primary font: SF Pro Display (similar to Netflix Sans)
+    ImFontConfig fontConfig;
+    fontConfig.SizePixels = 16.0f;
+    strcpy(fontConfig.Name, "SF Pro Display");
+    
+    // Try to load SF Pro Display, fallback to Helvetica Neue
+    ImFont* mainFont = io.Fonts->AddFontFromFileTTF("/System/Library/Fonts/SFCompact.ttf", 16.0f, &fontConfig);
+    if (!mainFont) {
+        mainFont = io.Fonts->AddFontFromFileTTF("/System/Library/Fonts/Helvetica.ttc", 16.0f, &fontConfig);
+    }
+    if (!mainFont) {
+        io.Fonts->AddFontDefault();
+    }
+    
+    // Large font for titles (28px)
+    fontConfig.SizePixels = 28.0f;
+    strcpy(fontConfig.Name, "SF Pro Display Bold");
+    ImFont* titleFont = io.Fonts->AddFontFromFileTTF("/System/Library/Fonts/SFCompact.ttf", 28.0f, &fontConfig);
+    
     // Setup style
     SetupNetflixTheme();
 
@@ -133,6 +169,7 @@ void DrawFullscreenIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color
     // Render UI
     RenderMenuBar(state);
     RenderNetflixUI(state);
+    RenderPlaylistPanel(state, ImVec2((float)view.bounds.size.width, (float)view.bounds.size.height));
 
     // Rendering
     ImGui::Render();
@@ -238,6 +275,7 @@ int main(int, char**) {
         // Render UI
         RenderMenuBar(state);
         RenderNetflixUI(state);
+        RenderPlaylistPanel(state, ImVec2((float)io.DisplaySize.x, (float)io.DisplaySize.y));
 
         // Rendering
         ImGui::Render();
@@ -589,6 +627,151 @@ void DrawFullscreenIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color
                   ImVec2(center.x + gap, center.y + gap - cornerSize), color, 2.0f);
 }
 
+void DrawPlaylistIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color) {
+    float lineWidth = size * 0.6f;
+    float lineSpacing = size * 0.25f;
+    
+    // Three horizontal lines (playlist/hamburger menu style)
+    draw->AddLine(
+        ImVec2(center.x - lineWidth * 0.5f, center.y - lineSpacing),
+        ImVec2(center.x + lineWidth * 0.5f, center.y - lineSpacing),
+        color, 2.0f
+    );
+    draw->AddLine(
+        ImVec2(center.x - lineWidth * 0.5f, center.y),
+        ImVec2(center.x + lineWidth * 0.5f, center.y),
+        color, 2.0f
+    );
+    draw->AddLine(
+        ImVec2(center.x - lineWidth * 0.5f, center.y + lineSpacing),
+        ImVec2(center.x + lineWidth * 0.5f, center.y + lineSpacing),
+        color, 2.0f
+    );
+}
+
+void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
+    if (!state.showPlaylistPanel) return;
+    
+    float panelWidth = 400.0f;
+    float panelX = screenSize.x - panelWidth;
+    
+    ImGui::SetNextWindowPos(ImVec2(panelX, 0));
+    ImGui::SetNextWindowSize(ImVec2(panelWidth, screenSize.y));
+    
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.08f, 0.08f, 0.08f, 0.98f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    
+    ImGui::Begin("##Playlist", nullptr, 
+        ImGuiWindowFlags_NoDecoration | 
+        ImGuiWindowFlags_NoMove | 
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoSavedSettings);
+    
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+    
+    // Header
+    ImGui::SetCursorPos(ImVec2(24, 24));
+    ImGui::PushFont(ImGui::GetIO().Fonts->Fonts.Size > 1 ? ImGui::GetIO().Fonts->Fonts[1] : ImGui::GetFont());
+    ImGui::Text("Episodes");
+    ImGui::PopFont();
+    
+    // Close button
+    ImGui::SetCursorPos(ImVec2(panelWidth - 50, 20));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.1f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.15f));
+    
+    if (ImGui::Button("X##ClosePlaylist", ImVec2(32, 32))) {
+        state.showPlaylistPanel = false;
+    }
+    
+    ImGui::PopStyleColor(3);
+    
+    // Separator
+    draw->AddLine(
+        ImVec2(panelX + 24, 70),
+        ImVec2(panelX + panelWidth - 24, 70),
+        IM_COL32(80, 80, 80, 255),
+        1.0f
+    );
+    
+    // Playlist items
+    ImGui::SetCursorPos(ImVec2(0, 90));
+    ImGui::BeginChild("##PlaylistItems", ImVec2(panelWidth, screenSize.y - 90), false);
+    
+    for (size_t i = 0; i < state.playlistFiles.size(); i++) {
+        ImGui::PushID((int)i);
+        
+        bool isPlaying = (i == state.currentPlaylistIndex);
+        
+        // Item background
+        ImVec2 itemPos = ImGui::GetCursorScreenPos();
+        ImVec2 itemSize = ImVec2(panelWidth, 80);
+        
+        if (isPlaying) {
+            draw->AddRectFilled(itemPos, 
+                ImVec2(itemPos.x + itemSize.x, itemPos.y + itemSize.y),
+                IM_COL32(229, 9, 20, 30)); // Netflix red tint
+        }
+        
+        // Clickable area
+        ImGui::SetCursorPos(ImVec2(0, ImGui::GetCursorPosY()));
+        if (ImGui::InvisibleButton("##Item", itemSize)) {
+            state.currentPlaylistIndex = (int)i;
+            state.currentTitle = state.playlistFiles[i];
+            state.currentTime = 0.0f;
+            // TODO: Load actual file
+        }
+        
+        bool hovered = ImGui::IsItemHovered();
+        if (hovered && !isPlaying) {
+            draw->AddRectFilled(itemPos,
+                ImVec2(itemPos.x + itemSize.x, itemPos.y + itemSize.y),
+                IM_COL32(255, 255, 255, 15));
+        }
+        
+        // Episode number and title
+        ImGui::SetCursorPos(ImVec2(24, itemPos.y - ImGui::GetWindowPos().y + 20));
+        
+        if (isPlaying) {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.898f, 0.035f, 0.078f, 1.0f));
+        }
+        
+        char episodeNum[16];
+        snprintf(episodeNum, sizeof(episodeNum), "Episode %d", (int)i + 1);
+        ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "%s", episodeNum);
+        ImGui::SetCursorPosX(24);
+        ImGui::Text("%s", state.playlistFiles[i].c_str());
+        
+        if (isPlaying) {
+            ImGui::PopStyleColor();
+        }
+        
+        // Now playing indicator
+        if (isPlaying) {
+            ImGui::SetCursorPos(ImVec2(panelWidth - 120, itemPos.y - ImGui::GetWindowPos().y + 30));
+            ImGui::TextColored(ImVec4(0.898f, 0.035f, 0.078f, 1.0f), "Now Playing");
+        }
+        
+        ImGui::PopID();
+        
+        // Separator
+        if (i < state.playlistFiles.size() - 1) {
+            ImVec2 sepStart = ImVec2(itemPos.x + 24, itemPos.y + itemSize.y);
+            draw->AddLine(sepStart,
+                ImVec2(sepStart.x + panelWidth - 48, sepStart.y),
+                IM_COL32(50, 50, 50, 255), 1.0f);
+        }
+    }
+    
+    ImGui::EndChild();
+    ImGui::End();
+    
+    ImGui::PopStyleVar(2);
+    ImGui::PopStyleColor();
+}
+
 void RenderMenuBar(AppState& state) {
     ImGuiIO& io = ImGui::GetIO();
     
@@ -873,9 +1056,12 @@ void RenderNetflixUI(AppState& state) {
         float progressWidth = screenSize.x - 100;
         
         ImGui::SetCursorPos(ImVec2(50, progressY));
-        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.16f, 0.16f, 0.16f, 0.8f));
-        ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.898f, 0.035f, 0.078f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(1.0f, 0.05f, 0.09f, 1.0f));
+        // Make the ImGui slider invisible - we'll draw our own custom appearance
+        ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Transparent background
+        ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Transparent on hover
+        ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Transparent when active
+        ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Invisible grab
+        ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Invisible grab when active
         ImGui::PushStyleVar(ImGuiStyleVar_GrabMinSize, 16.0f);
         
         ImGui::PushItemWidth(progressWidth);
@@ -908,7 +1094,7 @@ void RenderNetflixUI(AppState& state) {
         }
         
         ImGui::PopStyleVar();
-        ImGui::PopStyleColor(3);
+        ImGui::PopStyleColor(5); // Pop 5 colors now (was 3)
         
         // Control buttons (40px from bottom)
         float controlsY = screenSize.y - 40;
@@ -976,8 +1162,18 @@ void RenderNetflixUI(AppState& state) {
             IM_COL32(255, 255, 255, (int)(230 * alpha)), timeStr.c_str());
         
         // Right-side controls
-        float rightControlsX = screenSize.x - 200;
+        float rightControlsX = screenSize.x - 250;
         ImGui::SetCursorPos(ImVec2(rightControlsX, controlsY - 16));
+        
+        // Playlist/Episodes button
+        ImVec2 playlistPos = ImGui::GetCursorScreenPos();
+        if (ImGui::Button("##Playlist", ImVec2(32, 32))) {
+            state.showPlaylistPanel = !state.showPlaylistPanel;
+        }
+        DrawPlaylistIcon(drawList, ImVec2(playlistPos.x + 16, playlistPos.y + 16), 18.0f,
+            IM_COL32(255, 255, 255, (int)(255 * alpha)));
+        
+        ImGui::SameLine(0, 8);
         
         // Settings button
         ImVec2 settingsPos = ImGui::GetCursorScreenPos();
@@ -1008,19 +1204,6 @@ void RenderNetflixUI(AppState& state) {
             IM_COL32(255, 255, 255, (int)(255 * alpha)));
         
         ImGui::PopStyleColor(3);
-        
-        // "Next in Folder" button (Netflix style, bottom-right)
-        ImGui::SetCursorPos(ImVec2(screenSize.x - 260, screenSize.y - 100));
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.95f, 0.95f, 0.95f, 0.92f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.9f, 0.9f, 0.9f, 1.0f));
-        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-        
-        if (ImGui::Button("Next in Folder  \xE2\x96\xB6", ImVec2(200, 50))) {
-            // TODO: Open playlist panel
-        }
-        
-        ImGui::PopStyleColor(4);
         
         ImGui::PopStyleVar(); // Alpha
     }

@@ -31,6 +31,7 @@ A high-performance, Netflix-inspired media player for Windows and macOS with GPU
 - **Auto-Hide Controls**: Controls fade out during playback and reappear on mouse movement
 - **Smooth Animations**: Fade-in/fade-out transitions matching Netflix's timing (3-second delay)
 - **Dark Theme**: Netflix's signature dark background with red accent colors (#E50914)
+- **Typography**: SF Pro Display font on macOS (Netflix Sans alternative)
 
 #### YouTube-Inspired Interactions
 - **Click-to-Play**: Clicking anywhere on the video surface toggles play/pause
@@ -43,9 +44,10 @@ A high-performance, Netflix-inspired media player for Windows and macOS with GPU
 - **Click-and-Hold Scrubbing**: Hold mouse button on video to rapidly skim through content
 
 #### Directory Playlist
-- **"Next in Folder" Button**: Styled like Netflix's "Next Episode" button in bottom-right corner
-- **Playlist Panel**: Opens a side panel showing all playable media files from the current file's directory
-- **Auto-Navigation**: Easily jump between files in the same folder
+- **Episodes Panel**: Netflix-style button near audio controls that opens a right sidebar panel
+- **Playlist View**: Shows all playable media files from the current file's directory with "Episode N" style numbering
+- **Now Playing Indicator**: Highlights currently playing file with Netflix red accent
+- **Quick Navigation**: Click any file in the panel to switch playback instantly
 
 ### Menu Bar (VLC-Style)
 Comprehensive native menu bar for advanced features:
