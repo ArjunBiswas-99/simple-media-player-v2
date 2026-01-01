@@ -5,10 +5,18 @@ A modern, high-performance desktop media player with Netflix-inspired UI
 """
 
 import sys
+import os
 from pathlib import Path
 from PySide6.QtGui import QGuiApplication
-from PySide6.QtQml import QQmlApplicationEngine
+from PySide6.QtQml import QQmlApplicationEngine, qmlRegisterType
 from PySide6.QtCore import QUrl
+
+# Set the Qt Quick Controls style to Basic (for custom styling)
+os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
+
+# Import player module
+sys.path.insert(0, str(Path(__file__).parent / "src"))
+from player import MediaPlayer
 
 
 def main():
@@ -17,11 +25,13 @@ def main():
     app.setApplicationName("Simple Media Player")
     app.setOrganizationName("SimpleMediaPlayer")
     
-    # Set the Qt Quick Controls style to Basic (for custom styling)
-    import os
-    os.environ["QT_QUICK_CONTROLS_STYLE"] = "Basic"
+    # Create media player instance
+    player = MediaPlayer()
     
     engine = QQmlApplicationEngine()
+    
+    # Expose player to QML
+    engine.rootContext().setContextProperty("mediaPlayer", player)
     
     # Load the main QML file
     qml_file = Path(__file__).parent / "src" / "main.qml"

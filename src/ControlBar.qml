@@ -10,6 +10,14 @@ Rectangle {
     // Signal to communicate with parent
     signal playlistToggled()
     
+    // Format seconds to MM:SS
+    function formatTime(seconds) {
+        if (isNaN(seconds) || seconds < 0) return "0:00"
+        var mins = Math.floor(seconds / 60)
+        var secs = Math.floor(seconds % 60)
+        return mins + ":" + (secs < 10 ? "0" : "") + secs
+    }
+    
     // Gradient background overlay
     Rectangle {
         anchors.fill: parent
@@ -31,7 +39,7 @@ Rectangle {
             
             Text {
                 id: currentTime
-                text: "0:00"
+                text: controlBar.formatTime(mediaPlayer.position)
                 color: "#FFFFFF"
                 font.pixelSize: 14
             }
@@ -45,7 +53,7 @@ Rectangle {
                 
                 Rectangle {
                     id: progressBarFill
-                    width: parent.width * 0.3 // Mock progress at 30%
+                    width: mediaPlayer.duration > 0 ? (mediaPlayer.position / mediaPlayer.duration) * parent.width : 0
                     height: parent.height
                     color: "#E50914"
                     radius: 3
@@ -62,12 +70,19 @@ Rectangle {
                     onExited: {
                         progressBarBackground.height = 6
                     }
+                    
+                    onClicked: {
+                        if (mediaPlayer.duration > 0) {
+                            var newPosition = (mouse.x / width) * mediaPlayer.duration
+                            mediaPlayer.setPosition(newPosition)
+                        }
+                    }
                 }
             }
             
             Text {
                 id: totalTime
-                text: "0:00"
+                text: controlBar.formatTime(mediaPlayer.duration)
                 color: "#FFFFFF"
                 font.pixelSize: 14
             }
@@ -109,11 +124,15 @@ Rectangle {
                     }
                     
                     contentItem: Text {
-                        text: "▶" // Play icon (will use proper icons later)
+                        text: mediaPlayer.playing ? "⏸" : "▶"
                         color: "#FFFFFF"
                         font.pixelSize: 18
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        mediaPlayer.togglePlayPause()
                     }
                 }
                 
@@ -143,6 +162,21 @@ Rectangle {
                         text: "⏮"
                         color: "#FFFFFF"
                         font.pixelSize: 16
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        mediaPlayer.seek(-10)
+                    }
+                }
+                
+                // Next button (seek forward)
+                Button {
+                    id: nextBtn
+                    width: 36
+                    height: 36
+                    
                     scale: nextBtn.pressed ? 0.9 : 1.0
                     opacity: nextBtn.hovered ? 1.0 : 0.8
                     
@@ -153,17 +187,6 @@ Rectangle {
                     Behavior on opacity {
                         NumberAnimation { duration: 150 }
                     }
-                    
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                }
-                
-                // Next button (seek forward)
-                Button {
-                    id: nextBtn
-                    width: 36
-                    height: 36
                     
                     background: Rectangle {
                         color: nextBtn.hovered ? "#FFFFFF22" : "transparent"
@@ -176,6 +199,10 @@ Rectangle {
                         font.pixelSize: 16
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
+                    }
+                    
+                    onClicked: {
+                        mediaPlayer.seek(10)
                     }
                 }
                 
@@ -200,14 +227,24 @@ Rectangle {
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
                         }
+                        
+                        onClicked: {
+                            mediaPlayer.toggleMute()
+                        }
                     }
                     
                     Slider {
                         id: volumeSlider
                         from: 0
                         to: 100
-                        value: 80
+                        value: mediaPlayer.volume
                         width: 100
+                        
+                        onValueChanged: {
+                            if (Math.abs(value - mediaPlayer.volume) > 1) {
+                                mediaPlayer.setVolume(value)
+                            }
+                        }
                         
                         background: Rectangle {
                             x: volumeSlider.leftPadding
@@ -240,13 +277,7 @@ Rectangle {
             // Spacer
             Item {
                 Layout.fillWidth: true
-            }scale: playlistBtn.pressed ? 0.95 : 1.0
-                    
-                    Behavior on scale {
-                        NumberAnimation { duration: 100 }
-                    }
-                    
-                    
+            }
             
             // Right section: Playlist and Fullscreen
             RowLayout {
@@ -256,6 +287,12 @@ Rectangle {
                 Button {
                     id: playlistBtn
                     height: 36
+                    
+                    scale: playlistBtn.pressed ? 0.95 : 1.0
+                    
+                    Behavior on scale {
+                        NumberAnimation { duration: 100 }
+                    }
                     
                     background: Rectangle {
                         color: playlistBtn.hovered ? "#FFFFFF22" : "transparent"
@@ -274,17 +311,6 @@ Rectangle {
                         }
                         
                         Text {
-                    scale: fullscreenBtn.pressed ? 0.9 : 1.0
-                    opacity: fullscreenBtn.hovered ? 1.0 : 0.8
-                    
-                    Behavior on scale {
-                        NumberAnimation { duration: 100 }
-                    }
-                    
-                    Behavior on opacity {
-                        NumberAnimation { duration: 150 }
-                    }
-                    
                             text: "Playlist"
                             color: "#FFFFFF"
                             font.pixelSize: 14
@@ -301,6 +327,17 @@ Rectangle {
                     id: fullscreenBtn
                     width: 36
                     height: 36
+                    
+                    scale: fullscreenBtn.pressed ? 0.9 : 1.0
+                    opacity: fullscreenBtn.hovered ? 1.0 : 0.8
+                    
+                    Behavior on scale {
+                        NumberAnimation { duration: 100 }
+                    }
+                    
+                    Behavior on opacity {
+                        NumberAnimation { duration: 150 }
+                    }
                     
                     background: Rectangle {
                         color: fullscreenBtn.hovered ? "#FFFFFF22" : "transparent"

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 
 ApplicationWindow {
     id: mainWindow
@@ -12,6 +13,16 @@ ApplicationWindow {
     title: "Simple Media Player"
     color: "#141414"
     
+    // File dialog for opening media files
+    FileDialog {
+        id: fileDialog
+        title: "Open Media File"
+        nameFilters: ["Media files (*.mp4 *.mov *.wmv *.ts *.mpeg *.mp3 *.wav)", "All files (*)"]
+        onAccepted: {
+            mediaPlayer.openFile(fileDialog.selectedFile.toString())
+        }
+    }
+    
     // Menu Bar (VLC-style)
     menuBar: MenuBar {
         Menu {
@@ -20,6 +31,7 @@ ApplicationWindow {
             Action {
                 text: "Open &File..."
                 shortcut: "Ctrl+O"
+                onTriggered: fileDialog.open()
             }
             
             Action {
