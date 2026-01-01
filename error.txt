@@ -1,16 +1,17 @@
-\simple-media-player-v2> python src/main.py
+ia-player-v2> python src/main.py
 [INFO] MPVPlayer: Initializing MPV player
-[DEBUG] MPVPlayer: Creating MPV instance with parameters
+[DEBUG] MPVPlayer: Creating MPV instance with minimal parameters
 [INFO] MPVPlayer: MPV instance created successfully
+[DEBUG] MPVPlayer: MPV properties set
 [INFO] MainWindow: Open file dialog triggered
 [INFO] MainWindow: User selected file: C:/Users/arjun/Downloads/The Heat.mp4
 [INFO] MainWindow: _load_file called with: C:/Users/arjun/Downloads/The Heat.mp4
 [DEBUG] MainWindow: File exists: True
 [DEBUG] MainWindow: Is file: True
 [DEBUG] MPVPlayer: Calling MPV loadfile: C:/Users/arjun/Downloads/The Heat.mp4
-[ERROR] MPVPlayer: Failed to load file: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x0000028117D1ABC0>, <mpv.LP_MpvNode object at 0x0000028117DD40C0>, <mpv.LP_MpvNode object at 0x0000028117DD4040>))
+[ERROR] MPVPlayer: Failed to load file: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x00000243F3B6ABC0>, <mpv.LP_MpvNode object at 0x00000243F3C340C0>, <mpv.LP_MpvNode object at 0x00000243F3C34040>))
 Traceback (most recent call last):
-  File "C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\player\mpv_player.py", line 202, in load_file
+  File "C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\player\mpv_player.py", line 193, in load_file
     self._player.loadfile(filepath)
   File "C:\Python310\lib\site-packages\mpv.py", line 1329, in loadfile
     self.command('loadfile', filename.encode(fs_enc), mode, MPV._encode_options(options))
@@ -18,7 +19,7 @@ Traceback (most recent call last):
     _mpv_command_node(self.handle, ppointer, out)
   File "C:\Python310\lib\site-packages\mpv.py", line 142, in raise_for_ec
     raise ex
-ValueError: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x0000028117D1ABC0>, <mpv.LP_MpvNode object at 0x0000028117DD40C0>, <mpv.LP_MpvNode object at 0x0000028117DD4040>))
+ValueError: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x00000243F3B6ABC0>, <mpv.LP_MpvNode object at 0x00000243F3C340C0>, <mpv.LP_MpvNode object at 0x00000243F3C34040>))
 [INFO] MainWindow: MPV load_file returned: False
 [ERROR] MainWindow: Failed to load file: C:/Users/arjun/Downloads/The Heat.mp4
 PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> 
