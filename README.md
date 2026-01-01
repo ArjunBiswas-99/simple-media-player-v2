@@ -84,22 +84,113 @@ A comprehensive, VLC-style native menu bar provides access to all features:
 
 This checklist outlines the detailed steps for building the application, focusing on completing the user interface first.
 
-### Phase 1: Project Setup & Complete UI/UX Mockup
-- [ ] **Step 1: Project Initialization:** Set up the directory structure (`src`) and dependencies (`requirements.txt`).
-- [ ] **Step 2: Main Application Window:** Create the basic window and the full top-level menu bar.
-- [ ] **Step 3: Static UI Elements:** Build the static (non-functional) interface, including the video display area and the complete Netflix-style control bar overlay (Play/Pause, Seek buttons, Volume, Timeline, Timestamps, Playlist button, Fullscreen button).
-- [ ] **Step 4: UI Animations & Transitions:** Implement the UI behaviors, such as the auto-hiding of the control bar on inactivity and the smooth slide-in transition for the (initially static) playlist panel.
+### Phase 1: Complete UI/UX Mockup (GUI First) ✨
+- [ ] **Step 1.1: Project Setup**
+  - Initialize project structure (`src/`, `assets/`, `main.py`)
+  - Create `requirements.txt` with PySide6
+  - Set up basic Python entry point
 
-### Phase 2: Core Playback & Control Wiring
-- [ ] **Step 5: Video Playback Integration:** Embed the core video playback engine into the designated video area.
-- [ ] **Step 6: Implement "Open File":** Wire up the "Media -> Open File..." menu option to load and play a video file.
-- [ ] **Step 7: Connect UI Controls:** Activate the UI by connecting the buttons and sliders (Play, Pause, Volume, Seek) to the video playback engine.
+- [ ] **Step 1.2: Main Window & Menu Bar**
+  - Create main QML application window (dark theme #141414)
+  - Implement full VLC-style native menu bar with all items (Media, Playback, Audio, Video, Tools)
+  - Menu items non-functional at this stage (just UI)
 
-### Phase 3: Advanced Behaviors & Features
-- [ ] **Step 8: Interactive Video Behaviors:** Implement YouTube-style interactions (click-to-play/pause, arrow keys to seek, click-hold to fast-forward).
-- [ ] **Step 9: Playlist Functionality:** Make the playlist panel dynamic, populating it with media files from the current directory and enabling playback from it.
-- [ ] **Step 10: Advanced Menu Features:** Implement the remaining menu functionalities (e.g., Aspect Ratio, Crop).
+- [ ] **Step 1.3: Netflix-Style Control Overlay (Static)**
+  - Design control bar at bottom with all elements:
+    - Play/Pause button (center-left)
+    - Previous/Next seek buttons
+    - Volume slider with mute button
+    - Progress bar/timeline with hover preview
+    - Current time / Total time labels
+    - Playlist button (Netflix "Episodes" style)
+    - Fullscreen button (right)
+  - Use Netflix red (#E50914) for accents
+  - Position as overlay on video area
 
-### Phase 4: Finalization
-- [ ] **Step 11: Performance Optimization:** Focus on improving seeking performance, especially for `.ts` files.
-- [ ] **Step 12: Application Packaging:** Bundle the application and all its dependencies into a single, distributable `.exe` file.
+- [ ] **Step 1.4: Video Display Area (Placeholder)**
+  - Create central black rectangle as video placeholder
+  - Ensure controls overlay properly on top
+
+- [ ] **Step 1.5: Playlist Panel UI (Static)**
+  - Design slide-in panel (right side, Netflix style)
+  - Show mock playlist items with thumbnails
+  - Add close button
+
+- [ ] **Step 1.6: UI Animations & Behaviors**
+  - Implement auto-hide control bar (fade out after 3s of inactivity, fade in on mouse move)
+  - Add hover effects on buttons (scale/opacity)
+  - Implement playlist panel slide-in/out animation (300ms smooth)
+  - Add button click feedback animations
+
+- [ ] **Step 1.7: UI Polish & Testing**
+  - Test all animations and transitions
+  - Verify responsive layout
+  - Ensure pixel-perfect Netflix aesthetic
+  - **Milestone: Fully functional, beautiful GUI with no video playback yet**
+
+---
+
+### Phase 2: Video Engine Integration 🎬
+- [ ] **Step 2.1: libmpv Setup**
+  - Add `python-mpv` to requirements
+  - Create mpv player instance wrapper class
+  - Integrate mpv rendering into QML video area (OpenGL surface)
+
+- [ ] **Step 2.2: Basic Playback**
+  - Wire "Media → Open File" to load video
+  - Test basic play functionality
+  - Verify video renders in display area
+
+- [ ] **Step 2.3: Connect Core Controls**
+  - Wire Play/Pause button → mpv
+  - Wire seek buttons (±10s) → mpv
+  - Wire volume slider → mpv
+  - Wire progress bar scrubbing → mpv seek
+  - Update timestamps in real-time
+
+- [ ] **Step 2.4: Test & Debug Core Playback**
+  - Test with all supported formats (.mp4, .ts, etc.)
+  - Verify seeking performance
+
+---
+
+### Phase 3: Advanced Features & Interactions 🚀
+- [ ] **Step 3.1: YouTube-Style Interactions**
+  - Click anywhere on video → toggle play/pause
+  - Arrow keys (←/→) → seek backward/forward
+  - Click-and-hold → fast-forward/skim
+
+- [ ] **Step 3.2: Dynamic Playlist**
+  - Scan current file's directory for media
+  - Populate playlist panel dynamically
+  - Click playlist item → play that file
+
+- [ ] **Step 3.3: Menu Functionality**
+  - Implement "Open Folder" dialog
+  - Implement aspect ratio menu
+  - Implement crop menu
+  - Implement playback speed control
+  - Implement audio/video track selection
+
+- [ ] **Step 3.4: Fullscreen Mode**
+  - Wire fullscreen button
+  - Handle ESC key to exit fullscreen
+
+---
+
+### Phase 4: Optimization & Packaging 📦
+- [ ] **Step 4.1: Performance Tuning**
+  - Enable hardware acceleration
+  - Optimize .ts file seeking
+  - Profile and fix any lag/stuttering
+
+- [ ] **Step 4.2: PyInstaller Packaging**
+  - Create `.spec` file
+  - Bundle libmpv binaries
+  - Test standalone .exe
+  - Create application icon
+
+- [ ] **Step 4.3: Final Testing & Release**
+  - Cross-test all features
+  - Document known issues
+  - Create README for end users
