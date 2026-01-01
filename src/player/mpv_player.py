@@ -93,21 +93,12 @@ class MPVPlayer(QObject):
             logger.debug('Creating MPV instance with parameters')
             self._player = mpv.MPV(
                 # Video output
-                vo='gpu',  # Use GPU-accelerated rendering
+                vo='gpu',
                 
-                # Hardware decoding (Windows: d3d11va, auto-detect others)
-                hwdec='auto-safe',  # Enable hardware decoding
+                # Hardware decoding
+                hwdec='auto-safe',
                 
-                # Fast seeking optimization (crucial for .ts files)
-                hr_seek='yes',  # Enable high-resolution seeking
-                hr_seek_framedrop='yes',  # Drop frames for faster seeking
-                
-                # Cache settings for better performance
-                cache='yes',
-                demuxer_max_bytes='150M',
-                demuxer_max_back_bytes='75M',
-                
-                # Keep window reference for embedding
+                # Keep window open
                 keep_open='yes',
                 idle='yes',
                 
@@ -117,9 +108,6 @@ class MPVPlayer(QObject):
                 # Input handling
                 input_default_bindings='no',
                 input_vo_keyboard='no',
-                
-                # Log level (only errors)
-                msg_level='all=error',
             )
             logger.info('MPV instance created successfully')
         except Exception as e:
