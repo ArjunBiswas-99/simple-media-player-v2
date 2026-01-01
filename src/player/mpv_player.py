@@ -192,16 +192,15 @@ class MPVPlayer(QObject):
             logger.debug(f'Calling MPV loadfile: {filepath}')
             self._player.loadfile(filepath)
             
-            # Wait a bit for file to load
-            logger.debug('Waiting for duration property')
-            self._player.wait_for_property('duration')
+            # Don't wait - let property observers handle duration and playback start
+            logger.debug('File load command sent to MPV')
             
             # Start position timer if not running
             if not self._position_timer.isActive():
                 logger.debug('Starting position timer')
                 self._position_timer.start(100)
             
-            logger.info(f'File loaded successfully: {filepath}')
+            logger.info(f'File load initiated: {filepath}')
             self.mediaLoaded.emit()
             return True
             
