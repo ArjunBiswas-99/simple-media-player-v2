@@ -40,7 +40,7 @@ ApplicationWindow {
             id: menuBarItem
             
             contentItem: Text {
-                text: menuBarItem.text
+                text: menuBarItem.text.replace("&", "")
                 font.pixelSize: 13
                 opacity: enabled ? 1.0 : 0.3
                 color: menuBarItem.highlighted ? "#E50914" : "#FFFFFF"
@@ -67,14 +67,27 @@ ApplicationWindow {
             delegate: MenuItem {
                 id: menuItem
                 
+                implicitWidth: 200
+                implicitHeight: 30
+                
                 contentItem: Text {
-                    text: menuItem.text
+                    text: menuItem.text.replace("&", "")
                     font.pixelSize: 13
                     opacity: enabled ? 1.0 : 0.3
                     color: "#FFFFFF"
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
+                    leftPadding: 10
+                    rightPadding: menuItem.subMenu ? 30 : 10
+                }
+                
+                arrow: Text {
+                    visible: menuItem.subMenu
+                    text: "▶"
+                    color: "#FFFFFF"
+                    opacity: 0.6
+                    font.pixelSize: 10
                 }
                 
                 background: Rectangle {
@@ -121,14 +134,27 @@ ApplicationWindow {
             delegate: MenuItem {
                 id: playbackMenuItem
                 
+                implicitWidth: 200
+                implicitHeight: 30
+                
                 contentItem: Text {
-                    text: playbackMenuItem.text
+                    text: playbackMenuItem.text.replace("&", "")
                     font.pixelSize: 13
                     opacity: enabled ? 1.0 : 0.3
                     color: "#FFFFFF"
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
+                    leftPadding: 10
+                    rightPadding: playbackMenuItem.subMenu ? 30 : 10
+                }
+                
+                arrow: Text {
+                    visible: playbackMenuItem.subMenu
+                    text: "▶"
+                    color: "#FFFFFF"
+                    opacity: 0.6
+                    font.pixelSize: 10
                 }
                 
                 background: Rectangle {
@@ -149,14 +175,19 @@ ApplicationWindow {
                 delegate: MenuItem {
                     id: speedMenuItem
                     
+                    implicitWidth: 200
+                    implicitHeight: 30
+                    
                     contentItem: Text {
-                        text: speedMenuItem.text
+                        text: speedMenuItem.text.replace("&", "")
                         font.pixelSize: 13
                         opacity: enabled ? 1.0 : 0.3
                         color: "#FFFFFF"
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
+                        leftPadding: 10
+                        rightPadding: 10
                     }
                     
                     background: Rectangle {
@@ -183,14 +214,27 @@ ApplicationWindow {
             delegate: MenuItem {
                 id: audioMenuItem
                 
+                implicitWidth: 200
+                implicitHeight: 30
+                
                 contentItem: Text {
-                    text: audioMenuItem.text
+                    text: audioMenuItem.text.replace("&", "")
                     font.pixelSize: 13
                     opacity: enabled ? 1.0 : 0.3
                     color: "#FFFFFF"
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
+                    leftPadding: 10
+                    rightPadding: audioMenuItem.subMenu ? 30 : 10
+                }
+                
+                arrow: Text {
+                    visible: audioMenuItem.subMenu
+                    text: "▶"
+                    color: "#FFFFFF"
+                    opacity: 0.6
+                    font.pixelSize: 10
                 }
                 
                 background: Rectangle {
@@ -211,14 +255,19 @@ ApplicationWindow {
                 delegate: MenuItem {
                     id: audioTrackMenuItem
                     
+                    implicitWidth: 200
+                    implicitHeight: 30
+                    
                     contentItem: Text {
-                        text: audioTrackMenuItem.text
+                        text: audioTrackMenuItem.text.replace("&", "")
                         font.pixelSize: 13
                         opacity: enabled ? 1.0 : 0.3
                         color: "#FFFFFF"
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
+                        leftPadding: 10
+                        rightPadding: 10
                     }
                     
                     background: Rectangle {
@@ -244,14 +293,27 @@ ApplicationWindow {
             delegate: MenuItem {
                 id: videoMenuItem
                 
+                implicitWidth: 200
+                implicitHeight: 30
+                
                 contentItem: Text {
-                    text: videoMenuItem.text
+                    text: videoMenuItem.text.replace("&", "")
                     font.pixelSize: 13
                     opacity: enabled ? 1.0 : 0.3
                     color: "#FFFFFF"
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
+                    leftPadding: 10
+                    rightPadding: videoMenuItem.subMenu ? 30 : 10
+                }
+                
+                arrow: Text {
+                    visible: videoMenuItem.subMenu
+                    text: "▶"
+                    color: "#FFFFFF"
+                    opacity: 0.6
+                    font.pixelSize: 10
                 }
                 
                 background: Rectangle {
@@ -272,14 +334,19 @@ ApplicationWindow {
                 delegate: MenuItem {
                     id: videoTrackMenuItem
                     
+                    implicitWidth: 200
+                    implicitHeight: 30
+                    
                     contentItem: Text {
-                        text: videoTrackMenuItem.text
+                        text: videoTrackMenuItem.text.replace("&", "")
                         font.pixelSize: 13
                         opacity: enabled ? 1.0 : 0.3
                         color: "#FFFFFF"
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
+                        leftPadding: 10
+                        rightPadding: 10
                     }
                     
                     background: Rectangle {
@@ -312,14 +379,19 @@ ApplicationWindow {
                 delegate: MenuItem {
                     id: aspectMenuItem
                     
+                    implicitWidth: 200
+                    implicitHeight: 30
+                    
                     contentItem: Text {
-                        text: aspectMenuItem.text
+                        text: aspectMenuItem.text.replace("&", "")
                         font.pixelSize: 13
                         opacity: enabled ? 1.0 : 0.3
                         color: "#FFFFFF"
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
+                        leftPadding: 10
+                        rightPadding: 10
                     }
                     
                     background: Rectangle {
@@ -346,14 +418,19 @@ ApplicationWindow {
                 delegate: MenuItem {
                     id: cropMenuItem
                     
+                    implicitWidth: 200
+                    implicitHeight: 30
+                    
                     contentItem: Text {
-                        text: cropMenuItem.text
+                        text: cropMenuItem.text.replace("&", "")
                         font.pixelSize: 13
                         opacity: enabled ? 1.0 : 0.3
                         color: "#FFFFFF"
                         horizontalAlignment: Text.AlignLeft
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
+                        leftPadding: 10
+                        rightPadding: 10
                     }
                     
                     background: Rectangle {
@@ -380,14 +457,19 @@ ApplicationWindow {
             delegate: MenuItem {
                 id: toolsMenuItem
                 
+                implicitWidth: 200
+                implicitHeight: 30
+                
                 contentItem: Text {
-                    text: toolsMenuItem.text
+                    text: toolsMenuItem.text.replace("&", "")
                     font.pixelSize: 13
                     opacity: enabled ? 1.0 : 0.3
                     color: "#FFFFFF"
                     horizontalAlignment: Text.AlignLeft
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideRight
+                    leftPadding: 10
+                    rightPadding: 10
                 }
                 
                 background: Rectangle {

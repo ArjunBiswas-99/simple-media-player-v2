@@ -29,18 +29,26 @@ class MediaPlayer(QObject):
         # Set locale for MPV
         locale.setlocale(locale.LC_NUMERIC, 'C')
         
-        # Initialize MPV with simplified settings
-        self.mpv = mpv.MPV(
-            osc=False,  # Disable on-screen controller
-            keep_open=True,
-            idle=True
-        )
-        
-        # Try to enable hardware acceleration (optional)
+        # Initialize MPV with minimal settings for compatibility
         try:
-            self.mpv.hwdec = 'auto'
-        except:
-            pass  # Ignore if hwdec is not available
+            self.mpv = mpv.MPV(
+                log_handler=print,
+                loglevel='info'
+            )
+            
+            # Set properties after initialization
+            self.mpv.osc = False  # Disable on-screen controller
+            self.mpv.keep_open = True
+            self.mpv.idle = True
+            
+            # Try to enable hardware acceleration (optional)
+            try:
+                self.mpv.hwdec = 'auto'
+            except:
+                pass  # Ignore if hwdec is not available
+        except Exception as e:
+            print(f"Error initializing MPV: {e}")
+            raise
         
         # Internal state
         self._playing = False
@@ -77,9 +85,17 @@ class MediaPlayer(QObject):
         """Load and play a media file"""
         try:
             # Remove file:// prefix if present
-            if filepath.startswith('file://'):
-                filepath = filepath[7:]
+            if filepath.startswith('file:///'):
+                filepath = filepath[8:]  # Remove file:///
+            elif filepath.startswith('file://'):
+                filepath = filepath[7:]  # Remove file://
             
+            # On Windows, handle paths correctly
+            if sys.platform == 'win32':
+                # Convert forward slashes to backslashes
+                filepath = filepath.replace('/', '\\')
+            
+            print(f"Loading file: {filepath}")
             self.mpv.play(filepath)
             self._current_file = filepath
             self._playing = True
@@ -87,6 +103,8 @@ class MediaPlayer(QObject):
             self.playingChanged.emit(True)
         except Exception as e:
             print(f"Error loading file: {e}")
+            import traceback
+            traceback.print_exc()
     
     # Playback controls
     @Slot()
