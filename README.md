@@ -9,14 +9,17 @@ cd simple-media-player-v2
 # Clone Dear ImGui into external folder
 git clone https://github.com/ocornut/imgui.git external/imgui
 
-# Generate Visual Studio solution with CMake
-cmake -B build -G "Visual Studio 17 2022" -A x64
+# Launch Visual Studio Developer Command Prompt (for MSVC compiler)
+& "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\Tools\LaunchDevCmd.bat"
 
-# Build the project
-cmake --build build --config Debug
+# Configure with Ninja
+cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug
+
+# Build
+ninja
 
 # Run the executable
-.\build\Debug\MediaPlayer.exe
+.\build\MediaPlayer.exe
 
 
 ---
@@ -362,8 +365,13 @@ brew install cmake ninja ffmpeg
 
 **Windows:**
 ```powershell
+# Install CMake and Ninja
 winget install Kitware.CMake Ninja-build.Ninja
-# Download FFmpeg from: https://github.com/BtbN/FFmpeg-Builds/releases
+
+# Install Visual Studio Build Tools 2019 (for MSVC compiler)
+winget install Microsoft.VisualStudio.2019.BuildTools
+
+# Note: FFmpeg not required for Phase 1 (GUI only)
 ```
 
 ### Build Instructions
