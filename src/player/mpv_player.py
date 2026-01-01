@@ -13,7 +13,12 @@ Responsibilities:
 import os
 import sys
 import locale
+import logging
 from PySide6.QtCore import QObject, Signal, QTimer
+
+# Setup logging
+logging.basicConfig(level=logging.DEBUG, format='[%(levelname)s] %(name)s: %(message)s')
+logger = logging.getLogger('MPVPlayer')
 
 # Set locale for MPV (required on some systems)
 try:
@@ -70,9 +75,11 @@ class MPVPlayer(QObject):
     def __init__(self):
         """Initialize MPV player with optimized settings."""
         super().__init__()
+        logger.info('Initializing MPV player')
         
         # Check if MPV is available
         if not MPV_AVAILABLE:
+            logger.error('MPV library not available')
             self._player = None
             self._is_playing = False
             self._current_file = None
@@ -83,6 +90,7 @@ class MPVPlayer(QObject):
         
         # Create MPV instance with optimized configuration
         try:
+            logger.debug('Creating MPV instance with parameters')
             self._player = mpv.MPV(
                 # Video output
                 vo='gpu',  # Use GPU-accelerated rendering
@@ -113,8 +121,9 @@ class MPVPlayer(QObject):
                 # Log level (only errors)
                 msg_level='all=error',
             )
+            logger.info('MPV instance created successfully')
         except Exception as e:
-            print(f"Failed to initialize MPV: {e}")
+            logger.exception(f'Failed to initialize MPV: {e}')
             self._player = None
             self._is_playing = False
             self._current_file = None
@@ -196,32 +205,41 @@ class MPVPlayer(QObject):
             
         try:
             if not os.path.exists(filepath):
+                logger.error(f'File not found: {filepath}')
                 self.errorOccurred.emit(f"File not found: {filepath}")
                 return False
             
             self._current_file = filepath
+            logger.debug(f'Calling MPV loadfile: {filepath}')
             self._player.loadfile(filepath)
             
             # Wait a bit for file to load
+            logger.debug('Waiting for duration property')
             self._player.wait_for_property('duration')
             
             # Start position timer if not running
             if not self._position_timer.isActive():
+                logger.debug('Starting position timer')
                 self._position_timer.start(100)
             
+            logger.info(f'File loaded successfully: {filepath}')
             self.mediaLoaded.emit()
             return True
             
         except Exception as e:
+            logger.exception(f'Failed to load file: {e}')
             self.errorOccurred.emit(f"Failed to load file: {str(e)}")
             return False
     
     def play(self):
         """Start or resume playback."""
+        logger.debug('play() called')
         if not self._player:
+            logger.error('Cannot play: MPV player not initialized')
             return
         try:
             self._player.pause = False
+            logger.info('Playback started')
         except:
             pass
     
