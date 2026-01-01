@@ -1,3 +1,0 @@
-sers\arjun\OneDrive\Desktop\Test\simple-media-player-v2> python main.py        
-Error loading file: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x0000015E2ED3C040>, <mpv.LP_MpvNode object at 0x0000015E2ED4ED40>, <mpv.LP_MpvNode object at 0x0000015E2ED4ECC0>))
-PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> 
