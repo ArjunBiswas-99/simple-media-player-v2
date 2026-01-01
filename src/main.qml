@@ -25,8 +25,63 @@ ApplicationWindow {
     
     // Menu Bar (VLC-style)
     menuBar: MenuBar {
+        background: Rectangle {
+            color: "#1C1C1C"
+            
+            Rectangle {
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: 1
+                color: "#333333"
+            }
+        }
+        
+        delegate: MenuBarItem {
+            id: menuBarItem
+            
+            contentItem: Text {
+                text: menuBarItem.text
+                font.pixelSize: 13
+                opacity: enabled ? 1.0 : 0.3
+                color: menuBarItem.highlighted ? "#E50914" : "#FFFFFF"
+                horizontalAlignment: Text.AlignLeft
+                verticalAlignment: Text.AlignVCenter
+                elide: Text.ElideRight
+            }
+            
+            background: Rectangle {
+                opacity: enabled ? 1 : 0.3
+                color: menuBarItem.highlighted ? "#2C2C2C" : "transparent"
+            }
+        }
+        
         Menu {
             title: "&Media"
+            
+            background: Rectangle {
+                color: "#1C1C1C"
+                border.color: "#333333"
+                border.width: 1
+            }
+            
+            delegate: MenuItem {
+                id: menuItem
+                
+                contentItem: Text {
+                    text: menuItem.text
+                    font.pixelSize: 13
+                    opacity: enabled ? 1.0 : 0.3
+                    color: "#FFFFFF"
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
+                
+                background: Rectangle {
+                    opacity: enabled ? 1 : 0.3
+                    color: menuItem.highlighted ? "#E50914" : "transparent"
+                }
+            }
             
             Action {
                 text: "Open &File..."
@@ -39,7 +94,13 @@ ApplicationWindow {
                 shortcut: "Ctrl+F"
             }
             
-            MenuSeparator {}
+            MenuSeparator {
+                contentItem: Rectangle {
+                    implicitWidth: 200
+                    implicitHeight: 1
+                    color: "#333333"
+                }
+            }
             
             Action {
                 text: "&Quit"
@@ -51,8 +112,58 @@ ApplicationWindow {
         Menu {
             title: "&Playback"
             
+            background: Rectangle {
+                color: "#1C1C1C"
+                border.color: "#333333"
+                border.width: 1
+            }
+            
+            delegate: MenuItem {
+                id: playbackMenuItem
+                
+                contentItem: Text {
+                    text: playbackMenuItem.text
+                    font.pixelSize: 13
+                    opacity: enabled ? 1.0 : 0.3
+                    color: "#FFFFFF"
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
+                
+                background: Rectangle {
+                    opacity: enabled ? 1 : 0.3
+                    color: playbackMenuItem.highlighted ? "#E50914" : "transparent"
+                }
+            }
+            
             Menu {
                 title: "Speed"
+                
+                background: Rectangle {
+                    color: "#1C1C1C"
+                    border.color: "#333333"
+                    border.width: 1
+                }
+                
+                delegate: MenuItem {
+                    id: speedMenuItem
+                    
+                    contentItem: Text {
+                        text: speedMenuItem.text
+                        font.pixelSize: 13
+                        opacity: enabled ? 1.0 : 0.3
+                        color: "#FFFFFF"
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+                    
+                    background: Rectangle {
+                        opacity: enabled ? 1 : 0.3
+                        color: speedMenuItem.highlighted ? "#E50914" : "transparent"
+                    }
+                }
                 
                 Action { text: "Faster" }
                 Action { text: "Normal" }
@@ -63,8 +174,58 @@ ApplicationWindow {
         Menu {
             title: "&Audio"
             
+            background: Rectangle {
+                color: "#1C1C1C"
+                border.color: "#333333"
+                border.width: 1
+            }
+            
+            delegate: MenuItem {
+                id: audioMenuItem
+                
+                contentItem: Text {
+                    text: audioMenuItem.text
+                    font.pixelSize: 13
+                    opacity: enabled ? 1.0 : 0.3
+                    color: "#FFFFFF"
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
+                
+                background: Rectangle {
+                    opacity: enabled ? 1 : 0.3
+                    color: audioMenuItem.highlighted ? "#E50914" : "transparent"
+                }
+            }
+            
             Menu {
                 title: "Audio Track"
+                
+                background: Rectangle {
+                    color: "#1C1C1C"
+                    border.color: "#333333"
+                    border.width: 1
+                }
+                
+                delegate: MenuItem {
+                    id: audioTrackMenuItem
+                    
+                    contentItem: Text {
+                        text: audioTrackMenuItem.text
+                        font.pixelSize: 13
+                        opacity: enabled ? 1.0 : 0.3
+                        color: "#FFFFFF"
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+                    
+                    background: Rectangle {
+                        opacity: enabled ? 1 : 0.3
+                        color: audioTrackMenuItem.highlighted ? "#E50914" : "transparent"
+                    }
+                }
                 
                 Action { text: "Track 1" }
                 Action { text: "Disable" }
@@ -74,17 +235,98 @@ ApplicationWindow {
         Menu {
             title: "&Video"
             
+            background: Rectangle {
+                color: "#1C1C1C"
+                border.color: "#333333"
+                border.width: 1
+            }
+            
+            delegate: MenuItem {
+                id: videoMenuItem
+                
+                contentItem: Text {
+                    text: videoMenuItem.text
+                    font.pixelSize: 13
+                    opacity: enabled ? 1.0 : 0.3
+                    color: "#FFFFFF"
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
+                
+                background: Rectangle {
+                    opacity: enabled ? 1 : 0.3
+                    color: videoMenuItem.highlighted ? "#E50914" : "transparent"
+                }
+            }
+            
             Menu {
                 title: "Video Track"
+                
+                background: Rectangle {
+                    color: "#1C1C1C"
+                    border.color: "#333333"
+                    border.width: 1
+                }
+                
+                delegate: MenuItem {
+                    id: videoTrackMenuItem
+                    
+                    contentItem: Text {
+                        text: videoTrackMenuItem.text
+                        font.pixelSize: 13
+                        opacity: enabled ? 1.0 : 0.3
+                        color: "#FFFFFF"
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+                    
+                    background: Rectangle {
+                        opacity: enabled ? 1 : 0.3
+                        color: videoTrackMenuItem.highlighted ? "#E50914" : "transparent"
+                    }
+                }
                 
                 Action { text: "Track 1" }
                 Action { text: "Disable" }
             }
             
-            MenuSeparator {}
+            MenuSeparator {
+                contentItem: Rectangle {
+                    implicitWidth: 200
+                    implicitHeight: 1
+                    color: "#333333"
+                }
+            }
             
             Menu {
                 title: "Aspect Ratio"
+                
+                background: Rectangle {
+                    color: "#1C1C1C"
+                    border.color: "#333333"
+                    border.width: 1
+                }
+                
+                delegate: MenuItem {
+                    id: aspectMenuItem
+                    
+                    contentItem: Text {
+                        text: aspectMenuItem.text
+                        font.pixelSize: 13
+                        opacity: enabled ? 1.0 : 0.3
+                        color: "#FFFFFF"
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+                    
+                    background: Rectangle {
+                        opacity: enabled ? 1 : 0.3
+                        color: aspectMenuItem.highlighted ? "#E50914" : "transparent"
+                    }
+                }
                 
                 Action { text: "Default" }
                 Action { text: "16:9" }
@@ -95,6 +337,31 @@ ApplicationWindow {
             Menu {
                 title: "Crop"
                 
+                background: Rectangle {
+                    color: "#1C1C1C"
+                    border.color: "#333333"
+                    border.width: 1
+                }
+                
+                delegate: MenuItem {
+                    id: cropMenuItem
+                    
+                    contentItem: Text {
+                        text: cropMenuItem.text
+                        font.pixelSize: 13
+                        opacity: enabled ? 1.0 : 0.3
+                        color: "#FFFFFF"
+                        horizontalAlignment: Text.AlignLeft
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+                    
+                    background: Rectangle {
+                        opacity: enabled ? 1 : 0.3
+                        color: cropMenuItem.highlighted ? "#E50914" : "transparent"
+                    }
+                }
+                
                 Action { text: "Default" }
                 Action { text: "16:9" }
                 Action { text: "4:3" }
@@ -103,6 +370,31 @@ ApplicationWindow {
         
         Menu {
             title: "&Tools"
+            
+            background: Rectangle {
+                color: "#1C1C1C"
+                border.color: "#333333"
+                border.width: 1
+            }
+            
+            delegate: MenuItem {
+                id: toolsMenuItem
+                
+                contentItem: Text {
+                    text: toolsMenuItem.text
+                    font.pixelSize: 13
+                    opacity: enabled ? 1.0 : 0.3
+                    color: "#FFFFFF"
+                    horizontalAlignment: Text.AlignLeft
+                    verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
+                }
+                
+                background: Rectangle {
+                    opacity: enabled ? 1 : 0.3
+                    color: toolsMenuItem.highlighted ? "#E50914" : "transparent"
+                }
+            }
             
             Action { text: "Preferences..." }
         }

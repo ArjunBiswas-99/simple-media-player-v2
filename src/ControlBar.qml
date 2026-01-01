@@ -39,7 +39,7 @@ Rectangle {
             
             Text {
                 id: currentTime
-                text: controlBar.formatTime(mediaPlayer.position)
+                text: controlBar.formatTime(mediaPlayer ? mediaPlayer.position : 0)
                 color: "#FFFFFF"
                 font.pixelSize: 14
             }
@@ -53,7 +53,7 @@ Rectangle {
                 
                 Rectangle {
                     id: progressBarFill
-                    width: mediaPlayer.duration > 0 ? (mediaPlayer.position / mediaPlayer.duration) * parent.width : 0
+                    width: (mediaPlayer && mediaPlayer.duration > 0) ? (mediaPlayer.position / mediaPlayer.duration) * parent.width : 0
                     height: parent.height
                     color: "#E50914"
                     radius: 3
@@ -72,7 +72,7 @@ Rectangle {
                     }
                     
                     onClicked: {
-                        if (mediaPlayer.duration > 0) {
+                        if (mediaPlayer && mediaPlayer.duration > 0) {
                             var newPosition = (mouse.x / width) * mediaPlayer.duration
                             mediaPlayer.setPosition(newPosition)
                         }
@@ -82,7 +82,7 @@ Rectangle {
             
             Text {
                 id: totalTime
-                text: controlBar.formatTime(mediaPlayer.duration)
+                text: controlBar.formatTime(mediaPlayer ? mediaPlayer.duration : 0)
                 color: "#FFFFFF"
                 font.pixelSize: 14
             }
@@ -124,7 +124,7 @@ Rectangle {
                     }
                     
                     contentItem: Text {
-                        text: mediaPlayer.playing ? "⏸" : "▶"
+                        text: (mediaPlayer && mediaPlayer.playing) ? "⏸" : "▶"
                         color: "#FFFFFF"
                         font.pixelSize: 18
                         horizontalAlignment: Text.AlignHCenter
@@ -132,7 +132,7 @@ Rectangle {
                     }
                     
                     onClicked: {
-                        mediaPlayer.togglePlayPause()
+                        if (mediaPlayer) mediaPlayer.togglePlayPause()
                     }
                 }
                 
@@ -167,7 +167,7 @@ Rectangle {
                     }
                     
                     onClicked: {
-                        mediaPlayer.seek(-10)
+                        if (mediaPlayer) mediaPlayer.seek(-10)
                     }
                 }
                 
@@ -202,7 +202,7 @@ Rectangle {
                     }
                     
                     onClicked: {
-                        mediaPlayer.seek(10)
+                        if (mediaPlayer) mediaPlayer.seek(10)
                     }
                 }
                 
@@ -229,7 +229,7 @@ Rectangle {
                         }
                         
                         onClicked: {
-                            mediaPlayer.toggleMute()
+                            if (mediaPlayer) mediaPlayer.toggleMute()
                         }
                     }
                     
@@ -237,11 +237,11 @@ Rectangle {
                         id: volumeSlider
                         from: 0
                         to: 100
-                        value: mediaPlayer.volume
+                        value: mediaPlayer ? mediaPlayer.volume : 80
                         width: 100
                         
                         onValueChanged: {
-                            if (Math.abs(value - mediaPlayer.volume) > 1) {
+                            if (mediaPlayer && Math.abs(value - mediaPlayer.volume) > 1) {
                                 mediaPlayer.setVolume(value)
                             }
                         }

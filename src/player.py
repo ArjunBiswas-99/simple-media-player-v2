@@ -29,15 +29,18 @@ class MediaPlayer(QObject):
         # Set locale for MPV
         locale.setlocale(locale.LC_NUMERIC, 'C')
         
-        # Initialize MPV with window embedding
+        # Initialize MPV with simplified settings
         self.mpv = mpv.MPV(
-            input_default_bindings=True,
-            input_vo_keyboard=True,
             osc=False,  # Disable on-screen controller
-            hwdec='auto',
-            keep_open='yes',
-            idle='yes'
+            keep_open=True,
+            idle=True
         )
+        
+        # Try to enable hardware acceleration (optional)
+        try:
+            self.mpv.hwdec = 'auto'
+        except:
+            pass  # Ignore if hwdec is not available
         
         # Internal state
         self._playing = False
