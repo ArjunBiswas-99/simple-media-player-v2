@@ -104,7 +104,7 @@ class MPVPlayer(QObject):
                 idle='yes',
                 
                 # Disable OSD (we have our own UI)
-                osd_level=0,
+                osd_level='0',
                 
                 # Input handling
                 input_default_bindings='no',
