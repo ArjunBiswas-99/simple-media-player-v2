@@ -17,9 +17,15 @@ ApplicationWindow {
     FileDialog {
         id: fileDialog
         title: "Open Media File"
+        fileMode: FileDialog.OpenFile
         nameFilters: ["Media files (*.mp4 *.mov *.wmv *.ts *.mpeg *.mp3 *.wav)", "All files (*)"]
+        currentFolder: "file:///" + (Qt.platform.os === "windows" ? "C:/" : "/")
         onAccepted: {
+            console.log("File selected:", fileDialog.selectedFile)
             mediaPlayer.openFile(fileDialog.selectedFile.toString())
+        }
+        onRejected: {
+            console.log("File dialog cancelled")
         }
     }
     
@@ -99,7 +105,10 @@ ApplicationWindow {
             Action {
                 text: "Open &File..."
                 shortcut: "Ctrl+O"
-                onTriggered: fileDialog.open()
+                onTriggered: {
+                    console.log("Open File triggered")
+                    fileDialog.open()
+                }
             }
             
             Action {
