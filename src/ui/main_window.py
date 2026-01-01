@@ -402,7 +402,8 @@ class MainWindow(QMainWindow):
         
     def _on_open_file(self):
         """Handle open file dialog."""
-        logger.info('Open file dialog triggered')\n        # Build filter string for supported formats
+        logger.info('Open file dialog triggered')
+        # Build filter string for supported formats
         video_exts = " *".join(MockData.VIDEO_EXTENSIONS)
         audio_exts = " *".join(MockData.AUDIO_EXTENSIONS)
         filter_str = f"Media Files (*{video_exts} *{audio_exts});;All Files (*.*)"
@@ -414,7 +415,8 @@ class MainWindow(QMainWindow):
             filter_str
         )
         
-        logger.info(f'User selected file: {filename}')\n        if filename:
+        logger.info(f'User selected file: {filename}')
+        if filename:
             self._load_file(filename)
             
     def _on_open_folder(self):
@@ -554,8 +556,19 @@ class MainWindow(QMainWindow):
         Args:
             filepath: Absolute path to media file
         """
-        logger.info(f'_load_file called with: {filepath}')\n        logger.debug(f'File exists: {os.path.exists(filepath)}')\n        logger.debug(f'Is file: {os.path.isfile(filepath)}')\n        \n        success = self._mpv_player.load_file(filepath)\n        logger.info(f'MPV load_file returned: {success}')\n        \n        if success:\n            logger.debug('Starting playback')\n            self._mpv_player.play()
-        else:\n            logger.error(f'Failed to load file: {filepath}')\n            QMessageBox.critical(self, \"Error\", f\"Failed to load file:\\n{filepath}\")
+        logger.info(f'_load_file called with: {filepath}')
+        logger.debug(f'File exists: {os.path.exists(filepath)}')
+        logger.debug(f'Is file: {os.path.isfile(filepath)}')
+        
+        success = self._mpv_player.load_file(filepath)
+        logger.info(f'MPV load_file returned: {success}')
+        
+        if success:
+            logger.debug('Starting playback')
+            self._mpv_player.play()
+        else:
+            logger.error(f'Failed to load file: {filepath}')
+            QMessageBox.critical(self, "Error", f"Failed to load file:\n{filepath}")
         
     # ==================== Control Visibility ====================
     
