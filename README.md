@@ -2,6 +2,23 @@
 
 A high-performance, Netflix-inspired media player for Windows and macOS with GPU-accelerated playback and modern UI/UX.
 
+# Clone the repo
+git clone https://github.com/ArjunBiswas-99/simple-media-player-v2.git
+cd simple-media-player-v2
+
+# Clone Dear ImGui into external folder
+git clone https://github.com/ocornut/imgui.git external/imgui
+
+# Generate Visual Studio solution with CMake
+cmake -B build -G "Visual Studio 17 2022" -A x64
+
+# Build the project
+cmake --build build --config Debug
+
+# Run the executable
+.\build\Debug\MediaPlayer.exe
+
+
 ---
 
 ## 📋 Functional Specification
