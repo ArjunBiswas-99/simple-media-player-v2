@@ -10,6 +10,7 @@
 #endif
 
 #ifdef _WIN32
+#define NOMINMAX  // Prevent Windows.h from defining min/max macros
 #include <mmdeviceapi.h>
 #include <audioclient.h>
 #include <comdef.h>

@@ -3,6 +3,10 @@
 // Main Entry Point
 //
 
+#ifdef _WIN32
+#define NOMINMAX  // Prevent Windows.h from defining min/max macros
+#endif
+
 #include "imgui.h"
 
 #ifdef __APPLE__

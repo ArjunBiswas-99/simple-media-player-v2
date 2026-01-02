@@ -12,6 +12,7 @@
     using PlatformWindow = NSWindow*;
     
 #elif defined(_WIN32)
+    #define NOMINMAX  // Prevent Windows.h from defining min/max macros
     #include <d3d11.h>
     #include <windows.h>
     

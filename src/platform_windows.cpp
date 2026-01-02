@@ -1,5 +1,6 @@
 #ifdef _WIN32
 
+#define NOMINMAX  // Prevent Windows.h from defining min/max macros
 #include "platform.h"
 #include <d3d11.h>
 #include <windows.h>
