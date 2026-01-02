@@ -1647,25 +1647,30 @@ void RenderNetflixUI(AppState& state, HWND window) {
     // Process pending click if enough time has passed without double-click
     // Wait 150ms (half of typical 300ms double-click threshold) to be safe
     if (hasPendingClick && (currentTime - pendingClickTime) > 0.15 && !wasDoubleClick) {
-        state.isPlaying = !state.isPlaying;
-        state.showControls = true;
-        state.controlsTimer = 3.0f;
-        
-        // Control decoder and audio
-        if (state.decoder) {
-            if (state.isPlaying) {
-                state.decoder->play();
-                if (state.audioOutput) {
-                    state.audioOutput->play();
-                }
-            } else {
-                state.decoder->pause();
-                if (state.audioOutput) {
-                    state.audioOutput->pause();
+        if (state.ignoreNextClick) {
+            state.ignoreNextClick = false;
+            hasPendingClick = false;
+        } else {
+            state.isPlaying = !state.isPlaying;
+            state.showControls = true;
+            state.controlsTimer = 3.0f;
+            
+            // Control decoder and audio
+            if (state.decoder) {
+                if (state.isPlaying) {
+                    state.decoder->play();
+                    if (state.audioOutput) {
+                        state.audioOutput->play();
+                    }
+                } else {
+                    state.decoder->pause();
+                    if (state.audioOutput) {
+                        state.audioOutput->pause();
+                    }
                 }
             }
+            hasPendingClick = false;
         }
-        hasPendingClick = false;
     }
     
     // Track mouse down event
@@ -2488,6 +2493,15 @@ void RenderNetflixUI(AppState& state, HWND window) {
     }
     
     // Netflix-style pause overlay (large icons when paused)
+    static bool playButtonClicked = false;  // Guard to prevent multiple clicks (outside if block)
+    static double playButtonClickTime = 0.0;  // Time when play button was clicked
+    
+    // Reset click guard after 0.5 seconds
+    double pauseOverlayTime = ImGui::GetTime();
+    if (playButtonClicked && (pauseOverlayTime - playButtonClickTime) > 0.5) {
+        playButtonClicked = false;
+    }
+    
     if (!state.isPlaying && state.fileLoaded) {
         ImVec2 center = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.5f);
         ImDrawList* pauseDrawList = ImGui::GetWindowDrawList();
@@ -2531,9 +2545,22 @@ void RenderNetflixUI(AppState& state, HWND window) {
                 state.pendingFrame = nullptr;
             }
             
+            // Perform the seek first
             state.decoder->seek(state.currentTime);
             state.justSeeked = true;
             state.videoStartTime = 0.0;
+            
+            // IMPORTANT: Pause AFTER seek (seek resumes decoder thread)
+            state.isPlaying = false;
+            state.ignoreNextClick = true;  // Prevent video surface button from toggling it back
+            
+            if (state.decoder) {
+                state.decoder->pause();
+            }
+            
+            if (state.audioOutput) {
+                state.audioOutput->pause();
+            }
             
             // Reset audio clock
             if (state.audioOutput) {
@@ -2563,23 +2590,20 @@ void RenderNetflixUI(AppState& state, HWND window) {
         DrawPlayIcon(pauseDrawList, center, iconSize, centerIconColor);
         
         if (centerClicked) {
-            printf("[DEBUG] Center play button clicked!\n");
-            state.isPlaying = true;
-            printf("[DEBUG] Set state.isPlaying = true\n");
-            // Resume playback
-            if (state.decoder) {
-                printf("[DEBUG] Calling decoder->play()\n");
-                state.decoder->play();
-            } else {
-                printf("[DEBUG] decoder is NULL!\n");
+            if (!playButtonClicked) {
+                playButtonClicked = true;
+                playButtonClickTime = ImGui::GetTime();
+                state.isPlaying = true;
+                state.ignoreNextClick = true;  // Prevent video surface button from toggling it back
+                
+                // Resume playback
+                if (state.decoder) {
+                    state.decoder->play();
+                }
+                if (state.audioOutput) {
+                    state.audioOutput->play();
+                }
             }
-            if (state.audioOutput) {
-                printf("[DEBUG] Calling audioOutput->play()\n");
-                state.audioOutput->play();
-            } else {
-                printf("[DEBUG] audioOutput is NULL!\n");
-            }
-            printf("[DEBUG] Play button handler completed\n");
         }
         
         // Right: Forward 5s button
@@ -2617,9 +2641,22 @@ void RenderNetflixUI(AppState& state, HWND window) {
                 state.pendingFrame = nullptr;
             }
             
+            // Perform the seek first
             state.decoder->seek(state.currentTime);
             state.justSeeked = true;
             state.videoStartTime = 0.0;
+            
+            // IMPORTANT: Pause AFTER seek (seek resumes decoder thread)
+            state.isPlaying = false;
+            state.ignoreNextClick = true;  // Prevent video surface button from toggling it back
+            
+            if (state.decoder) {
+                state.decoder->pause();
+            }
+            
+            if (state.audioOutput) {
+                state.audioOutput->pause();
+            }
             
             // Reset audio clock
             if (state.audioOutput) {
@@ -2644,8 +2681,8 @@ void RenderNetflixUI(AppState& state, HWND window) {
             state.accumulatedSkipBackSeconds = 0;
         } else {
             ImDrawList* animDrawList = ImGui::GetWindowDrawList();
-            // Use screen center for animation
-            ImVec2 screenCenter = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
+            // Use screen center for animation, move up to avoid button overlap
+            ImVec2 screenCenter = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f - 120.0f);
             ImVec2 buttonCenter = screenCenter;
             
             // Animation timeline (normalized 0 to 1, where 1 is start)
@@ -2744,8 +2781,8 @@ void RenderNetflixUI(AppState& state, HWND window) {
             state.accumulatedSkipForwardSeconds = 0;
         } else {
             ImDrawList* animDrawList = ImGui::GetWindowDrawList();
-            // Use screen center for animation
-            ImVec2 screenCenter = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
+            // Use screen center for animation, move up to avoid button overlap
+            ImVec2 screenCenter = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f - 120.0f);
             ImVec2 buttonCenter = screenCenter;
             
             // Animation timeline (normalized 0 to 1, where 1 is start)
