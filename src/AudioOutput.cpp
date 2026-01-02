@@ -123,6 +123,9 @@ bool AudioOutput::initialize(int sampleRate, int channels) {
     waveFormat.nAvgBytesPerSec = waveFormat.nSamplesPerSec * waveFormat.nBlockAlign;
     waveFormat.cbSize = 0;
     
+    std::cout << "[AUDIO INIT] Requested format: " << sampleRate << "Hz, " << channels << " channels" << std::endl;
+    std::cout << "[AUDIO INIT] nAvgBytesPerSec: " << waveFormat.nAvgBytesPerSec << std::endl;
+    
     // Initialize audio client
     REFERENCE_TIME bufferDuration = 10000000; // 1 second in 100-nanosecond units
     hr = m_audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED,
@@ -130,8 +133,19 @@ bool AudioOutput::initialize(int sampleRate, int channels) {
                                    bufferDuration, 0, &waveFormat, nullptr);
     if (FAILED(hr)) {
         std::cerr << "Failed to initialize audio client: " << std::hex << hr << std::endl;
+        
+        // Try to get the closest supported format
+        WAVEFORMATEX* closestMatch = nullptr;
+        hr = m_audioClient->IsFormatSupported(AUDCLNT_SHAREMODE_SHARED, &waveFormat, &closestMatch);
+        if (closestMatch) {
+            std::cout << "[AUDIO INIT] Suggested format: " << closestMatch->nSamplesPerSec << "Hz, " 
+                      << closestMatch->nChannels << " channels" << std::endl;
+            CoTaskMemFree(closestMatch);
+        }
         return false;
     }
+    
+    std::cout << "[AUDIO INIT] Audio client initialized successfully" << std::endl;
     
     // Create event for audio callback
     m_audioEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -432,6 +446,14 @@ void AudioOutput::audioThreadFunc() {
             // Update audio clock with frame PTS
             m_audioClock = frame->pts;
             m_lastClockUpdate = frame->pts;
+            
+            static int audioLogCounter = 0;
+            if (audioLogCounter++ % 100 == 0) {
+                std::cout << "[AUDIO THREAD] Frame PTS: " << frame->pts 
+                          << ", Clock: " << m_audioClock 
+                          << ", SampleRate: " << m_sampleRate 
+                          << ", FrameSamples: " << (frame->size / (m_channels * sizeof(float))) << std::endl;
+            }
             
             // Calculate how many frames we can copy
             UINT32 frameSamples = frame->size / (m_channels * sizeof(float));
