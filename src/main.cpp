@@ -758,6 +758,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 state.pendingFrame->width > 0 && state.pendingFrame->height > 0) {
                 
                 double videoPTS = state.pendingFrame->pts;
+                
+                // Sync audio clock to first video frame to prevent initial drift
+                static bool initialSyncDone = false;
+                if (!initialSyncDone && useAudioSync && state.audioOutput) {
+                    state.audioOutput->setAudioClock(videoPTS);
+                    audioClock = videoPTS;
+                    initialSyncDone = true;
+                    std::cout << "[MAIN] Initial A/V sync: set audio clock to " << videoPTS << std::endl;
+                    std::cout.flush();
+                }
                 bool shouldDisplay = false;
                 
                 // Calculate if we should display this frame
