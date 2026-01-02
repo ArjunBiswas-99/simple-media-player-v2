@@ -767,6 +767,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     const double DROP_THRESHOLD = 0.100;
                     const double NOSYNC_THRESHOLD = 0.5;
                     
+                    static int syncLogCounter = 0;
+                    if (syncLogCounter++ % 30 == 0) {
+                        std::cout << "[VIDEO SYNC] videoPTS=" << videoPTS 
+                                  << " audioClock=" << audioClock 
+                                  << " drift=" << drift 
+                                  << " useSync=" << useAudioSync << std::endl;
+                        std::cout.flush();
+                    }
+                    
                     if (fabs(drift) > NOSYNC_THRESHOLD) {
                         // Large drift - resync
                         if (state.audioOutput) {
@@ -837,6 +846,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (state.audioOutput && state.decoder->hasAudio()) {
             AudioFrame* audioFrame = state.decoder->getNextAudioFrame();
             if (audioFrame && audioFrame->data && audioFrame->size > 0) {
+                static bool firstAudioFrame = true;
+                if (firstAudioFrame) {
+                    std::cout << "[MAIN] First audio frame: PTS=" << audioFrame->pts 
+                              << " size=" << audioFrame->size << std::endl;
+                    std::cout.flush();
+                    firstAudioFrame = false;
+                }
                 state.audioOutput->pushAudioFrame(audioFrame);
             }
         }
