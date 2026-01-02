@@ -53,9 +53,9 @@ PlatformTexture CreateVideoTexture(int width, int height) {
     desc.ArraySize = 1;
     desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     desc.SampleDesc.Count = 1;
-    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.Usage = D3D11_USAGE_DYNAMIC;  // Dynamic for CPU updates
     desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    desc.CPUAccessFlags = 0;
+    desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;  // Allow CPU write access
     
     ID3D11Texture2D* pTexture = nullptr;
     HRESULT hr = g_pd3dDevice->CreateTexture2D(&desc, nullptr, &pTexture);
@@ -76,15 +76,45 @@ PlatformTexture CreateVideoTexture(int width, int height) {
     return pSRV;
 }
 
-void UpdateVideoTexture(PlatformTexture srv, uint8_t* rgbaData, int width, int height) {
-    if (!srv || !rgbaData || !g_pd3dDeviceContext) return;
+void UpdateVideoTexture(PlatformTexture srv, uint8_t* rgbData, int width, int height) {
+    if (!srv || !rgbData || !g_pd3dDeviceContext) return;
     
     // Get the texture from the SRV
     ID3D11Resource* pResource = nullptr;
     srv->GetResource(&pResource);
     
     if (pResource) {
-        g_pd3dDeviceContext->UpdateSubresource(pResource, 0, nullptr, rgbaData, width * 4, 0);
+        ID3D11Texture2D* pTexture = nullptr;
+        pResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&pTexture);
+        
+        if (pTexture) {
+            // Map the texture for CPU write
+            D3D11_MAPPED_SUBRESOURCE mapped;
+            HRESULT hr = g_pd3dDeviceContext->Map(pTexture, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+            
+            if (SUCCEEDED(hr)) {
+                // Convert RGB24 to RGBA (add alpha channel)
+                uint8_t* dst = (uint8_t*)mapped.pData;
+                uint8_t* src = rgbData;
+                
+                for (int y = 0; y < height; y++) {
+                    uint8_t* dstRow = dst + y * mapped.RowPitch;
+                    uint8_t* srcRow = src + y * width * 3;
+                    
+                    for (int x = 0; x < width; x++) {
+                        dstRow[x * 4 + 0] = srcRow[x * 3 + 0];  // R
+                        dstRow[x * 4 + 1] = srcRow[x * 3 + 1];  // G
+                        dstRow[x * 4 + 2] = srcRow[x * 3 + 2];  // B
+                        dstRow[x * 4 + 3] = 255;                 // A (opaque)
+                    }
+                }
+                
+                g_pd3dDeviceContext->Unmap(pTexture, 0);
+            }
+            
+            pTexture->Release();
+        }
+        
         pResource->Release();
     }
 }
