@@ -236,18 +236,20 @@ void AudioOutput::play() {
     }
 #elif defined(_WIN32)
     if (m_audioClient && !m_playing) {
-        // Start audio client
+        // Start audio rendering thread if not already running
+        if (!m_audioThread.joinable()) {
+            m_stopAudioThread = false;
+            m_audioThread = std::thread(&AudioOutput::audioThreadFunc, this);
+        }
+        
+        // Start or restart audio client
         HRESULT hr = m_audioClient->Start();
-        if (SUCCEEDED(hr)) {
+        if (SUCCEEDED(hr) || hr == AUDCLNT_E_NOT_STOPPED) {
+            // AUDCLNT_E_NOT_STOPPED means already playing, which is fine
             m_playing = true;
-            
-            // Start audio rendering thread
-            if (!m_audioThread.joinable()) {
-                m_stopAudioThread = false;
-                m_audioThread = std::thread(&AudioOutput::audioThreadFunc, this);
-            }
+            std::cout << "[AUDIO] Playing" << std::endl;
         } else {
-            std::cerr << "Failed to start audio client: " << std::hex << hr << std::endl;
+            std::cerr << "[AUDIO] Failed to start audio client: 0x" << std::hex << hr << std::dec << std::endl;
         }
     }
 #endif
@@ -260,9 +262,11 @@ void AudioOutput::pause() {
         m_playing = false;
     }
 #elif defined(_WIN32)
-    if (m_audioClient && m_playing) {
-        m_audioClient->Stop();
+    if (m_playing) {
         m_playing = false;
+        // Don't stop audio client - let thread continue running
+        // This prevents deadlocks on pause/play cycles
+        std::cout << "[AUDIO] Paused" << std::endl;
     }
 #endif
 }
@@ -417,6 +421,13 @@ void AudioOutput::audioThreadFunc() {
         // Fill buffer with audio data
         UINT32 framesFilled = 0;
         float* floatBuffer = (float*)data;
+        
+        // If paused, output silence
+        if (!m_playing) {
+            memset(floatBuffer, 0, numFramesAvailable * m_channels * sizeof(float));
+            hr = m_renderClient->ReleaseBuffer(numFramesAvailable, 0);
+            continue;
+        }
         
         while (framesFilled < numFramesAvailable) {
             AudioFrame* frame = nullptr;

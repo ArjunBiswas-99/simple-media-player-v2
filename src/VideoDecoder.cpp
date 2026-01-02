@@ -416,7 +416,20 @@ AudioFrame* VideoDecoder::decodeAudioPacket(AVPacket* packet) {
     // Calculate PTS
     if (frame->pts != AV_NOPTS_VALUE) {
         AVStream* stream = m_formatCtx->streams[m_audioStreamIndex];
-        audioFrame->pts = frame->pts * av_q2d(stream->time_base);
+        double time_base = av_q2d(stream->time_base);
+        audioFrame->pts = frame->pts * time_base;
+        
+        static bool logged = false;
+        if (!logged) {
+            std::cout << "[AUDIO DECODER] First audio frame:" << std::endl;
+            std::cout << "  Raw PTS: " << frame->pts << std::endl;
+            std::cout << "  Time base: " << stream->time_base.num << "/" << stream->time_base.den 
+                      << " = " << time_base << std::endl;
+            std::cout << "  Calculated PTS: " << audioFrame->pts << " seconds" << std::endl;
+            std::cout << "  Frame samples: " << frame->nb_samples << std::endl;
+            std::cout << "  Expected duration: " << ((double)frame->nb_samples / m_sampleRate) << " seconds" << std::endl;
+            logged = true;
+        }
     }
     
     av_frame_free(&frame);
