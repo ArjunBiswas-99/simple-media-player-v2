@@ -101,6 +101,7 @@ struct AppState {
     int videoTextureWidth = 0;
     int videoTextureHeight = 0;
     bool fileLoaded = false;
+    bool ignoreNextClick = false;  // Skip next click event (e.g., after file dialog)
     
     // A/V sync state
     VideoFrame* pendingFrame = nullptr;  // Frame waiting to be displayed
@@ -296,167 +297,203 @@ void ScanDirectoryForMediaFiles(AppState& state, const std::string& filePath) {
     id<MTLDevice> metalDevice = self.device;
     
     // Process video frames with A/V synchronization
+    // At higher playback speeds, process multiple frames per UI loop
     if (state.fileLoaded && state.decoder && state.decoder->hasVideo() && state.isPlaying) {
-        // Get audio clock for synchronization
-        double audioClock = 0.0;
-        bool useAudioSync = false;
+        // Determine how many frames to process this loop
+        // At 2x speed, try to process 2 frames; at 1x speed, process 1 frame
+        int maxFramesToProcess = std::max(1, (int)(state.playbackSpeed * 1.5));
+        int framesProcessed = 0;
         
-        if (state.audioOutput && state.decoder->hasAudio()) {
-            audioClock = state.audioOutput->getAudioClock();
-            // Only use audio sync if audio has actually started (clock > 0.01s)
-            useAudioSync = (audioClock > 0.01);
-        }
-        
-        // CRITICAL FIX: Only fetch new frame if we don't have a pending one
-        // This prevents draining the queue too fast
-        if (!state.pendingFrame) {
-            state.pendingFrame = state.decoder->getNextVideoFrame();
+        // Loop to process multiple frames when speed > 1
+        for (int frameLoop = 0; frameLoop < maxFramesToProcess && state.isPlaying; frameLoop++) {
+            // Get audio clock for synchronization
+            double audioClock = 0.0;
+            bool useAudioSync = false;
             
-            // Check if we reached end of stream
+            if (state.audioOutput && state.decoder->hasAudio()) {
+                audioClock = state.audioOutput->getAudioClock();
+                // Only use audio sync if audio has actually started (clock > 0.1s)
+                // This allows initial frames to display before audio callback starts
+                useAudioSync = (audioClock > 0.1);
+            }
+            
+            // CRITICAL FIX: Only fetch new frame if we don't have a pending one
+            // This prevents draining the queue too fast
             if (!state.pendingFrame) {
-                // No more frames - check if decoder is done
-                if (!state.decoder->isPlaying()) {
-                    state.isPlaying = false;
-                    if (state.audioOutput) {
-                        state.audioOutput->pause();
+                state.pendingFrame = state.decoder->getNextVideoFrame();
+                
+                // Check if we reached end of stream
+                if (!state.pendingFrame) {
+                    // No more frames - check if decoder is done
+                    if (!state.decoder->isPlaying()) {
+                        state.isPlaying = false;
+                        if (state.audioOutput) {
+                            state.audioOutput->pause();
+                        }
                     }
+                    break;  // Exit loop if no more frames
                 }
             }
-        }
-        
-        // Process the pending frame
-        if (state.pendingFrame && state.pendingFrame->data && state.pendingFrame->width > 0 && state.pendingFrame->height > 0) {
-            double videoPTS = state.pendingFrame->pts;
-            double drift = 0.0;
-            bool shouldDisplay = false;
             
-            // Calculate drift based on sync mode
-            if (useAudioSync) {
-                drift = videoPTS - audioClock;
+            // Process the pending frame
+            if (state.pendingFrame && state.pendingFrame->data && state.pendingFrame->width > 0 && state.pendingFrame->height > 0) {
+                double videoPTS = state.pendingFrame->pts;
+                double drift = 0.0;
+                bool shouldDisplay = false;
                 
-                // Adjust thresholds based on playback speed
-                // At 2x speed, frames arrive faster so we need tighter sync
-                const double speedMultiplier = state.playbackSpeed;
-                const double SYNC_THRESHOLD = 0.040 / speedMultiplier;  // Tighter at higher speeds
-                const double DROP_THRESHOLD = 0.100 / speedMultiplier;
-                const double NOSYNC_THRESHOLD = 0.5;  // Keep this absolute
-                
-                // Check if we need to resync (after seek, audio glitch, etc)
-                if (fabs(drift) > NOSYNC_THRESHOLD) {
-                    // Large drift - force resync by setting audio clock to video
-                    if (state.audioOutput) {
-                        state.audioOutput->setAudioClock(videoPTS);
+                // Calculate drift based on sync mode
+                if (useAudioSync) {
+                    drift = videoPTS - audioClock;
+                    
+                    // Adjust thresholds based on playback speed
+                    // At 2x speed, frames arrive faster so we need tighter sync
+                    const double speedMultiplier = state.playbackSpeed;
+                    const double SYNC_THRESHOLD = 0.040 / speedMultiplier;  // Tighter at higher speeds
+                    const double DROP_THRESHOLD = 0.100 / speedMultiplier;
+                    const double NOSYNC_THRESHOLD = 0.5;  // Keep this absolute
+                    
+                    static int logCounter = 0;
+                    if (logCounter++ % 30 == 0) {  // Log every 30 frames
+                        std::cout << "[VIDEO SYNC] speedMultiplier=" << speedMultiplier 
+                                  << " videoPTS=" << videoPTS 
+                                  << " audioClock=" << audioClock 
+                                  << " drift=" << drift << std::endl;
                     }
-                    shouldDisplay = true;
-                }
-                // Video is too far behind - drop this frame to catch up
-                else if (drift < -DROP_THRESHOLD) {
-                    // Drop frame
-                    delete state.pendingFrame;
-                    state.pendingFrame = nullptr;
-                    state.droppedFrames++;
-                    shouldDisplay = false;
-                }
-                // Video is slightly ahead - wait a bit (but still display after threshold)
-                else if (drift > SYNC_THRESHOLD) {
-                    // Display it anyway to prevent freeze
-                    // The slight ahead is tolerable and better than stuttering
-                    shouldDisplay = true;
-                }
-                // In sync range - display it
-                else {
-                    shouldDisplay = true;
-                }
-            } else {
-                // No audio sync - display all frames immediately
-                shouldDisplay = true;
-            }
-            
-            // Display the frame if it's time
-            if (shouldDisplay && state.pendingFrame) {
-                VideoFrame* frame = state.pendingFrame;
-                state.pendingFrame = nullptr;  // Frame consumed
-                
-                // Update tracking
-                state.lastVideoFramePTS = videoPTS;
-                
-                // Only update currentTime from frame if we haven't just seeked
-                if (!state.justSeeked) {
-                    state.currentTime = (float)videoPTS;
-                } else if (videoPTS >= state.currentTime - 0.5) {
-                    // We've reached frames near/past our seek target, resume normal sync
-                    state.currentTime = (float)videoPTS;
-                    state.justSeeked = false;
-                }
-                
-                state.displayedFrames++;
-                
-                // Validate frame data before processing
-                if (!frame || !frame->data || frame->width <= 0 || frame->height <= 0) {
-                    std::cerr << "Invalid frame data, skipping frame" << std::endl;
-                    if (frame) {
-                        delete frame;
+                    
+                    // Check if we need to resync (after seek, audio glitch, etc)
+                    if (fabs(drift) > NOSYNC_THRESHOLD) {
+                        // Large drift - force resync by setting audio clock to video
+                        if (state.audioOutput) {
+                            state.audioOutput->setAudioClock(videoPTS);
+                        }
+                        shouldDisplay = true;
+                    }
+                    // Video is too far behind - drop this frame to catch up
+                    else if (drift < -DROP_THRESHOLD) {
+                        // Drop frame
+                        delete state.pendingFrame;
+                        state.pendingFrame = nullptr;
+                        state.droppedFrames++;
+                        shouldDisplay = false;
+                        continue;  // Try next frame
+                    }
+                    // Video is slightly ahead - wait a bit
+                    else if (drift > SYNC_THRESHOLD) {
+                        // At normal speed, don't display yet
+                        // At high speed, be more aggressive and display anyway
+                        if (state.playbackSpeed > 1.5) {
+                            shouldDisplay = true;
+                        } else {
+                            shouldDisplay = false;
+                            break;  // Stop processing, wait for audio to catch up
+                        }
+                    }
+                    // In sync range - display it
+                    else {
+                        shouldDisplay = true;
                     }
                 } else {
-                    // Create or update texture
-                    if (!state.videoTexture || 
-                        state.videoTextureWidth != frame->width || 
-                        state.videoTextureHeight != frame->height) {
-                        
-                        // Destroy old texture if exists
-                        if (state.videoTexture) {
-                            DestroyVideoTexture(state.videoTexture);
-                        }
-                        
-                        // Create new texture
-                        state.videoTexture = CreateVideoTexture(frame->width, frame->height);
-                        state.videoTextureWidth = frame->width;
-                        state.videoTextureHeight = frame->height;
-                        
-                        if (!state.videoTexture) {
-                            std::cerr << "Failed to create video texture" << std::endl;
-                            delete frame;
-                            frame = nullptr;
-                        }
+                    // No audio sync - display all frames immediately
+                    shouldDisplay = true;
+                }
+                
+                // Display the frame if it's time
+                if (shouldDisplay && state.pendingFrame) {
+                    VideoFrame* frame = state.pendingFrame;
+                    state.pendingFrame = nullptr;  // Frame consumed
+                    framesProcessed++;
+                    
+                    std::cout << "[FRAME DISPLAY] Displaying frame " << framesProcessed 
+                              << " PTS=" << videoPTS << std::endl;
+                    std::cout << "[FRAME DISPLAY] Displaying frame " << framesProcessed 
+                              << " PTS=" << videoPTS << std::endl;
+                    
+                    // Update tracking
+                    state.lastVideoFramePTS = videoPTS;
+                    
+                    // Only update currentTime from frame if we haven't just seeked
+                    if (!state.justSeeked) {
+                        state.currentTime = (float)videoPTS;
+                    } else if (videoPTS >= state.currentTime - 0.5) {
+                        // We've reached frames near/past our seek target, resume normal sync
+                        state.currentTime = (float)videoPTS;
+                        state.justSeeked = false;
                     }
                     
-                    if (frame && frame->data) {
-                        // Convert RGB24 to RGBA8 and upload to texture
-                        size_t rgbaSize = frame->width * frame->height * 4;
-                        uint8_t* rgbaData = (uint8_t*)malloc(rgbaSize);
-                        
-                        if (rgbaData) {
-                            // Convert RGB24 to RGBA8, accounting for linesize
-                            for (int y = 0; y < frame->height; y++) {
-                                for (int x = 0; x < frame->width; x++) {
-                                    int srcIdx = y * frame->linesize + x * 3;
-                                    int dstIdx = (y * frame->width + x) * 4;
-                                    
-                                    rgbaData[dstIdx + 0] = frame->data[srcIdx + 0]; // R
-                                    rgbaData[dstIdx + 1] = frame->data[srcIdx + 1]; // G
-                                    rgbaData[dstIdx + 2] = frame->data[srcIdx + 2]; // B
-                                    rgbaData[dstIdx + 3] = 255;                      // A
-                                }
+                    state.displayedFrames++;
+                    
+                    // Validate frame data before processing
+                    if (!frame || !frame->data || frame->width <= 0 || frame->height <= 0) {
+                        std::cerr << "Invalid frame data, skipping frame" << std::endl;
+                        if (frame) {
+                            delete frame;
+                        }
+                    } else {
+                        // Create or update texture
+                        if (!state.videoTexture || 
+                            state.videoTextureWidth != frame->width || 
+                            state.videoTextureHeight != frame->height) {
+                            
+                            // Destroy old texture if exists
+                            if (state.videoTexture) {
+                                DestroyVideoTexture(state.videoTexture);
                             }
                             
-                            // Upload to texture
-                            UpdateVideoTexture(state.videoTexture, rgbaData, frame->width, frame->height);
+                            // Create new texture
+                            state.videoTexture = CreateVideoTexture(frame->width, frame->height);
+                            state.videoTextureWidth = frame->width;
+                            state.videoTextureHeight = frame->height;
                             
-                            free(rgbaData);
+                            if (!state.videoTexture) {
+                                std::cerr << "Failed to create video texture" << std::endl;
+                                delete frame;
+                                frame = nullptr;
+                            }
+                        }
+                        
+                        if (frame && frame->data) {
+                            // Convert RGB24 to RGBA8 and upload to texture
+                            size_t rgbaSize = frame->width * frame->height * 4;
+                            uint8_t* rgbaData = (uint8_t*)malloc(rgbaSize);
+                            
+                            if (rgbaData) {
+                                // Convert RGB24 to RGBA8, accounting for linesize
+                                for (int y = 0; y < frame->height; y++) {
+                                    for (int x = 0; x < frame->width; x++) {
+                                        int srcIdx = y * frame->linesize + x * 3;
+                                        int dstIdx = (y * frame->width + x) * 4;
+                                        
+                                        rgbaData[dstIdx + 0] = frame->data[srcIdx + 0]; // R
+                                        rgbaData[dstIdx + 1] = frame->data[srcIdx + 1]; // G
+                                        rgbaData[dstIdx + 2] = frame->data[srcIdx + 2]; // B
+                                        rgbaData[dstIdx + 3] = 255;                      // A
+                                    }
+                                }
+                                
+                                // Upload to texture
+                                UpdateVideoTexture(state.videoTexture, rgbaData, frame->width, frame->height);
+                                
+                                free(rgbaData);
+                            }
+                        }
+                        
+                        // Always delete the frame after use
+                        if (frame) {
+                            delete frame;
                         }
                     }
-                    
-                    // Always delete the frame after use
-                    if (frame) {
-                        delete frame;
-                    }
+                } else if (!shouldDisplay) {
+                    // Frame not ready to display yet, keep it pending
+                    break;  // Exit loop and try again next UI frame
                 }
+            } else if (state.pendingFrame && (!state.pendingFrame->data || state.pendingFrame->width <= 0 || state.pendingFrame->height <= 0)) {
+                // Pending frame is invalid, discard it
+                delete state.pendingFrame;
+                state.pendingFrame = nullptr;
             }
-        } else if (state.pendingFrame && (!state.pendingFrame->data || state.pendingFrame->width <= 0 || state.pendingFrame->height <= 0)) {
-            // Pending frame is invalid, discard it
-            delete state.pendingFrame;
-            state.pendingFrame = nullptr;
-        }
+        }  // End of frame processing loop
+        
+        std::cout << "[FRAME PROCESSING] Processed " << framesProcessed << " frames this loop" << std::endl;
         
         // Process audio frames
         if (state.audioOutput && state.decoder->hasAudio()) {
@@ -1071,12 +1108,16 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
         // Clickable area
         ImGui::SetCursorPos(ImVec2(0, ImGui::GetCursorPosY()));
         if (ImGui::InvisibleButton("##Item", itemSize)) {
+            std::cout << "[LOAD] Playlist item clicked, index=" << i << std::endl;
             // Load the selected file
             if (state.decoder) {
                 std::string filepath = state.playlistFiles[i];
+                std::cout << "[LOAD] Opening file: " << filepath << std::endl;
                 if (state.decoder->open(filepath)) {
+                    std::cout << "[LOAD] File opened successfully" << std::endl;
                     state.currentPlaylistIndex = (int)i;
                     state.fileLoaded = true;
+                    std::cout << "[LOAD] fileLoaded=true" << std::endl;
                     state.duration = (float)state.decoder->getDuration();
                     state.currentTime = 0.0f;
                     state.currentTitle = state.playlistNames[i];
@@ -1099,13 +1140,18 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
                     }
                     
                     // Auto-start playback
+                    std::cout << "[LOAD] Auto-starting playback" << std::endl;
                     state.isPlaying = true;
+                    std::cout << "[LOAD] isPlaying=true" << std::endl;
                     state.decoder->play();
+                    std::cout << "[LOAD] decoder->play() called" << std::endl;
                     if (state.audioOutput) {
                         state.audioOutput->play();
+                        std::cout << "[LOAD] audioOutput->play() called" << std::endl;
                     }
                     
                     state.timeSinceFileLoad = 0.0f;
+                    std::cout << "[LOAD] Load complete, ready to play" << std::endl;
                 }
             }
         }
@@ -1237,6 +1283,9 @@ void RenderMenuBar(AppState& state) {
                         if (state.audioOutput) {
                             state.audioOutput->play();
                         }
+                        
+                        std::cout << "[LOAD] File loaded via dialog, starting playback" << std::endl;
+                        state.ignoreNextClick = true;  // Prevent file dialog click from toggling play/pause
                         
                         std::cout << "Loaded: " << state.currentTitle << std::endl;
                     }
@@ -1470,77 +1519,148 @@ void RenderNetflixUI(AppState& state, HWND window) {
     ImGui::SetCursorPos(ImVec2(0, 0));
     ImGui::InvisibleButton("##VideoSurface", clickableSize);
     
-    // Click: Play/Pause
-    if (ImGui::IsItemClicked(0)) {
-        state.isPlaying = !state.isPlaying;
-        state.showControls = true;
-        state.controlsTimer = 3.0f;
-        
-        // Control decoder and audio
-        if (state.decoder) {
-            if (state.isPlaying) {
-                state.decoder->play();
-                if (state.audioOutput) {
-                    state.audioOutput->play();
-                }
-            } else {
-                state.decoder->pause();
-                if (state.audioOutput) {
-                    state.audioOutput->pause();
-                }
-            }
-        }
-    }
-    
-    // Click-and-hold: 2x speed (YouTube-style)
-    // Need to exclude double-clicks which trigger fullscreen
+    // State tracking for click-and-hold behavior
+    static double mouseDownTime = 0.0;
+    static bool mouseWasDown = false;
     static bool wasDoubleClick = false;
     static double doubleClickTime = 0.0;
+    static bool playPauseHandled = false;
+    static double lastHoldDuration = 0.0; // Preserve duration for release check
+    static double lastClickTime = 0.0;     // Track last click for double-click detection
+    
+    const double HOLD_THRESHOLD = 0.2; // 200ms to distinguish click from hold
+    bool itemActive = ImGui::IsItemActive();
+    bool mouseDown = ImGui::IsMouseDown(0);
+    double currentTime = ImGui::GetTime();
     
     // Detect double-click first
     bool isDoubleClick = ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0);
     if (isDoubleClick) {
         wasDoubleClick = true;
-        doubleClickTime = ImGui::GetTime();
+        doubleClickTime = currentTime;
+        playPauseHandled = true; // Don't process as click
     }
     
     // Clear double-click flag after 500ms
-    if (wasDoubleClick && (ImGui::GetTime() - doubleClickTime) > 0.5) {
+    if (wasDoubleClick && (currentTime - doubleClickTime) > 0.5) {
         wasDoubleClick = false;
     }
     
+    // Track mouse down event
+    if (itemActive && mouseDown && !mouseWasDown && !wasDoubleClick) {
+        // Mouse just pressed down
+        mouseDownTime = currentTime;
+        playPauseHandled = false;
+    }
+    
+    // Calculate hold duration
+    double holdDuration = (itemActive && mouseDown) ? (currentTime - mouseDownTime) : lastHoldDuration;
+    
+    // Preserve hold duration when mouse is down
+    if (itemActive && mouseDown) {
+        lastHoldDuration = holdDuration;
+    }
+    
+    // Click-and-hold: 2x speed (YouTube-style)
+    // Only activate after hold threshold and if video is playing
     bool wasHoldingMouse = state.is2xSpeedMode;
-    // Only enable 2x speed if:
-    // 1. Mouse is held down on the video surface
-    // 2. Video is playing
-    // 3. NOT during/after a double-click (which triggers fullscreen)
-    state.is2xSpeedMode = ImGui::IsItemActive() && ImGui::IsMouseDown(0) && 
-                          state.isPlaying && !wasDoubleClick;
+    bool shouldActivate2x = itemActive && mouseDown && 
+                           holdDuration > HOLD_THRESHOLD && 
+                           state.isPlaying && 
+                           !wasDoubleClick;
+    
+    state.is2xSpeedMode = shouldActivate2x;
     
     // Entering 2x speed mode
     if (state.is2xSpeedMode && !wasHoldingMouse && state.fileLoaded) {
+        std::cout << "[2X MODE] ENTERING 2x speed mode" << std::endl;
+        std::cout << "[2X MODE] Previous playbackSpeed: " << state.playbackSpeed << std::endl;
         state.normalPlaybackSpeed = state.playbackSpeed;
         state.playbackSpeed = 2.0f;
         state.show2xSpeedIndicator = true;
+        std::cout << "[2X MODE] Set playbackSpeed to: " << state.playbackSpeed << std::endl;
         // Apply 2x speed to audio
         if (state.audioOutput) {
+            std::cout << "[2X MODE] Calling audioOutput->setPlaybackRate(2.0f)" << std::endl;
             state.audioOutput->setPlaybackRate(2.0f);
+            std::cout << "[2X MODE] Audio playback rate set, current rate: " << state.audioOutput->getPlaybackRate() << std::endl;
+        } else {
+            std::cout << "[2X MODE] WARNING: No audioOutput available!" << std::endl;
         }
     }
     
     // Exiting 2x speed mode
     if (!state.is2xSpeedMode && wasHoldingMouse) {
+        std::cout << "[2X MODE] EXITING 2x speed mode" << std::endl;
+        std::cout << "[2X MODE] Restoring playbackSpeed to: " << state.normalPlaybackSpeed << std::endl;
         state.playbackSpeed = state.normalPlaybackSpeed;
         state.show2xSpeedIndicator = false;
         // Restore normal speed to audio
         if (state.audioOutput) {
+            std::cout << "[2X MODE] Calling audioOutput->setPlaybackRate(1.0f)" << std::endl;
             state.audioOutput->setPlaybackRate(1.0f);
         }
     }
     
+    // Handle play/pause on mouse RELEASE (not on press)
+    // Only if it was a quick click (not a hold) and not a double-click
+    if (mouseWasDown && !mouseDown) {
+        // Check if we should ignore this click
+        if (state.ignoreNextClick) {
+            std::cout << "[CLICK] Ignoring click (file dialog)" << std::endl;
+            state.ignoreNextClick = false;
+        } else {
+            // Mouse just released
+            // Check if click was in controls area (bottom 150px)
+            ImVec2 mousePos = io.MousePos;
+            ImVec2 windowPos = ImGui::GetWindowPos();
+            float relativeY = mousePos.y - windowPos.y;
+            bool clickInControlsArea = relativeY > (io.DisplaySize.y - 150);
+            
+            // Check if this might be part of a double-click sequence
+            // If we clicked within 300ms of last click, don't process as play/pause
+            double timeSinceLastClick = currentTime - lastClickTime;
+            bool mightBeDoubleClick = timeSinceLastClick < 0.3;
+            
+            // Only toggle play/pause if not handled, not a double-click, file is loaded, AND not in controls area
+            if (!playPauseHandled && lastHoldDuration < HOLD_THRESHOLD && !wasDoubleClick && !mightBeDoubleClick && state.fileLoaded && !clickInControlsArea) {
+                std::cout << "[CLICK] Toggling play/pause" << std::endl;
+                // It was a quick click - toggle play/pause
+                state.isPlaying = !state.isPlaying;
+                state.showControls = true;
+                state.controlsTimer = 3.0f;
+                
+                // Control decoder and audio
+                if (state.decoder) {
+                    if (state.isPlaying) {
+                        state.decoder->play();
+                        if (state.audioOutput) {
+                            state.audioOutput->play();
+                        }
+                    } else {
+                        state.decoder->pause();
+                        if (state.audioOutput) {
+                            state.audioOutput->pause();
+                        }
+                    }
+                }
+            }
+        }
+        // Reset for next interaction only after mouse is fully released
+        if (!mouseDown) {
+            playPauseHandled = false;
+            lastHoldDuration = 0.0;
+            lastClickTime = currentTime;  // Update last click time on release
+        }
+    }
+    
+    // Update previous state
+    mouseWasDown = mouseDown;
+    // Update previous state
+    mouseWasDown = mouseDown;
+    
     // Double-click: Toggle fullscreen
     // Use static to prevent repeated toggles
-    static bool fullscreenTogglePending = false;
     static double lastFullscreenToggle = 0.0;
     
     if (isDoubleClick) {
@@ -1902,7 +2022,9 @@ void RenderNetflixUI(AppState& state, HWND window) {
         // Update hover animation
         state.playButtonHovered = false;
         if (ImGui::Button("##PlayPause", ImVec2(64, 64))) {
+            std::cout << "[BUTTON] Play/Pause clicked, toggling to " << (!state.isPlaying ? "play" : "pause") << std::endl;
             state.isPlaying = !state.isPlaying;
+            playPauseHandled = true;  // Prevent video click from also firing
             
             // Control decoder and audio
             if (state.decoder) {

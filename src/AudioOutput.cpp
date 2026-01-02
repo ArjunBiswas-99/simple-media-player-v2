@@ -264,12 +264,21 @@ void AudioOutput::setVolume(float volume) {
 }
 
 void AudioOutput::setPlaybackRate(float rate) {
+    float oldRate = m_playbackRate;
     m_playbackRate = std::max(0.5f, std::min(2.0f, rate));
+    std::cout << "[AUDIO] setPlaybackRate called: " << rate << " -> clamped to: " << m_playbackRate << std::endl;
     
 #ifdef __APPLE__
     if (m_audioQueue) {
-        // Set playback rate using CoreAudio
-        AudioQueueSetParameter(m_audioQueue, kAudioQueueParam_PlayRate, m_playbackRate);
+        std::cout << "[AUDIO] Setting CoreAudio kAudioQueueParam_PlayRate to: " << m_playbackRate << std::endl;
+        OSStatus status = AudioQueueSetParameter(m_audioQueue, kAudioQueueParam_PlayRate, m_playbackRate);
+        if (status == noErr) {
+            std::cout << "[AUDIO] CoreAudio playback rate set successfully" << std::endl;
+        } else {
+            std::cout << "[AUDIO] ERROR: Failed to set CoreAudio playback rate, status=" << status << std::endl;
+        }
+    } else {
+        std::cout << "[AUDIO] WARNING: m_audioQueue is null, cannot set playback rate" << std::endl;
     }
 #endif
 }
@@ -310,9 +319,38 @@ void AudioOutput::audioCallback(void* userData, AudioQueueRef queue, AudioQueueB
         AudioFrame* frame = output->m_frameQueue.front();
         output->m_frameQueue.pop();
         
-        // Update audio clock with frame PTS
-        output->m_audioClock = frame->pts;
-        output->m_lastClockUpdate = frame->pts;
+        static int audioLogCounter = 0;
+        bool shouldLog = (audioLogCounter++ % 100 == 0);  // Log every 100th audio frame
+        
+        // Update audio clock with frame PTS, scaled by playback rate
+        // When playing at 2x, the audio plays faster but frame PTS is at original speed
+        // We need to advance the clock proportionally faster
+        if (output->m_playbackRate > 0.0f) {
+            double oldClock = output->m_audioClock;
+            double clockAdvance = frame->pts - output->m_lastClockUpdate;
+            if (clockAdvance > 0 && output->m_lastClockUpdate > 0) {
+                // Advance clock by the scaled amount
+                output->m_audioClock = output->m_audioClock + (clockAdvance * output->m_playbackRate);
+                if (shouldLog) {
+                    std::cout << "[AUDIO CALLBACK] playbackRate=" << output->m_playbackRate 
+                              << " framePTS=" << frame->pts
+                              << " clockAdvance=" << clockAdvance
+                              << " scaledAdvance=" << (clockAdvance * output->m_playbackRate)
+                              << " oldClock=" << oldClock
+                              << " newClock=" << output->m_audioClock << std::endl;
+                }
+            } else {
+                // First frame or discontinuity - set directly
+                output->m_audioClock = frame->pts * output->m_playbackRate;
+                if (shouldLog) {
+                    std::cout << "[AUDIO CALLBACK] First frame or discontinuity, setting clock to: " << output->m_audioClock << std::endl;
+                }
+            }
+            output->m_lastClockUpdate = frame->pts;
+        } else {
+            output->m_audioClock = frame->pts;
+            output->m_lastClockUpdate = frame->pts;
+        }
         
         // Copy audio data
         int copySize = std::min((int)frame->size, (int)buffer->mAudioDataBytesCapacity);
