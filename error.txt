@@ -1,19 +1,58 @@
-d: C:\Users\arjun\Downloads\The Heat.mp4
+=== Simple Media Player V2 - Debug Console ===
+Windows build with Direct3D11 and WASAPI
+===============================================
+[MAIN] Entering main loop
+Opened: C:\Users\arjun\Downloads\The Heat.mp4
 Duration: 7220.25 seconds
 Video: 1920x800
 Audio: 48000Hz, 2 channels
+[AUDIO INIT] Requested format: 48000Hz, 2 channels
+[AUDIO INIT] nAvgBytesPerSec: 384000
+[AUDIO INIT] Audio client initialized successfully
 WASAPI Audio initialized: 48000Hz, 2 channels
 Loaded: The Heat.mp4
+[AUDIO THREAD] Frame PTS: 0, Clock: 0, SampleRate: 48000, FrameSamples: 1024
 [VIDEO] Texture created: 1920x800
-[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0xc0000005
-[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0xc0000005
-[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0xc0000005
-[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0xc0000005
-[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0xc0000005
-[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0xc0000005
-[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0xc0000005
-[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0xc0000005
-[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0xc0000005
-[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0xc0000005
-[VIDEO] Too many errors, stopping video processing
-
+[AUDIO THREAD] Frame PTS: 2.13333, Clock: 2.13333, SampleRate: 48000, FrameSamples: 1024
+[AUDIO THREAD] Frame PTS: 4.26667, Clock: 4.26667, SampleRate: 48000, FrameSamples: 1024
+[AUDIO THREAD] Frame PTS: 6.4, Clock: 6.4, SampleRate: 48000, FrameSamples: 1024
+[AUDIO THREAD] Frame PTS: 8.53333, Clock: 8.53333, SampleRate: 48000, FrameSamples: 1024
+[AUDIO THREAD] Frame PTS: 10.6667, Clock: 10.6667, SampleRate: 48000, FrameSamples: 1024
+[AUDIO THREAD] Frame PTS: 12.8, Clock: 12.8, SampleRate: 48000, FrameSamples: 1024
+[AUDIO THREAD] Frame PTS: 14.9333, Clock: 14.9333, SampleRate: 48000, FrameSamples: 1024
+[AUDIO THREAD] Frame PTS: 17.0667, Clock: 17.0667, SampleRate: 48000, FrameSamples: 1024
+[AUDIO THREAD] Frame PTS: 19.2, Clock: 19.2, SampleRate: 48000, FrameSamples: 1024
+[DEBUG VideoDecoder::seek] Called with seconds=2909.56
+[DEBUG VideoDecoder::seek] this pointer=0000012DC5544710
+[DEBUG VideoDecoder::seek] Setting m_seeking=true
+[DEBUG VideoDecoder::seek] m_seeking is now: 1
+[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
+[DEBUG VideoDecoder::seek] FFmpeg mutex locked
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=2909560546
+[DEBUG VideoDecoder::seek] av_seek_frame completed
+[DEBUG VideoDecoder::seek] Flushing video codec buffers
+[DEBUG VideoDecoder::seek] Flushing audio codec buffers
+[DEBUG VideoDecoder::seek] About to call clearQueues()
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=0000012DC5544710
+[DEBUG VideoDecoder::clearQueues] m_seeking=1
+[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
+[DEBUG VideoDecoder::clearQueues] Sleep completed
+[DEBUG VideoDecoder::clearQueues] About to lock video queue
+[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000012DC5484740
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000012DC5484170
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000012DC54841A0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000012DC54847A0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000012DC5484320
+[DEBUG VideoDecoder::clearQueues] Video queue cleared
+[DEBUG VideoDecoder::clearQueues] About to lock audio queue
+[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 1
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 0000012DBC980130
+[DEBUG VideoDecoder::clearQueues] Audio queue cleared
+[DEBUG VideoDecoder::clearQueues] clearQueues completed
+[DEBUG VideoDecoder::seek] clearQueues() returned
+[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
+[DEBUG VideoDecoder::seek] Seek completed successfully
+[AUDIO THREAD] Frame PTS: 2910.21, Clock: 2910.21, SampleRate: 48000, FrameSamples: 1024
+[AUDIO THREAD] Frame PTS: 2912.34, Clock: 2912.34, SampleRate: 48000, FrameSamples: 1024
+[AUDIO THREAD] Frame PTS: 2914.47, Clock: 2914.47, SampleRate: 48000, FrameSamples: 1024
