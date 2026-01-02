@@ -119,10 +119,28 @@ if(APPLE)
     message(STATUS "FFmpeg libraries: ${FFMPEG_LIBRARIES}")
     
 elseif(WIN32)
-    # Windows FFmpeg setup (will be added later)
+    # Windows FFmpeg setup
     set(FFMPEG_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/external/ffmpeg/windows)
     set(FFMPEG_INCLUDE_DIR ${FFMPEG_ROOT}/include)
-    # Windows specific setup here
+    set(FFMPEG_LIB_DIR ${FFMPEG_ROOT}/lib)
+    
+    # FFmpeg libraries for Windows
+    set(FFMPEG_LIBRARIES
+        ${FFMPEG_LIB_DIR}/avcodec.lib
+        ${FFMPEG_LIB_DIR}/avformat.lib
+        ${FFMPEG_LIB_DIR}/avutil.lib
+        ${FFMPEG_LIB_DIR}/swscale.lib
+        ${FFMPEG_LIB_DIR}/swresample.lib
+    )
+    
+    # Windows system libraries
+    list(APPEND PLATFORM_LIBS
+        d3d11.lib
+        dxgi.lib
+        d3dcompiler.lib
+        ole32.lib
+        shell32.lib
+    )
 endif()
 
 # Main executable
@@ -132,7 +150,15 @@ add_executable(MediaPlayer
     src/VideoDecoder.h
     src/AudioOutput.cpp
     src/AudioOutput.h
+    src/platform.h
 )
+
+# Platform-specific source files
+if(APPLE)
+    target_sources(MediaPlayer PRIVATE src/platform_macos.mm)
+elseif(WIN32)
+    target_sources(MediaPlayer PRIVATE src/platform_windows.cpp)
+endif()
 
 target_include_directories(MediaPlayer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -147,7 +173,7 @@ target_link_libraries(MediaPlayer PRIVATE
 
 if(APPLE)
     # Enable Objective-C++ for macOS
-    set_source_files_properties(src/main.cpp PROPERTIES
+    set_source_files_properties(src/main.cpp src/platform_macos.mm PROPERTIES
         COMPILE_FLAGS "-x objective-c++"
     )
     

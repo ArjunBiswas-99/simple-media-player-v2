@@ -30,6 +30,7 @@
 
 #include "VideoDecoder.h"
 #include "AudioOutput.h"
+#include "platform.h"
 
 // Application State
 struct AppState {
@@ -96,7 +97,9 @@ struct AppState {
     // Video playback
     VideoDecoder* decoder = nullptr;
     AudioOutput* audioOutput = nullptr;
-    id<MTLTexture> videoTexture = nil;
+    PlatformTexture videoTexture = nullptr;
+    int videoTextureWidth = 0;
+    int videoTextureHeight = 0;
     bool fileLoaded = false;
     
     // A/V sync state
@@ -108,37 +111,10 @@ struct AppState {
     bool justSeeked = false;             // Flag to ignore old frame timestamps after seek
 };
 
-#ifdef __APPLE__
-// File picker dialog for macOS
-std::string openFileDialog() {
-    @autoreleasepool {
-        NSOpenPanel* panel = [NSOpenPanel openPanel];
-        [panel setCanChooseFiles:YES];
-        [panel setCanChooseDirectories:NO];
-        [panel setAllowsMultipleSelection:NO];
-        [panel setTitle:@"Open Media File"];
-        
-        // File type filters
-        [panel setAllowedFileTypes:@[@"mp4", @"mov", @"ts", @"mpeg", @"mpg", @"wmv", @"avi", @"mkv", @"mp3", @"wav"]];
-        
-        if ([panel runModal] == NSModalResponseOK) {
-            NSURL* url = [[panel URLs] objectAtIndex:0];
-            NSString* path = [url path];
-            return std::string([path UTF8String]);
-        }
-    }
-    return "";
-}
-#endif
-
 // Forward declarations
 void SetupNetflixTheme();
 void RenderMenuBar(AppState& state);
-#ifdef __APPLE__
-void RenderNetflixUI(AppState& state, NSWindow* window);
-#else
-void RenderNetflixUI(AppState& state);
-#endif
+void RenderNetflixUI(AppState& state, PlatformWindow window);
 std::string FormatTime(float seconds);
 void DrawGradientOverlay(ImDrawList* draw, ImVec2 start, ImVec2 end, ImU32 colorTop, ImU32 colorBottom);
 void DrawPlayIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
@@ -151,20 +127,6 @@ void DrawAudioIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
 void DrawFullscreenIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
 void DrawPlaylistIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color);
 void RenderPlaylistPanel(AppState& state, ImVec2 screenSize);
-
-#ifdef __APPLE__
-void ToggleFullscreen(NSWindow* window, bool& isFullscreen);
-#endif
-
-// Platform-specific fullscreen toggle
-#ifdef __APPLE__
-void ToggleFullscreen(NSWindow* window, bool& isFullscreen) {
-    if (window) {
-        [window toggleFullScreen:nil];
-        isFullscreen = !isFullscreen;
-    }
-}
-#endif
 
 // Scan directory for media files
 void ScanDirectoryForMediaFiles(AppState& state, const std::string& filePath) {
@@ -438,20 +400,21 @@ void ScanDirectoryForMediaFiles(AppState& state, const std::string& filePath) {
                 } else {
                     // Create or update texture
                     if (!state.videoTexture || 
-                        state.videoTexture.width != frame->width || 
-                        state.videoTexture.height != frame->height) {
+                        state.videoTextureWidth != frame->width || 
+                        state.videoTextureHeight != frame->height) {
                         
-                        MTLTextureDescriptor* textureDescriptor = [MTLTextureDescriptor
-                            texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm
-                            width:frame->width
-                            height:frame->height
-                            mipmapped:NO];
-                        textureDescriptor.usage = MTLTextureUsageShaderRead;
+                        // Destroy old texture if exists
+                        if (state.videoTexture) {
+                            DestroyVideoTexture(state.videoTexture);
+                        }
                         
-                        state.videoTexture = [metalDevice newTextureWithDescriptor:textureDescriptor];
+                        // Create new texture
+                        state.videoTexture = CreateVideoTexture(frame->width, frame->height);
+                        state.videoTextureWidth = frame->width;
+                        state.videoTextureHeight = frame->height;
                         
                         if (!state.videoTexture) {
-                            std::cerr << "Failed to create Metal texture" << std::endl;
+                            std::cerr << "Failed to create video texture" << std::endl;
                             delete frame;
                             frame = nullptr;
                         }
@@ -476,11 +439,8 @@ void ScanDirectoryForMediaFiles(AppState& state, const std::string& filePath) {
                                 }
                             }
                             
-                            MTLRegion region = MTLRegionMake2D(0, 0, frame->width, frame->height);
-                            [state.videoTexture replaceRegion:region
-                                                  mipmapLevel:0
-                                                    withBytes:rgbaData
-                                                  bytesPerRow:frame->width * 4];
+                            // Upload to texture
+                            UpdateVideoTexture(state.videoTexture, rgbaData, frame->width, frame->height);
                             
                             free(rgbaData);
                         }
@@ -581,6 +541,9 @@ int main(int, char**) {
         return 1;
     }
 
+    // Set the D3D device for platform-specific texture functions
+    SetD3D11Device(g_pd3dDevice, g_pd3dDeviceContext);
+
     ShowWindow(hwnd, SW_SHOWDEFAULT);
     UpdateWindow(hwnd);
 
@@ -619,7 +582,7 @@ int main(int, char**) {
 
         // Render UI
         RenderMenuBar(state);
-        RenderNetflixUI(state);
+        RenderNetflixUI(state, hwnd);
         RenderPlaylistPanel(state, ImVec2((float)io.DisplaySize.x, (float)io.DisplaySize.y));
 
         // Rendering
@@ -1213,7 +1176,7 @@ void RenderMenuBar(AppState& state) {
         // Media Menu
         if (ImGui::BeginMenu("Media")) {
             if (ImGui::MenuItem("Open File...", "Cmd+O")) {
-                std::string filepath = openFileDialog();
+                std::string filepath = OpenFileDialog();
                 if (!filepath.empty()) {
                     // Initialize decoder if needed
                     if (!state.decoder) {
@@ -1428,8 +1391,7 @@ void RenderMenuBar(AppState& state) {
 #ifdef __APPLE__
 void RenderNetflixUI(AppState& state, NSWindow* window) {
 #else
-void RenderNetflixUI(AppState& state) {
-    NSWindow* window = nullptr;  // Not available on other platforms
+void RenderNetflixUI(AppState& state, HWND window) {
 #endif
     ImGuiIO& io = ImGui::GetIO();
     ImVec2 screenSize = io.DisplaySize;
