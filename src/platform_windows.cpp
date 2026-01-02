@@ -93,19 +93,45 @@ void UpdateVideoTexture(PlatformTexture srv, uint8_t* rgbData, int width, int he
             HRESULT hr = g_pd3dDeviceContext->Map(pTexture, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
             
             if (SUCCEEDED(hr)) {
-                // Convert RGB24 to RGBA (add alpha channel)
+                // Convert RGB24 to RGBA (add alpha channel) - optimized version
                 uint8_t* dst = (uint8_t*)mapped.pData;
                 uint8_t* src = rgbData;
                 
+                // Process row by row
                 for (int y = 0; y < height; y++) {
                     uint8_t* dstRow = dst + y * mapped.RowPitch;
                     uint8_t* srcRow = src + y * width * 3;
                     
-                    for (int x = 0; x < width; x++) {
-                        dstRow[x * 4 + 0] = srcRow[x * 3 + 0];  // R
-                        dstRow[x * 4 + 1] = srcRow[x * 3 + 1];  // G
-                        dstRow[x * 4 + 2] = srcRow[x * 3 + 2];  // B
-                        dstRow[x * 4 + 3] = 255;                 // A (opaque)
+                    // Process 4 pixels at a time for better cache performance
+                    int x = 0;
+                    for (; x < width - 3; x += 4) {
+                        // Pixel 0
+                        dstRow[x * 4 + 0] = srcRow[x * 3 + 0];
+                        dstRow[x * 4 + 1] = srcRow[x * 3 + 1];
+                        dstRow[x * 4 + 2] = srcRow[x * 3 + 2];
+                        dstRow[x * 4 + 3] = 255;
+                        // Pixel 1
+                        dstRow[x * 4 + 4] = srcRow[x * 3 + 3];
+                        dstRow[x * 4 + 5] = srcRow[x * 3 + 4];
+                        dstRow[x * 4 + 6] = srcRow[x * 3 + 5];
+                        dstRow[x * 4 + 7] = 255;
+                        // Pixel 2
+                        dstRow[x * 4 + 8] = srcRow[x * 3 + 6];
+                        dstRow[x * 4 + 9] = srcRow[x * 3 + 7];
+                        dstRow[x * 4 + 10] = srcRow[x * 3 + 8];
+                        dstRow[x * 4 + 11] = 255;
+                        // Pixel 3
+                        dstRow[x * 4 + 12] = srcRow[x * 3 + 9];
+                        dstRow[x * 4 + 13] = srcRow[x * 3 + 10];
+                        dstRow[x * 4 + 14] = srcRow[x * 3 + 11];
+                        dstRow[x * 4 + 15] = 255;
+                    }
+                    // Handle remaining pixels
+                    for (; x < width; x++) {
+                        dstRow[x * 4 + 0] = srcRow[x * 3 + 0];
+                        dstRow[x * 4 + 1] = srcRow[x * 3 + 1];
+                        dstRow[x * 4 + 2] = srcRow[x * 3 + 2];
+                        dstRow[x * 4 + 3] = 255;
                     }
                 }
                 

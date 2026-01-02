@@ -738,8 +738,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (done)
             break;
 
-        // Process video frames - keep simple without SEH
+        // Process video frames with A/V synchronization (same as macOS)
         if (state.fileLoaded && state.decoder && state.decoder->hasVideo() && state.isPlaying && videoErrorCount < MAX_VIDEO_ERRORS) {
+            // Get audio clock for synchronization
+            double audioClock = 0.0;
+            bool useAudioSync = false;
+            
+            if (state.audioOutput && state.decoder->hasAudio()) {
+                audioClock = state.audioOutput->getAudioClock();
+                useAudioSync = (audioClock > 0.1);
+            }
+            
+            // Fetch frame if we don't have one
             if (!state.pendingFrame) {
                 state.pendingFrame = state.decoder->getNextVideoFrame();
             }
@@ -747,44 +757,87 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             if (state.pendingFrame && state.pendingFrame->data && 
                 state.pendingFrame->width > 0 && state.pendingFrame->height > 0) {
                 
-                // Create or update texture
-                if (!state.videoTexture || 
-                    state.videoTextureWidth != state.pendingFrame->width || 
-                    state.videoTextureHeight != state.pendingFrame->height) {
+                double videoPTS = state.pendingFrame->pts;
+                bool shouldDisplay = false;
+                
+                // Calculate if we should display this frame
+                if (useAudioSync) {
+                    double drift = videoPTS - audioClock;
+                    const double SYNC_THRESHOLD = 0.040;
+                    const double DROP_THRESHOLD = 0.100;
+                    const double NOSYNC_THRESHOLD = 0.5;
                     
-                    if (state.videoTexture) {
-                        DestroyVideoTexture(state.videoTexture);
-                        state.videoTexture = nullptr;
+                    if (fabs(drift) > NOSYNC_THRESHOLD) {
+                        // Large drift - resync
+                        if (state.audioOutput) {
+                            state.audioOutput->setAudioClock(videoPTS);
+                        }
+                        shouldDisplay = true;
+                    } else if (drift < -DROP_THRESHOLD) {
+                        // Video behind - drop frame
+                        delete state.pendingFrame;
+                        state.pendingFrame = nullptr;
+                        continue;
+                    } else if (drift > SYNC_THRESHOLD) {
+                        // Video ahead - wait
+                        shouldDisplay = false;
+                    } else {
+                        // In sync - display
+                        shouldDisplay = true;
                     }
-                    
-                    state.videoTexture = CreateVideoTexture(state.pendingFrame->width, state.pendingFrame->height);
-                    
-                    if (state.videoTexture) {
-                        state.videoTextureWidth = state.pendingFrame->width;
-                        state.videoTextureHeight = state.pendingFrame->height;
-                        std::cout << "[VIDEO] Texture created: " << state.videoTextureWidth << "x" << state.videoTextureHeight << std::endl;
-                        std::cout.flush();
-                    }
+                } else {
+                    // No audio sync - display all frames
+                    shouldDisplay = true;
                 }
                 
-                // Update texture with frame data
-                if (state.videoTexture && state.pendingFrame->data) {
-                    int updateResult = SafeUpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
-                                     state.pendingFrame->width, state.pendingFrame->height);
-                    if (updateResult != 0) {
-                        std::cerr << "[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0x" 
-                                  << std::hex << updateResult << std::dec << std::endl;
-                        std::cerr.flush();
-                        videoErrorCount++;
+                if (shouldDisplay) {
+                    // Create or update texture
+                    if (!state.videoTexture || 
+                        state.videoTextureWidth != state.pendingFrame->width || 
+                        state.videoTextureHeight != state.pendingFrame->height) {
+                        
+                        if (state.videoTexture) {
+                            DestroyVideoTexture(state.videoTexture);
+                            state.videoTexture = nullptr;
+                        }
+                        
+                        state.videoTexture = CreateVideoTexture(state.pendingFrame->width, state.pendingFrame->height);
+                        
+                        if (state.videoTexture) {
+                            state.videoTextureWidth = state.pendingFrame->width;
+                            state.videoTextureHeight = state.pendingFrame->height;
+                            std::cout << "[VIDEO] Texture created: " << state.videoTextureWidth << "x" << state.videoTextureHeight << std::endl;
+                            std::cout.flush();
+                        }
                     }
+                    
+                    // Update texture with frame data
+                    if (state.videoTexture && state.pendingFrame->data) {
+                        int updateResult = SafeUpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
+                                         state.pendingFrame->width, state.pendingFrame->height);
+                        if (updateResult != 0) {
+                            std::cerr << "[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0x" 
+                                      << std::hex << updateResult << std::dec << std::endl;
+                            std::cerr.flush();
+                            videoErrorCount++;
+                        }
+                    }
+                    
+                    // Update time
+                    state.currentTime = (float)videoPTS;
+                    
+                    // Release frame
+                    delete state.pendingFrame;
+                    state.pendingFrame = nullptr;
                 }
-                
-                // Update time
-                state.currentTime = (float)state.pendingFrame->pts;
-                
-                // Release frame
-                delete state.pendingFrame;
-                state.pendingFrame = nullptr;
+            }
+        }
+        
+        // Process audio frames (feed audio output)
+        if (state.audioOutput && state.decoder->hasAudio()) {
+            AudioFrame* audioFrame = state.decoder->getNextAudioFrame();
+            if (audioFrame && audioFrame->data && audioFrame->size > 0) {
+                state.audioOutput->pushAudioFrame(audioFrame);
             }
         }
         
