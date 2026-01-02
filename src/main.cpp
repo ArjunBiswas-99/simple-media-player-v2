@@ -585,6 +585,16 @@ void LoadMediaFile(AppState& state, const std::string& filepath, PlatformWindow 
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // SEH-protected helper functions (no C++ objects with destructors)
+static int SafeUpdateVideoTexture(PlatformTexture texture, uint8_t* data, int width, int height) {
+    __try {
+        UpdateVideoTexture(texture, data, width, height);
+        return 0;
+    }
+    __except(EXCEPTION_EXECUTE_HANDLER) {
+        return GetExceptionCode();
+    }
+}
+
 static int SafeImGuiNewFrame() {
     __try {
         ImGui_ImplDX11_NewFrame();
@@ -759,8 +769,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 
                 // Update texture with frame data
                 if (state.videoTexture && state.pendingFrame->data) {
-                    UpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
+                    int updateResult = SafeUpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
                                      state.pendingFrame->width, state.pendingFrame->height);
+                    if (updateResult != 0) {
+                        std::cerr << "[VIDEO ERROR] UpdateVideoTexture crashed! Code: 0x" 
+                                  << std::hex << updateResult << std::dec << std::endl;
+                        std::cerr.flush();
+                        videoErrorCount++;
+                    }
                 }
                 
                 // Update time
