@@ -1,47 +1,62 @@
-\Downloads\The Heat.mp4
-Duration: 7220.25 seconds
-Video: 1920x800
-Audio: 48000Hz, 2 channels
-Loaded: The Heat.mp4
-[DEBUG VideoDecoder::seek] Called with seconds=1186.55
-[DEBUG VideoDecoder::seek] this pointer=000002027E73CF60
-[DEBUG VideoDecoder::seek] Setting m_seeking=true
-[DEBUG VideoDecoder::seek] m_seeking is now: 1
-[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
-[DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=1186545288
-[DEBUG VideoDecoder::seek] av_seek_frame completed
-[DEBUG VideoDecoder::seek] Flushing video codec buffers
-[DEBUG VideoDecoder::seek] Flushing audio codec buffers
-[DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002027E73CF60
-[DEBUG VideoDecoder::clearQueues] m_seeking=1
-[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
-[DEBUG VideoDecoder::clearQueues] Sleep completed
-[DEBUG VideoDecoder::clearQueues] About to lock video queue
-[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002027E77F7C0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002027E77F5E0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002027E77F550
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002027E77F850
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002027E77F7F0
-[DEBUG VideoDecoder::clearQueues] Video queue cleared
-[DEBUG VideoDecoder::clearQueues] About to lock audio queue
-[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 12
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A17A0
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1700
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1720
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1860
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A15A0
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1540
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A15C0
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1880
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1580
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1620
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1640
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 0000020273160F40
-[DEBUG VideoDecoder::clearQueues] Audio queue cleared
-[DEBUG VideoDecoder::clearQueues] clearQueues completed
-[DEBUG VideoDecoder::seek] clearQueues() returned
-[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
-[DEBUG VideoDecoder::seek] Seek completed successfully
+layer-v2> cmake -B build -A x64       
+-- Building for: Visual Studio 18 2026
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.26200.
+-- The CXX compiler identification is MSVC 19.50.35721.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Program Files (x86)/Microsoft Visual Studio/18/BuildTools/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/cl.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Consider using Ninja for faster builds: cmake -G Ninja
+-- Building for Windows
+-- Video Backend: Direct3D11
+-- Audio Backend: WASAPI
+-- FFmpeg DLLs will be copied from: C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/external/ffmpeg/windows/bin
+-- Configuration complete. Build with: cmake --build build
+-- Configuring done (2.5s)
+-- Generating done (0.1s)
+-- Build files have been written to: C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/build
+PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> cmake --build build --config Release
+MSBuild version 18.0.5+e22287bf1 for .NET Framework
+
+  1>Checking Build System
+  Building Custom Rule C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/CMakeLists.txt
+  imgui.cpp
+  imgui_demo.cpp
+  imgui_draw.cpp
+  imgui_tables.cpp
+  imgui_widgets.cpp
+  imgui_impl_win32.cpp
+  imgui_impl_dx11.cpp
+  Generating Code...
+  imgui.vcxproj -> C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\Release\imgui.lib
+  Building Custom Rule C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/CMakeLists.txt
+  main.cpp
+  VideoDecoder.cpp
+  AudioOutput.cpp
+  platform_windows.cpp
+C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(257,21): error C2589: '(': illegal token o
+n right side of '::' [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
+C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(257,21): error C2059: syntax error: ')' [C 
+:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
+C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(268,27): error C2589: '(': illegal token o 
+n right side of '::' [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
+C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(268,27): error C2059: syntax error: ')' [C 
+:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
+C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(438,40): error C2589: '(': illegal token o 
+n right side of '::' [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
+C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(438,40): error C2059: syntax error: ')' [C 
+:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
+  Generating Code...
+PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> copy external\ffmpeg\windows\bin\*.dll build\Release\
+>> 
+PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> .\build\Release\MediaPlayer.exe
+>> 
+.\build\Release\MediaPlayer.exe : The term '.\build\Release\MediaPlayer.exe' is not recognized as the name of a cmdlet, 
+function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the     
+path is correct and try again.
+At line:1 char:1
++ .\build\Release\MediaPlayer.exe
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : ObjectNotFound: (.\build\Release\MediaPlayer.exe:String) [], CommandNotFoundException        
+    + FullyQualifiedErrorId : CommandNotFoundException
