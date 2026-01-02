@@ -417,18 +417,42 @@ AudioFrame* VideoDecoder::decodeAudioPacket(AVPacket* packet) {
     if (frame->pts != AV_NOPTS_VALUE) {
         AVStream* stream = m_formatCtx->streams[m_audioStreamIndex];
         double time_base = av_q2d(stream->time_base);
-        audioFrame->pts = frame->pts * time_base;
+        double rawPTS = frame->pts * time_base;
         
-        static bool logged = false;
-        if (!logged) {
-            std::cout << "[AUDIO DECODER] First audio frame:" << std::endl;
-            std::cout << "  Raw PTS: " << frame->pts << std::endl;
-            std::cout << "  Time base: " << stream->time_base.num << "/" << stream->time_base.den 
-                      << " = " << time_base << std::endl;
-            std::cout << "  Calculated PTS: " << audioFrame->pts << " seconds" << std::endl;
-            std::cout << "  Frame samples: " << frame->nb_samples << std::endl;
-            std::cout << "  Expected duration: " << ((double)frame->nb_samples / m_sampleRate) << " seconds" << std::endl;
-            logged = true;
+        // CRITICAL FIX: Some files have audio PTS that increments by frame size instead of 1
+        // Detect this and correct it
+        static double lastPTS = -1.0;
+        static double expectedDuration = 0.0;
+        static bool needsCorrection = false;
+        static bool correctionChecked = false;
+        
+        if (!correctionChecked && frame->nb_samples > 0) {
+            expectedDuration = (double)frame->nb_samples / m_sampleRate;
+            
+            if (lastPTS >= 0) {
+                double actualDuration = rawPTS - lastPTS;
+                // If actual duration is more than 10x expected, we need correction
+                if (actualDuration > expectedDuration * 10.0) {
+                    needsCorrection = true;
+                    double correctionFactor = expectedDuration / actualDuration;
+                    std::cout << "[AUDIO DECODER FIX] Detected incorrect PTS scaling!" << std::endl;
+                    std::cout << "  Expected duration: " << expectedDuration << "s" << std::endl;
+                    std::cout << "  Actual duration: " << actualDuration << "s" << std::endl;
+                    std::cout << "  Correction factor: " << correctionFactor << std::endl;
+                }
+                correctionChecked = true;
+            }
+            lastPTS = rawPTS;
+        }
+        
+        // Apply correction if needed
+        if (needsCorrection && frame->nb_samples > 0) {
+            // Calculate PTS based on frame position and duration instead
+            audioFrame->pts = lastPTS + expectedDuration;
+            lastPTS = audioFrame->pts;
+        } else {
+            audioFrame->pts = rawPTS;
+            lastPTS = rawPTS;
         }
     }
     
