@@ -585,6 +585,48 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // Windows entry point
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    // Allocate console for debug output
+    AllocConsole();
+    FILE* fDummy;
+    freopen_s(&fDummy, "CONOUT$", "w", stdout);
+    freopen_s(&fDummy, "CONOUT$", "w", stderr);
+    freopen_s(&fDummy, "CONIN$", "r", stdin);
+    std::cout.clear();
+    std::cerr.clear();
+    std::cin.clear();
+    
+    std::cout << "=== Simple Media Player V2 - Debug Console ===" << std::endl;
+    std::cout << "Windows build with Direct3D11 and WASAPI" << std::endl;
+    std::cout << "===============================================" << std::endl;
+    
+    // Parse command line to get initial file (if provided)
+    std::string initialFile;
+    if (lpCmdLine && strlen(lpCmdLine) > 0) {
+        // Remove quotes if present
+        std::string cmdLine(lpCmdLine);
+        if (!cmdLine.empty() && cmdLine.front() == '"' && cmdLine.back() == '"') {
+            cmdLine = cmdLine.substr(1, cmdLine.length() - 2);
+        }
+        initialFile = cmdLine;
+        std::cout << "Command line file: " << initialFile << std::endl;
+    }
+    
+    // Alternative: parse using GetCommandLineW for better Unicode support
+    if (initialFile.empty()) {
+        int nArgs;
+        LPWSTR* szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
+        if (szArglist != nullptr && nArgs > 1) {
+            // Convert wide string to narrow string
+            int size = WideCharToMultiByte(CP_UTF8, 0, szArglist[1], -1, nullptr, 0, nullptr, nullptr);
+            if (size > 0) {
+                initialFile.resize(size - 1);
+                WideCharToMultiByte(CP_UTF8, 0, szArglist[1], -1, &initialFile[0], size, nullptr, nullptr);
+                std::cout << "Command line file (Unicode): " << initialFile << std::endl;
+            }
+            LocalFree(szArglist);
+        }
+    }
+    
     // Create application window
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"MediaPlayer", nullptr };
     RegisterClassExW(&wc);
@@ -617,6 +659,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Application state
     AppState state;
+    
+    // Load initial file if provided via command line
+    if (!initialFile.empty()) {
+        std::cout << "Loading file from command line: " << initialFile << std::endl;
+        LoadMediaFile(state, initialFile, hwnd);
+    }
 
     // Main loop
     bool done = false;
@@ -707,6 +755,88 @@ void CreateRenderTarget() {
 
 void CleanupRenderTarget() {
     if (g_mainRenderTargetView) { g_mainRenderTargetView->Release(); g_mainRenderTargetView = nullptr; }
+}
+
+// Helper function to load a media file
+void LoadMediaFile(AppState& state, const std::string& filepath, PlatformWindow window) {
+    std::cout << "[LoadMediaFile] Starting to load: " << filepath << std::endl;
+    
+    // Initialize decoder if needed
+    if (!state.decoder) {
+        std::cout << "[LoadMediaFile] Creating VideoDecoder" << std::endl;
+        state.decoder = new VideoDecoder();
+    }
+    if (!state.audioOutput) {
+        std::cout << "[LoadMediaFile] Creating AudioOutput" << std::endl;
+        state.audioOutput = new AudioOutput();
+    }
+    
+    // Open file
+    std::cout << "[LoadMediaFile] Calling decoder->open()" << std::endl;
+    if (state.decoder->open(filepath)) {
+        std::cout << "[LoadMediaFile] File opened successfully!" << std::endl;
+        state.fileLoaded = true;
+        state.duration = (float)state.decoder->getDuration();
+        state.currentTime = 0.0f;
+        std::cout << "[LoadMediaFile] Duration: " << state.duration << " seconds" << std::endl;
+        
+        // Extract filename for title
+        size_t lastSlash = filepath.find_last_of("/\\");
+        state.currentTitle = (lastSlash != std::string::npos) 
+            ? filepath.substr(lastSlash + 1) 
+            : filepath;
+        state.currentFile = state.currentTitle;
+        
+        // Scan directory for playlist
+        ScanDirectoryForMediaFiles(state, filepath);
+        
+        // CRITICAL: Clear any stale pending frame
+        if (state.pendingFrame) {
+            delete state.pendingFrame;
+            state.pendingFrame = nullptr;
+        }
+        
+        // Initialize audio if available
+        if (state.decoder->hasAudio()) {
+            std::cout << "[LoadMediaFile] Has audio - initializing AudioOutput" << std::endl;
+            std::cout << "[LoadMediaFile] Sample rate: " << state.decoder->getSampleRate() << " Hz" << std::endl;
+            std::cout << "[LoadMediaFile] Channels: " << state.decoder->getChannels() << std::endl;
+            bool audioInit = state.audioOutput->initialize(
+                state.decoder->getSampleRate(),
+                state.decoder->getChannels()
+            );
+            std::cout << "[LoadMediaFile] Audio initialized: " << (audioInit ? "SUCCESS" : "FAILED") << std::endl;
+        } else {
+            std::cout << "[LoadMediaFile] No audio stream found" << std::endl;
+        }
+        
+        // Auto-start playback
+        state.isPlaying = true;
+        state.showControls = true;
+        state.showMenuBar = true;
+        state.controlsTimer = 5.0f;
+        state.timeSinceFileLoad = 0.0f;
+        
+        // Reset A/V sync state
+        state.lastVideoFramePTS = 0.0;
+        state.videoStartTime = 0.0;
+        state.droppedFrames = 0;
+        state.displayedFrames = 0;
+        if (state.pendingFrame) {
+            delete state.pendingFrame;
+            state.pendingFrame = nullptr;
+        }
+        
+        std::cout << "[LoadMediaFile] Starting playback..." << std::endl;
+        state.decoder->play();
+        if (state.audioOutput) {
+            state.audioOutput->play();
+        }
+        
+        std::cout << "[LoadMediaFile] Load complete!" << std::endl;
+    } else {
+        std::cerr << "[LoadMediaFile] FAILED to open file!" << std::endl;
+    }
 }
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
