@@ -116,6 +116,9 @@ private:
     std::condition_variable m_videoQueueCV;
     std::condition_variable m_audioQueueCV;
     
+    // Mutex to protect FFmpeg contexts from concurrent access
+    std::mutex m_ffmpegMutex;
+    
     static constexpr int MAX_VIDEO_QUEUE_SIZE = 5;
     static constexpr int MAX_AUDIO_QUEUE_SIZE = 10;
     

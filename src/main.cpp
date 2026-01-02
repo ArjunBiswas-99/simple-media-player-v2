@@ -105,6 +105,7 @@ struct AppState {
     double videoStartTime = 0.0;         // System time when video started
     int droppedFrames = 0;               // Count of dropped frames
     int displayedFrames = 0;             // Count of displayed frames
+    bool justSeeked = false;             // Flag to ignore old frame timestamps after seek
 };
 
 #ifdef __APPLE__
@@ -416,7 +417,16 @@ void ScanDirectoryForMediaFiles(AppState& state, const std::string& filePath) {
                 
                 // Update tracking
                 state.lastVideoFramePTS = videoPTS;
-                state.currentTime = (float)videoPTS;
+                
+                // Only update currentTime from frame if we haven't just seeked
+                if (!state.justSeeked) {
+                    state.currentTime = (float)videoPTS;
+                } else if (videoPTS >= state.currentTime - 0.5) {
+                    // We've reached frames near/past our seek target, resume normal sync
+                    state.currentTime = (float)videoPTS;
+                    state.justSeeked = false;
+                }
+                
                 state.displayedFrames++;
                 
                 // Validate frame data before processing
@@ -474,9 +484,6 @@ void ScanDirectoryForMediaFiles(AppState& state, const std::string& filePath) {
                             
                             free(rgbaData);
                         }
-                        
-                        // Update current time
-                        state.currentTime = (float)frame->pts;
                     }
                     
                     // Always delete the frame after use
@@ -748,9 +755,9 @@ void SetupNetflixTheme() {
     colors[ImGuiCol_SliderGrabActive] = lightGray;
     
     // Header colors (for menu hover)
-    colors[ImGuiCol_Header] = ImVec4(1.0f, 1.0f, 1.0f, 0.08f);
-    colors[ImGuiCol_HeaderHovered] = ImVec4(1.0f, 1.0f, 1.0f, 0.12f);
-    colors[ImGuiCol_HeaderActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.15f);
+    colors[ImGuiCol_Header] = ImVec4(0.898f, 0.078f, 0.078f, 0.2f);         // Netflix red for menu items
+    colors[ImGuiCol_HeaderHovered] = ImVec4(0.898f, 0.078f, 0.078f, 0.4f);  // Brighter red on hover
+    colors[ImGuiCol_HeaderActive] = ImVec4(0.898f, 0.078f, 0.078f, 0.6f);   // Even brighter on click
     
     // Text
     colors[ImGuiCol_Text] = white;
@@ -1062,8 +1069,8 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
     // Close button
     ImGui::SetCursorPos(ImVec2(panelWidth - 50, 20));
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.1f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.15f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.898f, 0.078f, 0.078f, 0.3f));  // Netflix red on hover
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.898f, 0.078f, 0.078f, 0.5f));   // Darker red on click
     
     if (ImGui::Button("X##ClosePlaylist", ImVec2(32, 32))) {
         state.showPlaylistPanel = false;
@@ -1615,20 +1622,31 @@ void RenderNetflixUI(AppState& state) {
         }
         
         // Left Arrow: Skip backward 5s
-        if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow)) {
+        if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) && state.fileLoaded && state.decoder) {
+            std::cout << "[DEBUG] Left arrow pressed - fileLoaded=" << state.fileLoaded 
+                      << " decoder=" << (void*)state.decoder << std::endl;
             state.currentTime = fmaxf(state.currentTime - 5.0f, 0.0f);
+            std::cout << "[DEBUG] Seeking to: " << state.currentTime << std::endl;
             if (state.pendingFrame) {
+                std::cout << "[DEBUG] Deleting pending frame" << std::endl;
                 delete state.pendingFrame;
                 state.pendingFrame = nullptr;
             }
-            if (state.decoder) {
-                state.decoder->seek(state.currentTime);
-                if (state.audioOutput) {
-                    state.audioOutput->clearQueue();
-                    state.audioOutput->setAudioClock(state.currentTime);
-                }
-                state.lastVideoFramePTS = state.currentTime;
+            std::cout << "[DEBUG] Calling decoder->seek()" << std::endl;
+            state.decoder->seek(state.currentTime);
+            std::cout << "[DEBUG] Seek completed" << std::endl;
+            
+            // Set flag to prevent old frames from resetting currentTime
+            state.justSeeked = true;
+            state.videoStartTime = 0.0;
+            
+            if (state.audioOutput) {
+                std::cout << "[DEBUG] Clearing audio queue" << std::endl;
+                state.audioOutput->clearQueue();
+                state.audioOutput->setAudioClock(state.currentTime);
             }
+            state.lastVideoFramePTS = state.currentTime;
+            std::cout << "[DEBUG] Left arrow handler completed" << std::endl;
             // Show skip animation for 0.8s
             state.showSkipAnimation = true;
             state.skipAnimationTimer = 0.8f;
@@ -1639,20 +1657,31 @@ void RenderNetflixUI(AppState& state) {
         }
         
         // Right Arrow: Skip forward 5s
-        if (ImGui::IsKeyPressed(ImGuiKey_RightArrow)) {
+        if (ImGui::IsKeyPressed(ImGuiKey_RightArrow) && state.fileLoaded && state.decoder) {
+            std::cout << "[DEBUG] Right arrow pressed - fileLoaded=" << state.fileLoaded 
+                      << " decoder=" << (void*)state.decoder << std::endl;
             state.currentTime = fminf(state.currentTime + 5.0f, state.duration);
+            std::cout << "[DEBUG] Seeking to: " << state.currentTime << std::endl;
             if (state.pendingFrame) {
+                std::cout << "[DEBUG] Deleting pending frame" << std::endl;
                 delete state.pendingFrame;
                 state.pendingFrame = nullptr;
             }
-            if (state.decoder) {
-                state.decoder->seek(state.currentTime);
-                if (state.audioOutput) {
-                    state.audioOutput->clearQueue();
-                    state.audioOutput->setAudioClock(state.currentTime);
-                }
-                state.lastVideoFramePTS = state.currentTime;
+            std::cout << "[DEBUG] Calling decoder->seek()" << std::endl;
+            state.decoder->seek(state.currentTime);
+            std::cout << "[DEBUG] Seek completed" << std::endl;
+            
+            // Set flag to prevent old frames from resetting currentTime
+            state.justSeeked = true;
+            state.videoStartTime = 0.0;
+            
+            if (state.audioOutput) {
+                std::cout << "[DEBUG] Clearing audio queue" << std::endl;
+                state.audioOutput->clearQueue();
+                state.audioOutput->setAudioClock(state.currentTime);
             }
+            state.lastVideoFramePTS = state.currentTime;
+            std::cout << "[DEBUG] Right arrow handler completed" << std::endl;
             // Show skip animation for 0.8s
             state.showSkipAnimation = true;
             state.skipAnimationTimer = 0.8f;
@@ -1833,6 +1862,9 @@ void RenderNetflixUI(AppState& state) {
         ImGui::PushStyleColor(ImGuiCol_FrameBgActive, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Transparent when active
         ImGui::PushStyleColor(ImGuiCol_SliderGrab, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Invisible grab
         ImGui::PushStyleColor(ImGuiCol_SliderGrabActive, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Invisible grab when active
+        ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Remove border
+        ImGui::PushStyleColor(ImGuiCol_NavHighlight, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Remove nav highlight
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 0.0f); // No border
         ImGui::PushStyleVar(ImGuiStyleVar_GrabMinSize, 16.0f);
         
         ImGui::PushItemWidth(progressWidth);
@@ -1847,6 +1879,10 @@ void RenderNetflixUI(AppState& state) {
                 }
                 
                 state.decoder->seek(state.currentTime);
+                
+                // Set flag to prevent old frames from resetting currentTime
+                state.justSeeked = true;
+                state.videoStartTime = 0.0;
                 
                 // Reset audio clock to match seek position
                 if (state.audioOutput) {
@@ -1887,16 +1923,16 @@ void RenderNetflixUI(AppState& state) {
                 IM_COL32(229, 9, 20, (int)(255 * alpha)), 16);
         }
         
-        ImGui::PopStyleVar();
-        ImGui::PopStyleColor(5); // Pop 5 colors now (was 3)
+        ImGui::PopStyleVar(2); // Pop 2 style vars
+        ImGui::PopStyleColor(7); // Pop 7 colors
         
         // Control buttons (40px from bottom)
         float controlsY = screenSize.y - 40;
         ImGui::SetCursorPos(ImVec2(50, controlsY - 24));
         
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.1f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.15f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.898f, 0.078f, 0.078f, 0.3f));  // Netflix red on hover
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.898f, 0.078f, 0.078f, 0.5f));   // Darker red on click
         
         // Play/Pause button (64x64 - bigger for Netflix feel)
         ImVec2 playButtonPos = ImGui::GetCursorScreenPos();
@@ -1940,8 +1976,11 @@ void RenderNetflixUI(AppState& state) {
         
         // Skip backward button (56x56 - bigger)
         ImVec2 skipBackPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##SkipBack", ImVec2(56, 56))) {
+        if (ImGui::Button("##SkipBack", ImVec2(56, 56)) && state.fileLoaded && state.decoder) {
+            std::cout << "[DEBUG] Skip back button pressed - fileLoaded=" << state.fileLoaded 
+                      << " decoder=" << (void*)state.decoder << std::endl;
             state.currentTime = fmaxf(state.currentTime - 5.0f, 0.0f);
+            std::cout << "[DEBUG] Seeking to: " << state.currentTime << std::endl;
             
             // Trigger skip animation
             state.showSkipAnimation = true;
@@ -1951,20 +1990,26 @@ void RenderNetflixUI(AppState& state) {
             
             // CRITICAL: Clear pending frame BEFORE seek
             if (state.pendingFrame) {
+                std::cout << "[DEBUG] Deleting pending frame" << std::endl;
                 delete state.pendingFrame;
                 state.pendingFrame = nullptr;
             }
             
-            if (state.decoder) {
-                state.decoder->seek(state.currentTime);
-                // Reset audio clock to match seek position
-                if (state.audioOutput) {
-                    state.audioOutput->clearQueue();
-                    state.audioOutput->setAudioClock(state.currentTime);
-                }
-                // Reset video timing
-                state.lastVideoFramePTS = state.currentTime;
+            std::cout << "[DEBUG] Calling decoder->seek()" << std::endl;
+            state.decoder->seek(state.currentTime);
+            std::cout << "[DEBUG] Seek completed" << std::endl;
+            
+            // Set flag to prevent old frames from resetting currentTime
+            state.justSeeked = true;
+            state.videoStartTime = 0.0;
+            
+            // Reset audio clock to match seek position
+            if (state.audioOutput) {
+                state.audioOutput->clearQueue();
+                state.audioOutput->setAudioClock(state.currentTime);
             }
+            // Reset video timing
+            state.lastVideoFramePTS = state.currentTime;
         }
         state.skipBackHovered = ImGui::IsItemHovered();
         float targetSkipBackAnim = state.skipBackHovered ? 1.0f : 0.0f;
@@ -1978,8 +2023,11 @@ void RenderNetflixUI(AppState& state) {
         
         // Skip forward button (56x56 - bigger)
         ImVec2 skipForwardPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##SkipForward", ImVec2(56, 56))) {
+        if (ImGui::Button("##SkipForward", ImVec2(56, 56)) && state.fileLoaded && state.decoder) {
+            std::cout << "[DEBUG] Skip forward button pressed - fileLoaded=" << state.fileLoaded 
+                      << " decoder=" << (void*)state.decoder << std::endl;
             state.currentTime = fminf(state.currentTime + 5.0f, state.duration);
+            std::cout << "[DEBUG] Seeking to: " << state.currentTime << std::endl;
             
             // Trigger skip animation
             state.showSkipAnimation = true;
@@ -1989,20 +2037,26 @@ void RenderNetflixUI(AppState& state) {
             
             // CRITICAL: Clear pending frame BEFORE seek
             if (state.pendingFrame) {
+                std::cout << "[DEBUG] Deleting pending frame" << std::endl;
                 delete state.pendingFrame;
                 state.pendingFrame = nullptr;
             }
             
-            if (state.decoder) {
-                state.decoder->seek(state.currentTime);
-                // Reset audio clock to match seek position
-                if (state.audioOutput) {
-                    state.audioOutput->clearQueue();
-                    state.audioOutput->setAudioClock(state.currentTime);
-                }
-                // Reset video timing
-                state.lastVideoFramePTS = state.currentTime;
+            std::cout << "[DEBUG] Calling decoder->seek()" << std::endl;
+            state.decoder->seek(state.currentTime);
+            std::cout << "[DEBUG] Seek completed" << std::endl;
+            
+            // Set flag to prevent old frames from resetting currentTime
+            state.justSeeked = true;
+            state.videoStartTime = 0.0;
+            
+            // Reset audio clock to match seek position
+            if (state.audioOutput) {
+                state.audioOutput->clearQueue();
+                state.audioOutput->setAudioClock(state.currentTime);
             }
+            // Reset video timing
+            state.lastVideoFramePTS = state.currentTime;
         }
         state.skipForwardHovered = ImGui::IsItemHovered();
         float targetSkipForwardAnim = state.skipForwardHovered ? 1.0f : 0.0f;

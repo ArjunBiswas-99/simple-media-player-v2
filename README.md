@@ -506,7 +506,133 @@ simple-media-player-v2/
 
 ---
 
-## 📄 License
+## � Debugging Crash Issues
+
+### Systematic Approach to Diagnosing Segmentation Faults
+
+When encountering crashes (segfaults, exit code 139), follow this structured debugging methodology:
+
+#### 1. Identify the Pattern
+- **Reproduce consistently**: Note exact steps to trigger crash (e.g., "crashes on 2nd/4th seek operation")
+- **Check for timing**: Does it happen immediately or after repeated actions?
+- **Isolate the feature**: Does crash occur with specific operations (seeking, file loading, playback)?
+
+#### 2. Add Strategic Debug Logging
+```cpp
+// Log at function entry/exit
+std::cout << "[DEBUG ClassName::methodName] Entry, this=" << (void*)this << std::endl;
+
+// Log before/after critical operations
+std::cout << "[DEBUG] About to call FFmpeg function" << std::endl;
+functionCall();
+std::cout << "[DEBUG] FFmpeg function completed" << std::endl;
+
+// Log mutex locks/unlocks
+std::cout << "[DEBUG] Acquiring mutex" << std::endl;
+std::lock_guard<std::mutex> lock(myMutex);
+std::cout << "[DEBUG] Mutex acquired" << std::endl;
+
+// Log thread IDs for multi-threaded issues
+std::cout << "[DEBUG] Thread ID: " << std::this_thread::get_id() << std::endl;
+```
+
+#### 3. Identify Crash Location
+From debug logs, find the **last successful log** before crash - the crash happens in the next operation.
+
+Example:
+```
+[DEBUG] About to sleep for 50ms     ← Last log
+zsh: segmentation fault             ← Crash here
+```
+**Conclusion**: Crash happens during or immediately after the sleep operation.
+
+#### 4. Analyze Root Cause Categories
+
+**Race Conditions (Multi-threaded)**
+- Symptoms: Crash happens after N iterations, timing-dependent
+- Signs: Multiple threads accessing shared data (FFmpeg contexts, queues, member variables)
+- Solution: Add mutex protection around shared resource access
+- Key insight: Checking a flag (`if (m_seeking)`) doesn't prevent TOCTOU (Time-Of-Check-Time-Of-Use) bugs
+
+**Memory Corruption**
+- Symptoms: Crash in unrelated system calls (sleep, malloc, etc.)
+- Signs: Crash location changes between runs, heap corruption messages
+- Solution: Check for double-free, use-after-free, buffer overflows
+- Tool: Use AddressSanitizer (`-fsanitize=address`)
+
+**Thread-Unsafe Library Usage**
+- Symptoms: Crash when calling library functions from multiple threads
+- Signs: FFmpeg, OpenGL, or other C libraries accessed concurrently
+- Solution: Serialize access with mutexes or use thread-local contexts
+- Example: FFmpeg's `AVFormatContext` is NOT thread-safe
+
+#### 5. Implement Fix with Verification
+```cpp
+// Example: Protecting FFmpeg contexts with mutex
+std::mutex m_ffmpegMutex;
+
+// In decode thread:
+{
+    std::lock_guard<std::mutex> lock(m_ffmpegMutex);
+    av_read_frame(m_formatCtx, packet);  // Protected
+    decodePacket(packet);                 // Protected
+}
+
+// In main thread (seek):
+{
+    std::lock_guard<std::mutex> lock(m_ffmpegMutex);
+    av_seek_frame(m_formatCtx, ...);     // Protected
+    avcodec_flush_buffers(...);          // Protected
+}
+```
+
+#### 6. Common Pitfalls Solved in This Project
+
+**Seeking Crash (Race Condition)**
+- **Problem**: Main thread modified FFmpeg contexts while decode thread was using them
+- **Symptom**: Crash on 2nd-6th seek, during `clearQueues()` sleep
+- **Root Cause**: `av_read_frame()` in decode thread overlapped with `av_seek_frame()` in main thread
+- **Solution**: Added `m_ffmpegMutex` to serialize all FFmpeg API calls
+
+**Seek Position Jump-Back**
+- **Problem**: After seeking forward, position immediately jumped back
+- **Symptom**: Video seeks to +5s, then resets to original position
+- **Root Cause**: Old frames in pipeline had old PTS, which overwrote `currentTime`
+- **Solution**: Added `justSeeked` flag to ignore frame timestamps until reaching target position
+
+#### 7. Debugging Tools
+```bash
+# Run with debugger to get backtrace
+lldb ./build/MediaPlayer
+(lldb) run
+# After crash:
+(lldb) bt all           # Backtrace of all threads
+(lldb) thread list      # Show all threads
+(lldb) frame variable   # Show local variables
+
+# Check for memory issues
+cmake -DCMAKE_CXX_FLAGS="-fsanitize=address" -B build
+cmake --build build
+./build/MediaPlayer
+
+# Monitor system calls (macOS)
+sudo dtruss -p <PID>
+
+# Check crash logs (macOS)
+log show --predicate 'process == "MediaPlayer"' --last 5m
+```
+
+#### 8. Prevention Strategies
+- **Minimize shared mutable state** between threads
+- **Document thread ownership** of data structures
+- **Use RAII** for mutex locks (std::lock_guard)
+- **Atomic flags** for boolean state (`std::atomic<bool>`)
+- **Validate pointers** before dereferencing (`if (ptr)`)
+- **Clear after delete** to catch use-after-free (`ptr = nullptr`)
+
+---
+
+## �📄 License
 
 MIT License - Feel free to use and modify
 

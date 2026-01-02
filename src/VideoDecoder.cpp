@@ -220,24 +220,49 @@ void VideoDecoder::stop() {
 }
 
 void VideoDecoder::seek(double seconds) {
-    if (!m_formatCtx) return;
+    std::cout << "[DEBUG VideoDecoder::seek] Called with seconds=" << seconds << std::endl;
+    std::cout << "[DEBUG VideoDecoder::seek] this pointer=" << (void*)this << std::endl;
     
+    if (!m_formatCtx) {
+        std::cout << "[DEBUG VideoDecoder::seek] m_formatCtx is NULL, returning" << std::endl;
+        return;
+    }
+    
+    std::cout << "[DEBUG VideoDecoder::seek] Setting m_seeking=true" << std::endl;
     m_seeking = true;
+    std::cout << "[DEBUG VideoDecoder::seek] m_seeking is now: " << m_seeking.load() << std::endl;
+    
+    // Give decode thread time to see m_seeking flag and stop
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    
+    // Lock FFmpeg mutex to prevent decode thread from using contexts
+    std::cout << "[DEBUG VideoDecoder::seek] Locking FFmpeg mutex" << std::endl;
+    std::lock_guard<std::mutex> ffmpegLock(m_ffmpegMutex);
+    std::cout << "[DEBUG VideoDecoder::seek] FFmpeg mutex locked" << std::endl;
     
     int64_t timestamp = (int64_t)(seconds * AV_TIME_BASE);
+    std::cout << "[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=" << timestamp << std::endl;
     av_seek_frame(m_formatCtx, -1, timestamp, AVSEEK_FLAG_BACKWARD);
+    std::cout << "[DEBUG VideoDecoder::seek] av_seek_frame completed" << std::endl;
     
     if (m_videoCodecCtx) {
+        std::cout << "[DEBUG VideoDecoder::seek] Flushing video codec buffers" << std::endl;
         avcodec_flush_buffers(m_videoCodecCtx);
     }
     if (m_audioCodecCtx) {
+        std::cout << "[DEBUG VideoDecoder::seek] Flushing audio codec buffers" << std::endl;
         avcodec_flush_buffers(m_audioCodecCtx);
     }
     
+    std::cout << "[DEBUG VideoDecoder::seek] About to call clearQueues()" << std::endl;
     clearQueues();
+    std::cout << "[DEBUG VideoDecoder::seek] clearQueues() returned" << std::endl;
     
     m_currentTime = seconds;
+    std::cout << "[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false" << std::endl;
+    // FFmpeg mutex will be unlocked here when ffmpegLock goes out of scope
     m_seeking = false;
+    std::cout << "[DEBUG VideoDecoder::seek] Seek completed successfully" << std::endl;
 }
 
 void VideoDecoder::decodeLoop() {
@@ -249,6 +274,12 @@ void VideoDecoder::decodeLoop() {
             continue;
         }
         
+        // Skip decoding if we're currently seeking
+        if (m_seeking) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+        
         // Check if queues are full
         {
             std::unique_lock<std::mutex> lock(m_videoQueueMutex);
@@ -256,6 +287,14 @@ void VideoDecoder::decodeLoop() {
                 m_videoQueueCV.wait_for(lock, std::chrono::milliseconds(10));
                 continue;
             }
+        }
+        
+        // Lock FFmpeg mutex before accessing contexts
+        std::lock_guard<std::mutex> ffmpegLock(m_ffmpegMutex);
+        
+        // Double-check m_seeking after acquiring lock
+        if (m_seeking) {
+            continue;
         }
         
         // Read packet
@@ -414,19 +453,47 @@ AudioFrame* VideoDecoder::getNextAudioFrame() {
 }
 
 void VideoDecoder::clearQueues() {
+    std::cout << "[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=" << (void*)this << std::endl;
+    std::cout << "[DEBUG VideoDecoder::clearQueues] m_seeking=" << m_seeking.load() << std::endl;
+    
+    // Wait longer for decode thread to detect m_seeking flag and stop adding frames
+    std::cout << "[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms" << std::endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::cout << "[DEBUG VideoDecoder::clearQueues] Sleep completed" << std::endl;
+    
+    std::cout << "[DEBUG VideoDecoder::clearQueues] About to lock video queue" << std::endl;
+    
     {
         std::lock_guard<std::mutex> lock(m_videoQueueMutex);
+        std::cout << "[DEBUG VideoDecoder::clearQueues] Video queue locked, size: " << m_videoQueue.size() << std::endl;
+        
         while (!m_videoQueue.empty()) {
-            delete m_videoQueue.front();
+            VideoFrame* frame = m_videoQueue.front();
+            if (frame != nullptr) {
+                std::cout << "[DEBUG VideoDecoder::clearQueues] Deleting video frame at " << (void*)frame << std::endl;
+                delete frame;
+            }
             m_videoQueue.pop();
         }
+        std::cout << "[DEBUG VideoDecoder::clearQueues] Video queue cleared" << std::endl;
     }
+    
+    std::cout << "[DEBUG VideoDecoder::clearQueues] About to lock audio queue" << std::endl;
     
     {
         std::lock_guard<std::mutex> lock(m_audioQueueMutex);
+        std::cout << "[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: " << m_audioQueue.size() << std::endl;
+        
         while (!m_audioQueue.empty()) {
-            delete m_audioQueue.front();
+            AudioFrame* frame = m_audioQueue.front();
+            if (frame != nullptr) {
+                std::cout << "[DEBUG VideoDecoder::clearQueues] Deleting audio frame at " << (void*)frame << std::endl;
+                delete frame;
+            }
             m_audioQueue.pop();
         }
+        std::cout << "[DEBUG VideoDecoder::clearQueues] Audio queue cleared" << std::endl;
     }
+    
+    std::cout << "[DEBUG VideoDecoder::clearQueues] clearQueues completed" << std::endl;
 }
