@@ -405,6 +405,9 @@ void AudioOutput::audioThreadFunc() {
         return;
     }
     
+    std::cout << "[AUDIO THREAD] WASAPI buffer size: " << bufferFrameCount 
+              << " frames (" << (double)bufferFrameCount / m_sampleRate << "s)" << std::endl;
+    
     static auto lastCallbackTime = std::chrono::high_resolution_clock::now();
     static int callbackCount = 0;
     
