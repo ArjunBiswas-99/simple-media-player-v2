@@ -666,13 +666,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (!initialFile.empty()) {
         std::cout << "[MAIN] Loading file from command line: " << initialFile << std::endl;
         std::cout.flush();
-        try {
+        __try {
             LoadMediaFile(state, initialFile, hwnd);
-        } catch (const std::exception& e) {
-            std::cerr << "[MAIN ERROR] Failed to load file: " << e.what() << std::endl;
-            std::cerr.flush();
-        } catch (...) {
-            std::cerr << "[MAIN ERROR] Unknown error loading file" << std::endl;
+        }
+        __except(EXCEPTION_EXECUTE_HANDLER) {
+            std::cerr << "[MAIN ERROR] SEH exception loading file! Code: " 
+                      << GetExceptionCode() << std::endl;
             std::cerr.flush();
         }
     }
@@ -698,7 +697,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         // Process video frames with A/V synchronization (Windows)
         if (state.fileLoaded && state.decoder && state.decoder->hasVideo() && state.isPlaying && videoErrorCount < MAX_VIDEO_ERRORS) {
-            try {
+            __try {
                 // Get audio clock for synchronization
                 double audioClock = 0.0;
                 bool useAudioSync = false;
@@ -800,20 +799,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                         
                         // Update texture with frame data
                         if (state.videoTexture && state.pendingFrame->data) {
-                            __try {
-                                std::cout << "[VIDEO] Updating texture with frame data..." << std::endl;
-                                std::cout.flush();
-                                UpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
-                                                 state.pendingFrame->width, state.pendingFrame->height);
-                                std::cout << "[VIDEO] Texture updated successfully" << std::endl;
-                                std::cout.flush();
-                            }
-                            __except(EXCEPTION_EXECUTE_HANDLER) {
-                                std::cerr << "[VIDEO ERROR] SEH exception in UpdateVideoTexture! Code: " 
-                                          << GetExceptionCode() << std::endl;
-                                std::cerr.flush();
-                                videoErrorCount++;
-                            }
+                            std::cout << "[VIDEO] Updating texture with frame data..." << std::endl;
+                            std::cout.flush();
+                            UpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
+                                             state.pendingFrame->width, state.pendingFrame->height);
+                            std::cout << "[VIDEO] Texture updated successfully" << std::endl;
+                            std::cout.flush();
                         }
                         
                         // Update time
@@ -824,16 +815,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                         state.pendingFrame = nullptr;
                     }
                 }
-            } catch (const std::exception& e) {
-                std::cerr << "[VIDEO ERROR] Exception in video processing: " << e.what() << std::endl;
-                std::cerr.flush();
-                videoErrorCount++;
-                if (state.pendingFrame) {
-                    delete state.pendingFrame;
-                    state.pendingFrame = nullptr;
-                }
-            } catch (...) {
-                std::cerr << "[VIDEO ERROR] Unknown exception in video processing!" << std::endl;
+            }
+            __except(EXCEPTION_EXECUTE_HANDLER) {
+                std::cerr << "[VIDEO ERROR] SEH exception in video processing! Code: " 
+                          << GetExceptionCode() << std::endl;
                 std::cerr.flush();
                 videoErrorCount++;
                 if (state.pendingFrame) {
@@ -865,19 +850,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             continue;
         }
 
-        // Render UI (wrapped in try-catch to prevent crashes)
+        // Render UI (wrapped in SEH to prevent crashes)
         __try {
-            try {
-                RenderMenuBar(state);
-                RenderNetflixUI(state, hwnd);
-                RenderPlaylistPanel(state, ImVec2((float)io.DisplaySize.x, (float)io.DisplaySize.y));
-            } catch (const std::exception& e) {
-                std::cerr << "[UI ERROR] Exception in UI rendering: " << e.what() << std::endl;
-                std::cerr.flush();
-            } catch (...) {
-                std::cerr << "[UI ERROR] Unknown exception in UI rendering" << std::endl;
-                std::cerr.flush();
-            }
+            RenderMenuBar(state);
+            RenderNetflixUI(state, hwnd);
+            RenderPlaylistPanel(state, ImVec2((float)io.DisplaySize.x, (float)io.DisplaySize.y));
         }
         __except(EXCEPTION_EXECUTE_HANDLER) {
             std::cerr << "[UI ERROR] SEH exception in UI rendering! Code: " 
