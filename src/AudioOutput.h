@@ -60,6 +60,11 @@ private:
     std::thread m_audioThread;
     std::atomic<bool> m_stopAudioThread;
     
+    // Partial frame handling for WASAPI
+    AudioFrame* m_partialFrame;
+    UINT32 m_partialFrameOffset;  // Offset in samples
+    std::mutex m_partialFrameMutex;
+    
     void audioThreadFunc();
 #endif
     

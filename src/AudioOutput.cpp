@@ -21,6 +21,8 @@ AudioOutput::AudioOutput()
     , m_renderClient(nullptr)
     , m_audioEvent(nullptr)
     , m_stopAudioThread(false)
+    , m_partialFrame(nullptr)
+    , m_partialFrameOffset(0)
 #endif
 {
 #ifdef __APPLE__
@@ -227,6 +229,12 @@ void AudioOutput::shutdown() {
     if (m_audioEvent) {
         CloseHandle(m_audioEvent);
         m_audioEvent = nullptr;
+    }
+    
+    // Clean up partial frame
+    if (m_partialFrame) {
+        delete m_partialFrame;
+        m_partialFrame = nullptr;
     }
 #endif
     
@@ -460,16 +468,30 @@ void AudioOutput::audioThreadFunc() {
         
         while (framesFilled < numFramesAvailable) {
             AudioFrame* frame = nullptr;
+            UINT32 frameOffset = 0;
             
             static int totalFramesProcessed = 0;
             static double totalClockAdvance = 0.0;
             static int loopIterations = 0;
             
+            // Check for partial frame first
             {
+                std::lock_guard<std::mutex> lock(m_partialFrameMutex);
+                if (m_partialFrame) {
+                    frame = m_partialFrame;
+                    frameOffset = m_partialFrameOffset;
+                    m_partialFrame = nullptr;
+                    m_partialFrameOffset = 0;
+                }
+            }
+            
+            // Get new frame from queue if no partial frame
+            if (!frame) {
                 std::lock_guard<std::mutex> lock(m_queueMutex);
                 if (!m_frameQueue.empty()) {
                     frame = m_frameQueue.front();
                     m_frameQueue.pop();
+                    frameOffset = 0;
                 }
             }
             
@@ -497,40 +519,62 @@ void AudioOutput::audioThreadFunc() {
                 break;
             }
             
-            // Calculate frame size first
-            UINT32 frameSamples = frame->size / (m_channels * sizeof(float));
+            // Calculate frame size and available samples from current offset
+            UINT32 totalFrameSamples = frame->size / (m_channels * sizeof(float));
+            UINT32 availableSamples = totalFrameSamples - frameOffset;
             
-            // Update audio clock - advance gradually based on samples played
-            // Don't jump to frame PTS as this causes video sync issues
-            double frameDuration = (double)frameSamples / m_sampleRate;
-            double oldClock = m_audioClock;
+            // Detect seek: if this is start of a new frame and PTS discontinuity detected
+            bool isSeekDetected = (frameOffset == 0) && 
+                                  (m_audioClock > 0.001) && 
+                                  (fabs(frame->pts - m_audioClock) > 1.0);
             
-            // Use frame PTS for initial sync or large discontinuities only
-            if (m_audioClock < 0.001 || fabs(frame->pts - m_audioClock) > 1.0) {
-                // First frame or seek detected - sync to frame PTS
+            if (isSeekDetected) {
+                // Seek detected - sync to frame PTS and clear any stale partial frame
                 m_audioClock = frame->pts;
                 m_lastClockUpdate = frame->pts;
-                
-                static int initLogCount = 0;
-                if (initLogCount++ < 2) {
-                    std::cout << "[AUDIO THREAD] Clock sync to PTS: " << frame->pts << std::endl;
-                }
-            } else {
-                // Normal playback - advance clock by actual duration
-                m_audioClock += frameDuration;
+                std::cout << "[AUDIO THREAD] Clock sync to PTS: " << frame->pts << std::endl;
+            } else if (m_audioClock < 0.001 && frameOffset == 0) {
+                // Very first frame - initialize clock
+                m_audioClock = frame->pts;
                 m_lastClockUpdate = frame->pts;
-                
-                totalClockAdvance += (m_audioClock - oldClock);
-                totalFramesProcessed++;
             }
             
             static int audioLogCounter = 0;
             if (audioLogCounter++ % 100 == 0) {
                 std::cout << "[AUDIO THREAD] Frame PTS: " << frame->pts 
                           << ", Clock: " << m_audioClock 
-                          << ", Duration: " << frameDuration
-                          << ", SampleRate: " << m_sampleRate 
-                          << ", FrameSamples: " << frameSamples << std::endl;
+                          << ", Offset: " << frameOffset
+                          << "/" << totalFrameSamples << " samples" << std::endl;
+            }
+            
+            // Calculate how many samples we can copy from this frame
+            UINT32 samplesToCopy = std::min(availableSamples, numFramesAvailable - framesFilled);
+            
+            // Copy audio data from the correct offset
+            float* sourceData = (float*)frame->data + (frameOffset * m_channels);
+            memcpy(floatBuffer, sourceData, samplesToCopy * m_channels * sizeof(float));
+            floatBuffer += samplesToCopy * m_channels;
+            framesFilled += samplesToCopy;
+            
+            // Advance clock by the actual samples written
+            double actualDuration = (double)samplesToCopy / m_sampleRate;
+            double oldClock = m_audioClock;
+            m_audioClock += actualDuration;
+            m_lastClockUpdate = frame->pts;
+            
+            totalClockAdvance += (m_audioClock - oldClock);
+            
+            // Check if frame has remaining data
+            UINT32 newOffset = frameOffset + samplesToCopy;
+            if (newOffset < totalFrameSamples) {
+                // Frame has remaining data - save as partial frame
+                std::lock_guard<std::mutex> lock(m_partialFrameMutex);
+                m_partialFrame = frame;
+                m_partialFrameOffset = newOffset;
+            } else {
+                // Frame fully consumed
+                delete frame;
+                totalFramesProcessed++;
             }
             
             // Log diagnostic every 100 iterations
@@ -542,16 +586,6 @@ void AudioOutput::audioThreadFunc() {
                 totalClockAdvance = 0.0;
             }
             loopIterations++;
-            
-            // Calculate how many frames we can copy
-            UINT32 framesToCopy = std::min(frameSamples, numFramesAvailable - framesFilled);
-            
-            // Copy audio data
-            memcpy(floatBuffer, frame->data, framesToCopy * m_channels * sizeof(float));
-            floatBuffer += framesToCopy * m_channels;
-            framesFilled += framesToCopy;
-            
-            delete frame;
         }
         
         // Release buffer
