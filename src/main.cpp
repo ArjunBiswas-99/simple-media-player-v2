@@ -63,6 +63,22 @@ struct AppState {
     int skipAnimationDirection = 0;  // -1 = backward, +1 = forward
     int skipAnimationSeconds = 5;    // How many seconds to show (5s for arrow keys)
     
+    // Netflix-style accumulating seek animation
+    double lastSkipBackTime = 0.0;
+    double lastSkipForwardTime = 0.0;
+    int accumulatedSkipBackSeconds = 0;
+    int accumulatedSkipForwardSeconds = 0;
+    float skipBackAnimTimer = 0.0f;
+    float skipForwardAnimTimer = 0.0f;
+    bool showSkipBackAccumulation = false;
+    bool showSkipForwardAccumulation = false;
+    ImVec2 skipBackButtonPos = ImVec2(0, 0);  // Position of skip back button for animation
+    ImVec2 skipForwardButtonPos = ImVec2(0, 0);  // Position of skip forward button for animation
+    float controlButtonSize = 48.0f;  // Size of control buttons
+    
+    // Pause overlay state (Netflix-style large icons)
+    float pauseOverlayTimer = 3.0f;  // Fade after 3 seconds of pause
+    
     // 2x speed mode (click and hold)
     bool is2xSpeedMode = false;
     bool show2xSpeedIndicator = false;
@@ -93,6 +109,11 @@ struct AppState {
     float audioButtonHoverAnim = 0.0f;
     float subtitlesHoverAnim = 0.0f;
     float fullscreenHoverAnim = 0.0f;
+    
+    // Tooltip state
+    float tooltipHoverTime = 0.0f;
+    const char* tooltipText = nullptr;
+    ImVec2 tooltipPos = ImVec2(0, 0);
     
     // Video playback
     VideoDecoder* decoder = nullptr;
@@ -796,6 +817,42 @@ void DrawGradientOverlay(ImDrawList* draw, ImVec2 start, ImVec2 end, ImU32 color
     draw->AddRectFilledMultiColor(start, end, colorTop, colorTop, colorBottom, colorBottom);
 }
 
+// Netflix-style tooltip helper
+void ShowTooltip(AppState& state, const char* text, float hoverTime = 0.5f) {
+    if (ImGui::IsItemHovered()) {
+        state.tooltipHoverTime += ImGui::GetIO().DeltaTime;
+        if (state.tooltipHoverTime >= hoverTime) {
+            state.tooltipText = text;
+            state.tooltipPos = ImGui::GetItemRectMin();
+            state.tooltipPos.y -= 35;  // Above the button
+            state.tooltipPos.x += ImGui::GetItemRectSize().x * 0.5f;  // Center
+        }
+    } else {
+        state.tooltipHoverTime = 0.0f;
+    }
+}
+
+// Render accumulated tooltip
+void RenderTooltip(AppState& state) {
+    if (state.tooltipText && state.tooltipHoverTime >= 0.5f) {
+        ImDrawList* draw = ImGui::GetWindowDrawList();
+        ImVec2 textSize = ImGui::CalcTextSize(state.tooltipText);
+        float padding = 8.0f;
+        ImVec2 bgMin = ImVec2(state.tooltipPos.x - textSize.x * 0.5f - padding, state.tooltipPos.y - padding);
+        ImVec2 bgMax = ImVec2(state.tooltipPos.x + textSize.x * 0.5f + padding, state.tooltipPos.y + textSize.y + padding);
+        
+        // Dark background with slight transparency
+        draw->AddRectFilled(bgMin, bgMax, IM_COL32(20, 20, 20, 240), 4.0f);
+        draw->AddRect(bgMin, bgMax, IM_COL32(80, 80, 80, 255), 4.0f, 0, 1.0f);
+        
+        // White text
+        draw->AddText(ImVec2(state.tooltipPos.x - textSize.x * 0.5f, state.tooltipPos.y),
+            IM_COL32(255, 255, 255, 255), state.tooltipText);
+    }
+    // Reset for next frame
+    state.tooltipText = nullptr;
+}
+
 void DrawPlayIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color) {
     ImVec2 points[3] = {
         ImVec2(center.x - size * 0.3f, center.y - size * 0.45f),
@@ -825,22 +882,31 @@ void DrawPauseIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color) {
 void DrawSkipIcon(ImDrawList* draw, ImVec2 center, float size, bool forward, ImU32 color) {
     float direction = forward ? 1.0f : -1.0f;
     
-    // Arrow triangle
-    ImVec2 points[3] = {
-        ImVec2(center.x + direction * size * 0.15f, center.y),
-        ImVec2(center.x + direction * size * -0.25f, center.y - size * 0.35f),
-        ImVec2(center.x + direction * size * -0.25f, center.y + size * 0.35f)
+    // First triangle
+    ImVec2 tri1[3] = {
+        ImVec2(center.x + direction * size * 0.2f, center.y),
+        ImVec2(center.x + direction * size * -0.2f, center.y - size * 0.4f),
+        ImVec2(center.x + direction * size * -0.2f, center.y + size * 0.4f)
     };
-    draw->AddTriangleFilled(points[0], points[1], points[2], color);
+    draw->AddTriangleFilled(tri1[0], tri1[1], tri1[2], color);
     
-    // "10" text
-    char text[] = "10";
+    // Second triangle (offset)
+    float offset = size * 0.35f;
+    ImVec2 tri2[3] = {
+        ImVec2(center.x + direction * (size * 0.2f + offset), center.y),
+        ImVec2(center.x + direction * (size * -0.2f + offset), center.y - size * 0.4f),
+        ImVec2(center.x + direction * (size * -0.2f + offset), center.y + size * 0.4f)
+    };
+    draw->AddTriangleFilled(tri2[0], tri2[1], tri2[2], color);
+    
+    // "5" text below
+    char text[] = "5";
     ImVec2 textSize = ImGui::CalcTextSize(text);
     ImVec2 textPos = ImVec2(
-        center.x + direction * size * -0.05f - textSize.x * 0.5f,
-        center.y + size * 0.6f
+        center.x - textSize.x * 0.5f,
+        center.y + size * 0.65f
     );
-    draw->AddText(ImGui::GetFont(), 10.0f, textPos, color, text);
+    draw->AddText(ImGui::GetFont(), 16.0f, textPos, color, text);
 }
 
 void DrawVolumeIcon(ImDrawList* draw, ImVec2 pos, float volume, bool muted, ImU32 color) {
@@ -1028,13 +1094,14 @@ void DrawPlaylistIcon(ImDrawList* draw, ImVec2 center, float size, ImU32 color) 
 void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
     if (!state.showPlaylistPanel) return;
     
-    float panelWidth = 400.0f;
+    float panelWidth = 450.0f;  // Wider for better visibility
     float panelX = screenSize.x - panelWidth;
     
     ImGui::SetNextWindowPos(ImVec2(panelX, 0));
     ImGui::SetNextWindowSize(ImVec2(panelWidth, screenSize.y));
     
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.08f, 0.08f, 0.08f, 0.98f));
+    // Dark background with gradient
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.06f, 0.06f, 0.06f, 0.98f));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
     
@@ -1046,56 +1113,60 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
     
     ImDrawList* draw = ImGui::GetWindowDrawList();
     
-    // Header
-    ImGui::SetCursorPos(ImVec2(24, 24));
+    // Header with Netflix styling
+    ImGui::SetCursorPos(ImVec2(32, 32));
     ImGui::PushFont(ImGui::GetIO().Fonts->Fonts.Size > 1 ? ImGui::GetIO().Fonts->Fonts[1] : ImGui::GetFont());
-    ImGui::Text("Playlist");
+    ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "Playlist");
     ImGui::PopFont();
     
-    // File count
+    // File count with better styling
     ImGui::SameLine();
-    ImGui::SetCursorPosX(120);
+    ImGui::SetCursorPosX(140);
     char countText[32];
-    snprintf(countText, sizeof(countText), "(%zu files)", state.playlistFiles.size());
-    ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f), "%s", countText);
+    snprintf(countText, sizeof(countText), "(%zu videos)", state.playlistFiles.size());
+    ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "%s", countText);
     
-    // Close button
-    ImGui::SetCursorPos(ImVec2(panelWidth - 50, 20));
+    // Close button with Netflix red hover
+    ImGui::SetCursorPos(ImVec2(panelWidth - 60, 28));
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.898f, 0.078f, 0.078f, 0.3f));  // Netflix red on hover
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.898f, 0.078f, 0.078f, 0.5f));   // Darker red on click
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.898f, 0.078f, 0.078f, 0.3f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.898f, 0.078f, 0.078f, 0.5f));
     
-    if (ImGui::Button("X##ClosePlaylist", ImVec2(32, 32))) {
+    if (ImGui::Button("✕##ClosePlaylist", ImVec2(40, 40))) {
         state.showPlaylistPanel = false;
     }
     
     ImGui::PopStyleColor(3);
     
-    // Separator
-    draw->AddLine(
-        ImVec2(panelX + 24, 70),
-        ImVec2(panelX + panelWidth - 24, 70),
-        IM_COL32(80, 80, 80, 255),
-        1.0f
-    );
+    // Separator with gradient effect
+    ImVec2 sepStart = ImVec2(panelX + 32, 90);
+    ImVec2 sepEnd = ImVec2(panelX + panelWidth - 32, 90);
+    draw->AddLine(sepStart, sepEnd, IM_COL32(60, 60, 60, 255), 1.0f);
     
-    // Playlist items
-    ImGui::SetCursorPos(ImVec2(0, 90));
-    ImGui::BeginChild("##PlaylistItems", ImVec2(panelWidth, screenSize.y - 90), false);
+    // Scrollable playlist items
+    ImGui::SetCursorPos(ImVec2(0, 110));
+    ImGui::BeginChild("##PlaylistItems", ImVec2(panelWidth, screenSize.y - 110), false);
     
     for (size_t i = 0; i < state.playlistFiles.size(); i++) {
         ImGui::PushID((int)i);
         
         bool isPlaying = (state.currentPlaylistIndex >= 0 && i == (size_t)state.currentPlaylistIndex);
         
-        // Item background
+        // Item background with better styling
         ImVec2 itemPos = ImGui::GetCursorScreenPos();
-        ImVec2 itemSize = ImVec2(panelWidth, 80);
+        ImVec2 itemSize = ImVec2(panelWidth, 90);  // Taller items
         
+        // Playing item has Netflix red accent
         if (isPlaying) {
+            // Left accent bar
+            draw->AddRectFilled(
+                ImVec2(itemPos.x, itemPos.y),
+                ImVec2(itemPos.x + 4, itemPos.y + itemSize.y),
+                IM_COL32(229, 9, 20, 255));
+            // Background tint
             draw->AddRectFilled(itemPos, 
                 ImVec2(itemPos.x + itemSize.x, itemPos.y + itemSize.y),
-                IM_COL32(229, 9, 20, 30)); // Netflix red tint
+                IM_COL32(229, 9, 20, 25));
         }
         
         // Clickable area
@@ -1104,6 +1175,23 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
             // Load the selected file
             if (state.decoder) {
                 std::string filepath = state.playlistFiles[i];
+                
+                // CRITICAL: Stop and cleanup current playback before loading new file
+                state.isPlaying = false;
+                if (state.decoder) {
+                    state.decoder->pause();
+                }
+                if (state.audioOutput) {
+                    state.audioOutput->pause();
+                    state.audioOutput->clearQueue();
+                }
+                
+                // Clear pending frame BEFORE opening new file
+                if (state.pendingFrame) {
+                    delete state.pendingFrame;
+                    state.pendingFrame = nullptr;
+                }
+                
                 if (state.decoder->open(filepath)) {
                     state.currentPlaylistIndex = (int)i;
                     state.fileLoaded = true;
@@ -1142,19 +1230,35 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
         
         bool hovered = ImGui::IsItemHovered();
         if (hovered && !isPlaying) {
+            // Subtle hover effect
             draw->AddRectFilled(itemPos,
                 ImVec2(itemPos.x + itemSize.x, itemPos.y + itemSize.y),
-                IM_COL32(255, 255, 255, 15));
+                IM_COL32(255, 255, 255, 20));
         }
         
-        // File name
-        ImGui::SetCursorPos(ImVec2(24, itemPos.y - ImGui::GetWindowPos().y + 25));
+        // Number badge (Netflix style)
+        char numText[8];
+        snprintf(numText, sizeof(numText), "%zu", i + 1);
+        ImVec2 numTextSize = ImGui::CalcTextSize(numText);
+        ImGui::SetCursorPos(ImVec2(24, itemPos.y - ImGui::GetWindowPos().y + 35));
+        ImGui::PushStyleColor(ImGuiCol_Text, isPlaying ? 
+            ImVec4(0.898f, 0.035f, 0.078f, 1.0f) : ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+        ImGui::Text("%s.", numText);
+        ImGui::PopStyleColor();
+        
+        // File name with better spacing
+        ImGui::SetCursorPos(ImVec2(60, itemPos.y - ImGui::GetWindowPos().y + 28));
         
         if (isPlaying) {
-            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.898f, 0.035f, 0.078f, 1.0f));
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));  // Bright white
         }
         
-        ImGui::Text("%s", state.playlistNames[i].c_str());
+        // Truncate long file names
+        std::string displayName = state.playlistNames[i];
+        if (displayName.length() > 35) {
+            displayName = displayName.substr(0, 32) + "...";
+        }
+        ImGui::Text("%s", displayName.c_str());
         
         if (isPlaying) {
             ImGui::PopStyleColor();
@@ -1162,8 +1266,10 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
         
         // Now playing indicator
         if (isPlaying) {
-            ImGui::SetCursorPos(ImVec2(panelWidth - 120, itemPos.y - ImGui::GetWindowPos().y + 30));
-            ImGui::TextColored(ImVec4(0.898f, 0.035f, 0.078f, 1.0f), "Now Playing");
+            ImGui::SetCursorPos(ImVec2(60, itemPos.y - ImGui::GetWindowPos().y + 52));
+            ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);  // Smaller font
+            ImGui::TextColored(ImVec4(0.898f, 0.035f, 0.078f, 1.0f), "▶ Now Playing");
+            ImGui::PopFont();
         }
         
         ImGui::PopID();
@@ -1498,33 +1604,39 @@ void RenderNetflixUI(AppState& state, HWND window) {
     
     // Click on video area (not controls) to play/pause
     // Controls are in bottom 150px, so make clickable area exclude that
-    ImVec2 clickableSize = ImVec2(screenSize.x, screenSize.y - 150);
-    ImGui::SetCursorPos(ImVec2(0, 0));
-    ImGui::InvisibleButton("##VideoSurface", clickableSize);
-    
-    // State tracking for click-and-hold behavior
+    // State tracking for click-and-hold behavior (static, outside conditional)
     static double mouseDownTime = 0.0;
     static bool mouseWasDown = false;
     static bool wasDoubleClick = false;
     static double doubleClickTime = 0.0;
     static bool playPauseHandled = false;
-    static double lastHoldDuration = 0.0; // Preserve duration for release check
-    static double lastClickTime = 0.0;     // Track last click for double-click detection
-    static bool hasPendingClick = false;   // Delayed click to check for double-click
-    static double pendingClickTime = 0.0;  // When the pending click occurred
+    static double lastHoldDuration = 0.0;
+    static double lastClickTime = 0.0;
+    static bool hasPendingClick = false;
+    static double pendingClickTime = 0.0;
     
-    const double HOLD_THRESHOLD = 0.2; // 200ms to distinguish click from hold
-    bool itemActive = ImGui::IsItemActive();
+    bool isDoubleClick = false;
+    bool itemActive = false;
+    
+    // Only create video surface button when playing (let pause overlay handle clicks when paused)
+    if (state.isPlaying || !state.fileLoaded) {
+        ImVec2 clickableSize = ImVec2(screenSize.x, screenSize.y - 150);
+        ImGui::SetCursorPos(ImVec2(0, 0));
+        ImGui::InvisibleButton("##VideoSurface", clickableSize);
+        itemActive = ImGui::IsItemActive();
+        isDoubleClick = ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0);
+    }
+    
+    const double HOLD_THRESHOLD = 0.2;
     bool mouseDown = ImGui::IsMouseDown(0);
     double currentTime = ImGui::GetTime();
     
     // Detect double-click first
-    bool isDoubleClick = ImGui::IsItemHovered() && ImGui::IsMouseDoubleClicked(0);
     if (isDoubleClick) {
         wasDoubleClick = true;
         doubleClickTime = currentTime;
-        playPauseHandled = true; // Don't process as click
-        hasPendingClick = false; // Cancel any pending click
+        playPauseHandled = true;
+        hasPendingClick = false;
     }
     
     // Clear double-click flag after 500ms
@@ -1637,8 +1749,6 @@ void RenderNetflixUI(AppState& state, HWND window) {
         }
     }
     
-    // Update previous state
-    mouseWasDown = mouseDown;
     // Update previous state
     mouseWasDown = mouseDown;
     
@@ -1967,25 +2077,30 @@ void RenderNetflixUI(AppState& state, HWND window) {
         
         ImGui::PopItemWidth();
         
-        // Draw custom progress bar appearance
-        ImVec2 progressBarMin = ImVec2(50, progressY);
-        ImVec2 progressBarMax = ImVec2(50 + progressWidth, progressY + 6);
+        // Draw custom progress bar appearance (Netflix style - thicker on hover)
+        float barHeight = progressHovered ? 8.0f : 4.0f;  // Thicker on hover
+        ImVec2 progressBarMin = ImVec2(50, progressY - barHeight * 0.5f + 3);
+        ImVec2 progressBarMax = ImVec2(50 + progressWidth, progressY + barHeight * 0.5f + 3);
         float progress = state.currentTime / state.duration;
         
-        // Background track
-        controlDrawList->AddRectFilled(progressBarMin, progressBarMax, 
-            IM_COL32(70, 70, 70, (int)(200 * alpha)), 2.0f);
+        // Background track (darker on hover)
+        ImU32 bgColor = progressHovered ? IM_COL32(90, 90, 90, (int)(255 * alpha)) : IM_COL32(70, 70, 70, (int)(200 * alpha));
+        controlDrawList->AddRectFilled(progressBarMin, progressBarMax, bgColor, barHeight * 0.5f);
         
-        // Progress fill (Netflix red)
+        // Progress fill (Netflix red, brighter on hover)
+        ImU32 fillColor = progressHovered ? IM_COL32(229, 9, 20, 255) : IM_COL32(229, 9, 20, (int)(255 * alpha));
         controlDrawList->AddRectFilled(progressBarMin, 
             ImVec2(progressBarMin.x + progressWidth * progress, progressBarMax.y),
-            IM_COL32(229, 9, 20, (int)(255 * alpha)), 2.0f);
+            fillColor, barHeight * 0.5f);
         
-        // Scrubber circle
+        // Scrubber circle (only visible on hover)
         if (progressHovered) {
             ImVec2 scrubberPos = ImVec2(progressBarMin.x + progressWidth * progress, progressY + 3);
-            controlDrawList->AddCircleFilled(scrubberPos, 8.0f, 
-                IM_COL32(229, 9, 20, (int)(255 * alpha)), 16);
+            controlDrawList->AddCircleFilled(scrubberPos, 10.0f,  // Larger scrubber
+                IM_COL32(229, 9, 20, 255), 16);
+            // White border on scrubber
+            controlDrawList->AddCircle(scrubberPos, 10.0f,
+                IM_COL32(255, 255, 255, 200), 16, 2.0f);
         }
         
         ImGui::PopStyleVar(2); // Pop 2 style vars
@@ -1993,18 +2108,22 @@ void RenderNetflixUI(AppState& state, HWND window) {
         
         // Control buttons (40px from bottom)
         float controlsY = screenSize.y - 40;
-        ImGui::SetCursorPos(ImVec2(50, controlsY - 24));
+        float buttonSize = 48.0f;  // Consistent button size
+        float buttonY = controlsY - buttonSize * 0.5f;  // Center vertically
         
+        ImGui::SetCursorPos(ImVec2(50, buttonY));
+        
+        // Remove button background and hover boxes - we'll draw custom colored icons
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.898f, 0.078f, 0.078f, 0.3f));  // Netflix red on hover
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.898f, 0.078f, 0.078f, 0.5f));   // Darker red on click
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));  // Transparent - no box
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));   // Transparent - no box
         
-        // Play/Pause button (64x64 - bigger for Netflix feel)
+        // Play/Pause button
         ImVec2 playButtonPos = ImGui::GetCursorScreenPos();
         
         // Update hover animation
         state.playButtonHovered = false;
-        if (ImGui::Button("##PlayPause", ImVec2(64, 64))) {
+        if (ImGui::Button("##PlayPause", ImVec2(buttonSize, buttonSize))) {
             state.isPlaying = !state.isPlaying;
             playPauseHandled = true;  // Prevent video click from also firing
             
@@ -2024,131 +2143,161 @@ void RenderNetflixUI(AppState& state, HWND window) {
             }
         }
         state.playButtonHovered = ImGui::IsItemHovered();
+        ShowTooltip(state, state.isPlaying ? "Pause (Space)" : "Play (Space)");
         
         // Smooth hover animation
         float targetAnim = state.playButtonHovered ? 1.0f : 0.0f;
         state.playButtonHoverAnim += (targetAnim - state.playButtonHoverAnim) * io.DeltaTime * 10.0f;
         float scale = 1.0f + state.playButtonHoverAnim * 0.15f;  // Scale up 15% on hover
         
-        ImVec2 playIconCenter = ImVec2(playButtonPos.x + 32, playButtonPos.y + 32);
-        float iconSize = 28.0f * scale;  // Bigger icon
-        if (state.isPlaying) {
-            DrawPauseIcon(controlDrawList, playIconCenter, iconSize, IM_COL32(255, 255, 255, (int)(255 * alpha)));
-        } else {
-            DrawPlayIcon(controlDrawList, playIconCenter, iconSize, IM_COL32(255, 255, 255, (int)(255 * alpha)));
+        ImVec2 playIconCenter = ImVec2(playButtonPos.x + buttonSize * 0.5f, playButtonPos.y + buttonSize * 0.5f);
+        float iconSize = 24.0f * scale;
+        
+        // Netflix red on hover/press, white otherwise
+        ImU32 iconColor = IM_COL32(255, 255, 255, (int)(255 * alpha));
+        if (state.playButtonHovered || ImGui::IsItemActive()) {
+            iconColor = IM_COL32(229, 9, 20, (int)(255 * alpha));  // Netflix red
         }
         
-        ImGui::SameLine(0, 12);
+        if (state.isPlaying) {
+            DrawPauseIcon(controlDrawList, playIconCenter, iconSize, iconColor);
+        } else {
+            DrawPlayIcon(controlDrawList, playIconCenter, iconSize, iconColor);
+        }
         
-        // Skip backward button (56x56 - bigger)
+        ImGui::SameLine(0, 8);
+        
+        // Skip backward button (Netflix-style accumulating)
         ImVec2 skipBackPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##SkipBack", ImVec2(56, 56)) && state.fileLoaded && state.decoder) {
-            std::cout << "[DEBUG] Skip back button pressed - fileLoaded=" << state.fileLoaded 
-                      << " decoder=" << (void*)state.decoder << std::endl;
-            state.currentTime = fmaxf(state.currentTime - 5.0f, 0.0f);
-            std::cout << "[DEBUG] Seeking to: " << state.currentTime << std::endl;
+        state.skipBackButtonPos = skipBackPos;  // Save for animation
+        if (ImGui::Button("##SkipBack", ImVec2(buttonSize, buttonSize)) && state.fileLoaded && state.decoder) {
+            double currentTime = ImGui::GetTime();
             
-            // Trigger skip animation
-            state.showSkipAnimation = true;
-            state.skipAnimationTimer = 0.8f;  // Show for 0.8 seconds
-            state.skipAnimationDirection = -1;  // Backward
-            state.skipAnimationSeconds = 5;  // 5 seconds
+            // Check if this is within 1 second of last tap (accumulate)
+            if (currentTime - state.lastSkipBackTime < 1.0) {
+                state.accumulatedSkipBackSeconds += 5;
+            } else {
+                state.accumulatedSkipBackSeconds = 5;  // Reset accumulation
+            }
+            state.lastSkipBackTime = currentTime;
+            
+            // Perform the seek
+            state.currentTime = fmaxf(state.currentTime - 5.0f, 0.0f);
             
             // CRITICAL: Clear pending frame BEFORE seek
             if (state.pendingFrame) {
-                std::cout << "[DEBUG] Deleting pending frame" << std::endl;
                 delete state.pendingFrame;
                 state.pendingFrame = nullptr;
             }
             
-            std::cout << "[DEBUG] Calling decoder->seek()" << std::endl;
             state.decoder->seek(state.currentTime);
-            std::cout << "[DEBUG] Seek completed" << std::endl;
-            
-            // Set flag to prevent old frames from resetting currentTime
             state.justSeeked = true;
             state.videoStartTime = 0.0;
             
-            // Reset audio clock to match seek position
+            // Reset audio clock
             if (state.audioOutput) {
                 state.audioOutput->clearQueue();
                 state.audioOutput->setAudioClock(state.currentTime);
             }
-            // Reset video timing
             state.lastVideoFramePTS = state.currentTime;
+            
+            // Trigger accumulation animation
+            state.showSkipBackAccumulation = true;
+            state.skipBackAnimTimer = 1.0f;  // 1 second animation
         }
         state.skipBackHovered = ImGui::IsItemHovered();
+        ShowTooltip(state, "Rewind 5 seconds (Left Arrow)");
         float targetSkipBackAnim = state.skipBackHovered ? 1.0f : 0.0f;
         state.skipBackHoverAnim += (targetSkipBackAnim - state.skipBackHoverAnim) * io.DeltaTime * 10.0f;
         float skipBackScale = 1.0f + state.skipBackHoverAnim * 0.15f;
         
-        DrawSkipIcon(controlDrawList, ImVec2(skipBackPos.x + 28, skipBackPos.y + 28), 20.0f * skipBackScale, false,
-            IM_COL32(255, 255, 255, (int)(255 * alpha)));
+        // Netflix red on hover/press, white otherwise
+        ImU32 skipBackColor = IM_COL32(255, 255, 255, (int)(255 * alpha));
+        if (state.skipBackHovered || ImGui::IsItemActive()) {
+            skipBackColor = IM_COL32(229, 9, 20, (int)(255 * alpha));  // Netflix red
+        }
         
-        ImGui::SameLine(0, 12);
+        DrawSkipIcon(controlDrawList, ImVec2(skipBackPos.x + buttonSize * 0.5f, skipBackPos.y + buttonSize * 0.5f), 
+            18.0f * skipBackScale, false, skipBackColor);
         
-        // Skip forward button (56x56 - bigger)
+        ImGui::SameLine(0, 8);
+        
+        // Skip forward button (Netflix-style accumulating)
         ImVec2 skipForwardPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##SkipForward", ImVec2(56, 56)) && state.fileLoaded && state.decoder) {
-            std::cout << "[DEBUG] Skip forward button pressed - fileLoaded=" << state.fileLoaded 
-                      << " decoder=" << (void*)state.decoder << std::endl;
-            state.currentTime = fminf(state.currentTime + 5.0f, state.duration);
-            std::cout << "[DEBUG] Seeking to: " << state.currentTime << std::endl;
+        state.skipForwardButtonPos = skipForwardPos;  // Save for animation
+        if (ImGui::Button("##SkipForward", ImVec2(buttonSize, buttonSize)) && state.fileLoaded && state.decoder) {
+            double currentTime = ImGui::GetTime();
             
-            // Trigger skip animation
-            state.showSkipAnimation = true;
-            state.skipAnimationTimer = 0.8f;  // Show for 0.8 seconds
-            state.skipAnimationDirection = 1;  // Forward
-            state.skipAnimationSeconds = 5;  // 5 seconds
+            // Check if this is within 1 second of last tap (accumulate)
+            if (currentTime - state.lastSkipForwardTime < 1.0) {
+                state.accumulatedSkipForwardSeconds += 5;
+            } else {
+                state.accumulatedSkipForwardSeconds = 5;  // Reset accumulation
+            }
+            state.lastSkipForwardTime = currentTime;
+            
+            // Perform the seek
+            state.currentTime = fminf(state.currentTime + 5.0f, state.duration);
             
             // CRITICAL: Clear pending frame BEFORE seek
             if (state.pendingFrame) {
-                std::cout << "[DEBUG] Deleting pending frame" << std::endl;
                 delete state.pendingFrame;
                 state.pendingFrame = nullptr;
             }
             
-            std::cout << "[DEBUG] Calling decoder->seek()" << std::endl;
             state.decoder->seek(state.currentTime);
-            std::cout << "[DEBUG] Seek completed" << std::endl;
-            
-            // Set flag to prevent old frames from resetting currentTime
             state.justSeeked = true;
             state.videoStartTime = 0.0;
             
-            // Reset audio clock to match seek position
+            // Reset audio clock
             if (state.audioOutput) {
                 state.audioOutput->clearQueue();
                 state.audioOutput->setAudioClock(state.currentTime);
             }
-            // Reset video timing
             state.lastVideoFramePTS = state.currentTime;
+            
+            // Trigger accumulation animation
+            state.showSkipForwardAccumulation = true;
+            state.skipForwardAnimTimer = 1.0f;  // 1 second animation
         }
         state.skipForwardHovered = ImGui::IsItemHovered();
+        ShowTooltip(state, "Forward 5 seconds (Right Arrow)");
         float targetSkipForwardAnim = state.skipForwardHovered ? 1.0f : 0.0f;
         state.skipForwardHoverAnim += (targetSkipForwardAnim - state.skipForwardHoverAnim) * io.DeltaTime * 10.0f;
         float skipForwardScale = 1.0f + state.skipForwardHoverAnim * 0.15f;
         
-        DrawSkipIcon(controlDrawList, ImVec2(skipForwardPos.x + 28, skipForwardPos.y + 28), 20.0f * skipForwardScale, true,
-            IM_COL32(255, 255, 255, (int)(255 * alpha)));
+        // Netflix red on hover/press, white otherwise
+        ImU32 skipForwardColor = IM_COL32(255, 255, 255, (int)(255 * alpha));
+        if (state.skipForwardHovered || ImGui::IsItemActive()) {
+            skipForwardColor = IM_COL32(229, 9, 20, (int)(255 * alpha));  // Netflix red
+        }
+        
+        DrawSkipIcon(controlDrawList, ImVec2(skipForwardPos.x + buttonSize * 0.5f, skipForwardPos.y + buttonSize * 0.5f), 
+            18.0f * skipForwardScale, true, skipForwardColor);
         
         ImGui::SameLine(0, 16);
         
-        // Volume icon and slider
+        // Volume icon and slider - properly aligned
         ImVec2 volumeIconPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##VolumeIcon", ImVec2(32, 32))) {
+        if (ImGui::Button("##VolumeIcon", ImVec2(buttonSize, buttonSize))) {
             state.isMuted = !state.isMuted;
             if (state.audioOutput) {
                 state.audioOutput->setVolume(state.isMuted ? 0.0f : state.volume);
             }
         }
-        DrawVolumeIcon(controlDrawList, ImVec2(volumeIconPos.x + 6, volumeIconPos.y + 6), 
-            state.volume, state.isMuted, IM_COL32(255, 255, 255, (int)(255 * alpha)));
+        bool volumeIconHovered = ImGui::IsItemHovered();
+        ShowTooltip(state, state.isMuted ? "Unmute (M)" : "Mute (M)");
+        ImU32 volumeColor = IM_COL32(255, 255, 255, (int)(255 * alpha));
+        if (volumeIconHovered || ImGui::IsItemActive()) {
+            volumeColor = IM_COL32(229, 9, 20, (int)(255 * alpha));  // Netflix red
+        }
+        DrawVolumeIcon(controlDrawList, ImVec2(volumeIconPos.x + buttonSize * 0.25f, volumeIconPos.y + buttonSize * 0.25f), 
+            state.volume, state.isMuted, volumeColor);
         
-        ImGui::SameLine(0, 8);
+        ImGui::SameLine(0, 4);
         
         // Volume slider
-        ImGui::SetCursorPosY(controlsY - 16);
+        ImGui::SetCursorPosY(buttonY + buttonSize * 0.35f);  // Center slider vertically with buttons
         ImGui::PushItemWidth(100);
         if (ImGui::SliderFloat("##Volume", &state.volume, 0.0f, 1.0f, "")) {
             if (state.audioOutput) {
@@ -2157,89 +2306,113 @@ void RenderNetflixUI(AppState& state, HWND window) {
         }
         ImGui::PopItemWidth();
         
-        ImGui::SameLine(0, 24);
+        ImGui::SameLine(0, 20);
         
-        // Time display - BIGGER font
+        // Time display - centered with buttons
         std::string timeStr = FormatTime(state.currentTime) + " / " + FormatTime(state.duration);
-        controlDrawList->AddText(ImGui::GetFont(), 20.0f,  // Increased from default to 20px
-            ImVec2(ImGui::GetCursorScreenPos().x, controlsY - 6),
+        controlDrawList->AddText(ImGui::GetFont(), 18.0f,
+            ImVec2(ImGui::GetCursorScreenPos().x, buttonY + buttonSize * 0.3f),
             IM_COL32(255, 255, 255, (int)(230 * alpha)), timeStr.c_str());
         
         // Right-side controls
-        float rightControlsX = screenSize.x - 320;  // More space for bigger buttons
-        ImGui::SetCursorPos(ImVec2(rightControlsX, controlsY - 22));
+        float rightControlsX = screenSize.x - 280;
+        ImGui::SetCursorPos(ImVec2(rightControlsX, buttonY));
         
-        // Playlist/Episodes button (44x44 - bigger, disabled when no file loaded)
+        // Playlist/Episodes button (disabled when no file loaded)
         ImVec2 playlistPos = ImGui::GetCursorScreenPos();
         bool playlistEnabled = state.fileLoaded && !state.playlistFiles.empty();
         if (!playlistEnabled) {
             ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha * 0.3f);  // Dim when disabled
         }
-        if (ImGui::Button("##Playlist", ImVec2(44, 44)) && playlistEnabled) {
+        if (ImGui::Button("##Playlist", ImVec2(buttonSize, buttonSize)) && playlistEnabled) {
             state.showPlaylistPanel = !state.showPlaylistPanel;
         }
         state.playlistHovered = ImGui::IsItemHovered() && playlistEnabled;
+        if (playlistEnabled) ShowTooltip(state, "Playlist");
         float targetPlaylistAnim = state.playlistHovered ? 1.0f : 0.0f;
         state.playlistHoverAnim += (targetPlaylistAnim - state.playlistHoverAnim) * io.DeltaTime * 10.0f;
         float playlistScale = 1.0f + state.playlistHoverAnim * 0.15f;
         
-        DrawPlaylistIcon(controlDrawList, ImVec2(playlistPos.x + 22, playlistPos.y + 22), 22.0f * playlistScale,
-            IM_COL32(255, 255, 255, (int)(255 * alpha * (playlistEnabled ? 1.0f : 0.3f))));
+        ImU32 playlistColor = IM_COL32(255, 255, 255, (int)(255 * alpha * (playlistEnabled ? 1.0f : 0.3f)));
+        if (state.playlistHovered || ImGui::IsItemActive()) {
+            playlistColor = IM_COL32(229, 9, 20, (int)(255 * alpha));  // Netflix red
+        }
+        
+        DrawPlaylistIcon(controlDrawList, ImVec2(playlistPos.x + buttonSize * 0.5f, playlistPos.y + buttonSize * 0.5f), 
+            20.0f * playlistScale, playlistColor);
         if (!playlistEnabled) {
             ImGui::PopStyleVar();
         }
         
-        ImGui::SameLine(0, 12);
+        ImGui::SameLine(0, 8);
         
-        // Settings button (44x44)
+        // Settings button
         ImVec2 settingsPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##Settings", ImVec2(44, 44))) {
+        if (ImGui::Button("##Settings", ImVec2(buttonSize, buttonSize))) {
             // TODO: Open settings
         }
         state.settingsHovered = ImGui::IsItemHovered();
+        ShowTooltip(state, "Settings");
         float targetSettingsAnim = state.settingsHovered ? 1.0f : 0.0f;
         state.settingsHoverAnim += (targetSettingsAnim - state.settingsHoverAnim) * io.DeltaTime * 10.0f;
         float settingsScale = 1.0f + state.settingsHoverAnim * 0.15f;
         
-        DrawSettingsIcon(controlDrawList, ImVec2(settingsPos.x + 22, settingsPos.y + 22), 24.0f * settingsScale,
-            IM_COL32(255, 255, 255, (int)(255 * alpha)));
+        ImU32 settingsColor = IM_COL32(255, 255, 255, (int)(255 * alpha));
+        if (state.settingsHovered || ImGui::IsItemActive()) {
+            settingsColor = IM_COL32(229, 9, 20, (int)(255 * alpha));  // Netflix red
+        }
         
-        ImGui::SameLine(0, 12);
+        DrawSettingsIcon(controlDrawList, ImVec2(settingsPos.x + buttonSize * 0.5f, settingsPos.y + buttonSize * 0.5f), 
+            22.0f * settingsScale, settingsColor);
         
-        // Audio button (44x44)
+        ImGui::SameLine(0, 8);
+        
+        // Audio button
         ImVec2 audioPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##Audio", ImVec2(44, 44))) {
+        if (ImGui::Button("##Audio", ImVec2(buttonSize, buttonSize))) {
             state.showAudioMenu = !state.showAudioMenu;
         }
         state.audioButtonHovered = ImGui::IsItemHovered();
+        ShowTooltip(state, "Audio");
         float targetAudioAnim = state.audioButtonHovered ? 1.0f : 0.0f;
         state.audioButtonHoverAnim += (targetAudioAnim - state.audioButtonHoverAnim) * io.DeltaTime * 10.0f;
         float audioScale = 1.0f + state.audioButtonHoverAnim * 0.15f;
         
-        DrawAudioIcon(controlDrawList, ImVec2(audioPos.x + 22, audioPos.y + 22), 24.0f * audioScale,
-            IM_COL32(255, 255, 255, (int)(255 * alpha)));
+        ImU32 audioColor = IM_COL32(255, 255, 255, (int)(255 * alpha));
+        if (state.audioButtonHovered || ImGui::IsItemActive()) {
+            audioColor = IM_COL32(229, 9, 20, (int)(255 * alpha));  // Netflix red
+        }
         
-        ImGui::SameLine(0, 12);
+        DrawAudioIcon(controlDrawList, ImVec2(audioPos.x + buttonSize * 0.5f, audioPos.y + buttonSize * 0.5f), 
+            22.0f * audioScale, audioColor);
         
-        // Subtitles button (44x44)
+        ImGui::SameLine(0, 8);
+        
+        // Subtitles button
         ImVec2 subtitlesPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##Subtitles", ImVec2(44, 44))) {
+        if (ImGui::Button("##Subtitles", ImVec2(buttonSize, buttonSize))) {
             state.showSubtitleMenu = !state.showSubtitleMenu;
         }
         state.subtitlesHovered = ImGui::IsItemHovered();
+        ShowTooltip(state, "Subtitles (C)");
         float targetSubtitlesAnim = state.subtitlesHovered ? 1.0f : 0.0f;
         state.subtitlesHoverAnim += (targetSubtitlesAnim - state.subtitlesHoverAnim) * io.DeltaTime * 10.0f;
         float subtitlesScale = 1.0f + state.subtitlesHoverAnim * 0.15f;
         
-        DrawSubtitlesIcon(controlDrawList, ImVec2(subtitlesPos.x + 22, subtitlesPos.y + 22), 24.0f * subtitlesScale,
-            IM_COL32(255, 255, 255, (int)(255 * alpha)));
+        ImU32 subtitlesColor = IM_COL32(255, 255, 255, (int)(255 * alpha));
+        if (state.subtitlesHovered || ImGui::IsItemActive()) {
+            subtitlesColor = IM_COL32(229, 9, 20, (int)(255 * alpha));  // Netflix red
+        }
         
-        ImGui::SameLine(0, 12);
+        DrawSubtitlesIcon(controlDrawList, ImVec2(subtitlesPos.x + buttonSize * 0.5f, subtitlesPos.y + buttonSize * 0.5f), 
+            22.0f * subtitlesScale, subtitlesColor);
         
-        // Fullscreen button (44x44)
+        ImGui::SameLine(0, 8);
+        
+        // Fullscreen button
         static double lastButtonToggle = 0.0;
         ImVec2 fullscreenPos = ImGui::GetCursorScreenPos();
-        if (ImGui::Button("##Fullscreen", ImVec2(44, 44))) {
+        if (ImGui::Button("##Fullscreen", ImVec2(buttonSize, buttonSize))) {
             double currentTime = ImGui::GetTime();
             // Prevent rapid toggling
             if (currentTime - lastButtonToggle > 0.5) {
@@ -2253,12 +2426,21 @@ void RenderNetflixUI(AppState& state, HWND window) {
             }
         }
         state.fullscreenHovered = ImGui::IsItemHovered();
+        ShowTooltip(state, state.isFullscreen ? "Exit Fullscreen (F)" : "Fullscreen (F)");
         float targetFullscreenAnim = state.fullscreenHovered ? 1.0f : 0.0f;
         state.fullscreenHoverAnim += (targetFullscreenAnim - state.fullscreenHoverAnim) * io.DeltaTime * 10.0f;
         float fullscreenScale = 1.0f + state.fullscreenHoverAnim * 0.15f;
         
-        DrawFullscreenIcon(controlDrawList, ImVec2(fullscreenPos.x + 22, fullscreenPos.y + 22), 22.0f * fullscreenScale,
-            IM_COL32(255, 255, 255, (int)(255 * alpha)));
+        ImU32 fullscreenColor = IM_COL32(255, 255, 255, (int)(255 * alpha));
+        if (state.fullscreenHovered || ImGui::IsItemActive()) {
+            fullscreenColor = IM_COL32(229, 9, 20, (int)(255 * alpha));  // Netflix red
+        }
+        
+        DrawFullscreenIcon(controlDrawList, ImVec2(fullscreenPos.x + buttonSize * 0.5f, fullscreenPos.y + buttonSize * 0.5f), 
+            20.0f * fullscreenScale, fullscreenColor);
+        
+        // Render all tooltips
+        RenderTooltip(state);
         
         ImGui::PopStyleColor(3);
         
@@ -2302,6 +2484,348 @@ void RenderNetflixUI(AppState& state, HWND window) {
             ImVec2 textPos = ImVec2(center.x - textSize.x * 0.5f, center.y + 15);
             animDrawList->AddText(ImGui::GetFont(), 18.0f, textPos,
                 IM_COL32(255, 255, 255, (int)(255 * animAlpha)), skipText);
+        }
+    }
+    
+    // Netflix-style pause overlay (large icons when paused)
+    if (!state.isPlaying && state.fileLoaded) {
+        ImVec2 center = ImVec2(screenSize.x * 0.5f, screenSize.y * 0.5f);
+        ImDrawList* pauseDrawList = ImGui::GetWindowDrawList();
+        
+        float iconSize = 40.0f;
+        float circleRadius = 70.0f;
+        float spacing = 180.0f;
+        
+        // Left: Rewind 5s button
+        ImVec2 leftCenter = ImVec2(center.x - spacing, center.y);
+        ImGui::SetCursorScreenPos(ImVec2(leftCenter.x - circleRadius, leftCenter.y - circleRadius));
+        ImGui::PushID("pause_overlay_rewind");
+        bool leftHovered = false;
+        bool leftClicked = ImGui::InvisibleButton("##rewind", ImVec2(circleRadius * 2, circleRadius * 2));
+        leftHovered = ImGui::IsItemHovered();
+        ImGui::PopID();
+        
+        ImU32 leftCircleColor = leftHovered ? IM_COL32(229, 9, 20, 200) : IM_COL32(0, 0, 0, 160);
+        ImU32 leftIconColor = leftHovered ? IM_COL32(255, 255, 255, 255) : IM_COL32(255, 255, 255, 220);
+        
+        pauseDrawList->AddCircleFilled(leftCenter, circleRadius, leftCircleColor, 32);
+        pauseDrawList->AddCircle(leftCenter, circleRadius, IM_COL32(255, 255, 255, 180), 32, 3.0f);
+        DrawSkipIcon(pauseDrawList, leftCenter, iconSize, false, leftIconColor);
+        
+        if (leftClicked && state.decoder) {
+            double currentTime = ImGui::GetTime();
+            
+            // Check if this is within 1 second of last tap (accumulate)
+            if (currentTime - state.lastSkipBackTime < 1.0) {
+                state.accumulatedSkipBackSeconds += 5;
+            } else {
+                state.accumulatedSkipBackSeconds = 5;  // Reset accumulation
+            }
+            state.lastSkipBackTime = currentTime;
+            
+            state.currentTime = fmaxf(state.currentTime - 5.0f, 0.0f);
+            
+            // Clear pending frame BEFORE seek
+            if (state.pendingFrame) {
+                delete state.pendingFrame;
+                state.pendingFrame = nullptr;
+            }
+            
+            state.decoder->seek(state.currentTime);
+            state.justSeeked = true;
+            state.videoStartTime = 0.0;
+            
+            // Reset audio clock
+            if (state.audioOutput) {
+                state.audioOutput->clearQueue();
+                state.audioOutput->setAudioClock(state.currentTime);
+            }
+            state.lastVideoFramePTS = state.currentTime;
+            
+            // Trigger accumulation animation
+            state.showSkipBackAccumulation = true;
+            state.skipBackAnimTimer = 1.0f;  // 1 second animation
+        }
+        
+        // Center: Play button
+        ImGui::SetCursorScreenPos(ImVec2(center.x - circleRadius, center.y - circleRadius));
+        ImGui::PushID("pause_overlay_play");
+        bool centerHovered = false;
+        bool centerClicked = ImGui::InvisibleButton("##play", ImVec2(circleRadius * 2, circleRadius * 2));
+        centerHovered = ImGui::IsItemHovered();
+        ImGui::PopID();
+        
+        ImU32 centerCircleColor = centerHovered ? IM_COL32(229, 9, 20, 200) : IM_COL32(0, 0, 0, 160);
+        ImU32 centerIconColor = centerHovered ? IM_COL32(255, 255, 255, 255) : IM_COL32(255, 255, 255, 220);
+        
+        pauseDrawList->AddCircleFilled(center, circleRadius, centerCircleColor, 32);
+        pauseDrawList->AddCircle(center, circleRadius, IM_COL32(255, 255, 255, 180), 32, 3.0f);
+        DrawPlayIcon(pauseDrawList, center, iconSize, centerIconColor);
+        
+        if (centerClicked) {
+            printf("[DEBUG] Center play button clicked!\n");
+            state.isPlaying = true;
+            printf("[DEBUG] Set state.isPlaying = true\n");
+            // Resume playback
+            if (state.decoder) {
+                printf("[DEBUG] Calling decoder->play()\n");
+                state.decoder->play();
+            } else {
+                printf("[DEBUG] decoder is NULL!\n");
+            }
+            if (state.audioOutput) {
+                printf("[DEBUG] Calling audioOutput->play()\n");
+                state.audioOutput->play();
+            } else {
+                printf("[DEBUG] audioOutput is NULL!\n");
+            }
+            printf("[DEBUG] Play button handler completed\n");
+        }
+        
+        // Right: Forward 5s button
+        ImVec2 rightCenter = ImVec2(center.x + spacing, center.y);
+        ImGui::SetCursorScreenPos(ImVec2(rightCenter.x - circleRadius, rightCenter.y - circleRadius));
+        ImGui::PushID("pause_overlay_forward");
+        bool rightHovered = false;
+        bool rightClicked = ImGui::InvisibleButton("##forward", ImVec2(circleRadius * 2, circleRadius * 2));
+        rightHovered = ImGui::IsItemHovered();
+        ImGui::PopID();
+        
+        ImU32 rightCircleColor = rightHovered ? IM_COL32(229, 9, 20, 200) : IM_COL32(0, 0, 0, 160);
+        ImU32 rightIconColor = rightHovered ? IM_COL32(255, 255, 255, 255) : IM_COL32(255, 255, 255, 220);
+        
+        pauseDrawList->AddCircleFilled(rightCenter, circleRadius, rightCircleColor, 32);
+        pauseDrawList->AddCircle(rightCenter, circleRadius, IM_COL32(255, 255, 255, 180), 32, 3.0f);
+        DrawSkipIcon(pauseDrawList, rightCenter, iconSize, true, rightIconColor);
+        
+        if (rightClicked && state.decoder) {
+            double currentTime = ImGui::GetTime();
+            
+            // Check if this is within 1 second of last tap (accumulate)
+            if (currentTime - state.lastSkipForwardTime < 1.0) {
+                state.accumulatedSkipForwardSeconds += 5;
+            } else {
+                state.accumulatedSkipForwardSeconds = 5;  // Reset accumulation
+            }
+            state.lastSkipForwardTime = currentTime;
+            
+            state.currentTime = fminf(state.currentTime + 5.0f, state.duration);
+            
+            // Clear pending frame BEFORE seek
+            if (state.pendingFrame) {
+                delete state.pendingFrame;
+                state.pendingFrame = nullptr;
+            }
+            
+            state.decoder->seek(state.currentTime);
+            state.justSeeked = true;
+            state.videoStartTime = 0.0;
+            
+            // Reset audio clock
+            if (state.audioOutput) {
+                state.audioOutput->clearQueue();
+                state.audioOutput->setAudioClock(state.currentTime);
+            }
+            state.lastVideoFramePTS = state.currentTime;
+            
+            // Trigger accumulation animation
+            state.showSkipForwardAccumulation = true;
+            state.skipForwardAnimTimer = 1.0f;  // 1 second animation
+            // Keep video paused - don't start playback
+        }
+    }
+    
+    // Netflix-style accumulating seek animations
+    // Skip backward accumulation animation
+    if (state.showSkipBackAccumulation) {
+        state.skipBackAnimTimer -= io.DeltaTime;
+        if (state.skipBackAnimTimer <= 0.0f) {
+            state.showSkipBackAccumulation = false;
+            state.accumulatedSkipBackSeconds = 0;
+        } else {
+            ImDrawList* animDrawList = ImGui::GetWindowDrawList();
+            // Use screen center for animation
+            ImVec2 screenCenter = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
+            ImVec2 buttonCenter = screenCenter;
+            
+            // Animation timeline (normalized 0 to 1, where 1 is start)
+            float t = state.skipBackAnimTimer;
+            
+            // Arrow rotation animation (0.0-0.2s = 0.8-1.0 normalized)
+            float arrowRotation = 0.0f;
+            if (t > 0.8f) {
+                float phase = (t - 0.8f) / 0.2f;  // 0 to 1
+                // Rotate 20 degrees and back
+                arrowRotation = sinf(phase * 3.14159f) * 20.0f * (3.14159f / 180.0f);
+            }
+            
+            // Background pulse animation (0.0-0.2s = 0.8-1.0 normalized)
+            float bgOpacity = 0.0f;
+            if (t > 0.8f) {
+                float phase = (t - 0.8f) / 0.2f;
+                bgOpacity = sinf(phase * 3.14159f) * 0.3f;
+            }
+            
+            // Draw pulsing background
+            if (bgOpacity > 0.0f) {
+                animDrawList->AddCircleFilled(buttonCenter, state.controlButtonSize * 0.6f,
+                    IM_COL32(229, 9, 20, (int)(255 * bgOpacity)), 32);
+            }
+            
+            // Draw rotated arrow
+            animDrawList->AddCircleFilled(buttonCenter, state.controlButtonSize * 0.4f,
+                IM_COL32(20, 20, 20, 200), 32);
+            // Note: ImGui doesn't support rotation easily, so we'll use color pulse instead
+            ImU32 arrowColor = IM_COL32(229, 9, 20, 255);
+            DrawSkipIcon(animDrawList, buttonCenter, 18.0f, false, arrowColor);
+            
+            // Duration label (\"5s\") - fades out at start (0-0.1s), fades in at end (0.1-0s = 0.9-1.0 normalized)
+            float durationAlpha = 1.0f;
+            if (t > 0.9f) {
+                durationAlpha = 1.0f - ((t - 0.9f) / 0.1f);  // Fade out
+            } else if (t < 0.1f) {
+                durationAlpha = t / 0.1f;  // Fade in
+            } else {
+                durationAlpha = 0.0f;  // Hidden
+            }
+            
+            if (durationAlpha > 0.0f) {
+                const char* durationText = "5s";
+                ImVec2 textSize = ImGui::CalcTextSize(durationText);
+                ImVec2 textPos = ImVec2(buttonCenter.x - textSize.x * 0.5f, buttonCenter.y + state.controlButtonSize * 0.7f);
+                animDrawList->AddText(ImGui::GetFont(), 14.0f, textPos,
+                    IM_COL32(255, 255, 255, (int)(255 * durationAlpha)), durationText);
+            }
+            
+            // Accumulation label - fades in (0.9-1.0), moves out (0.5-1.0), fades out (0-0.45)
+            float accumAlpha = 0.0f;
+            float accumOffset = 0.0f;
+            
+            if (t > 0.9f) {
+                // Fade in phase (0.9-1.0s)
+                accumAlpha = 1.0f - ((t - 0.9f) / 0.1f);
+                accumOffset = 0.0f;
+            } else if (t > 0.5f) {
+                // Moving out phase (0.5-0.9s)
+                accumAlpha = 1.0f;
+                float movePhase = (0.9f - t) / 0.4f;  // 0 to 1
+                // Custom easing curve (ease out)
+                movePhase = 1.0f - powf(1.0f - movePhase, 3.0f);
+                accumOffset = movePhase * 80.0f;  // Move 80px to the left
+            } else if (t > 0.05f) {
+                // At final position
+                accumAlpha = 1.0f;
+                accumOffset = 80.0f;
+            } else {
+                // Fade out phase (0-0.05s)
+                accumAlpha = t / 0.05f;
+                accumOffset = 80.0f;
+            }
+            
+            if (accumAlpha > 0.0f) {
+                char accumText[16];
+                snprintf(accumText, sizeof(accumText), "-%ds", state.accumulatedSkipBackSeconds);
+                ImVec2 accumTextSize = ImGui::CalcTextSize(accumText);
+                ImVec2 accumPos = ImVec2(
+                    buttonCenter.x - accumOffset - accumTextSize.x * 0.5f,
+                    buttonCenter.y - accumTextSize.y * 0.5f
+                );
+                animDrawList->AddText(ImGui::GetFont(), 24.0f, accumPos,
+                    IM_COL32(255, 255, 255, (int)(255 * accumAlpha)), accumText);
+            }
+        }
+    }
+    
+    // Skip forward accumulation animation
+    if (state.showSkipForwardAccumulation) {
+        state.skipForwardAnimTimer -= io.DeltaTime;
+        if (state.skipForwardAnimTimer <= 0.0f) {
+            state.showSkipForwardAccumulation = false;
+            state.accumulatedSkipForwardSeconds = 0;
+        } else {
+            ImDrawList* animDrawList = ImGui::GetWindowDrawList();
+            // Use screen center for animation
+            ImVec2 screenCenter = ImVec2(io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f);
+            ImVec2 buttonCenter = screenCenter;
+            
+            // Animation timeline (normalized 0 to 1, where 1 is start)
+            float t = state.skipForwardAnimTimer;
+            
+            // Arrow rotation animation (0.0-0.2s = 0.8-1.0 normalized)
+            float arrowRotation = 0.0f;
+            if (t > 0.8f) {
+                float phase = (t - 0.8f) / 0.2f;  // 0 to 1
+                arrowRotation = sinf(phase * 3.14159f) * 20.0f * (3.14159f / 180.0f);
+            }
+            
+            // Background pulse animation (0.0-0.2s = 0.8-1.0 normalized)
+            float bgOpacity = 0.0f;
+            if (t > 0.8f) {
+                float phase = (t - 0.8f) / 0.2f;
+                bgOpacity = sinf(phase * 3.14159f) * 0.3f;
+            }
+            
+            // Draw pulsing background
+            if (bgOpacity > 0.0f) {
+                animDrawList->AddCircleFilled(buttonCenter, state.controlButtonSize * 0.6f,
+                    IM_COL32(229, 9, 20, (int)(255 * bgOpacity)), 32);
+            }
+            
+            // Draw rotated arrow
+            animDrawList->AddCircleFilled(buttonCenter, state.controlButtonSize * 0.4f,
+                IM_COL32(20, 20, 20, 200), 32);
+            ImU32 arrowColor = IM_COL32(229, 9, 20, 255);
+            DrawSkipIcon(animDrawList, buttonCenter, 18.0f, true, arrowColor);
+            
+            // Duration label ("5s")
+            float durationAlpha = 1.0f;
+            if (t > 0.9f) {
+                durationAlpha = 1.0f - ((t - 0.9f) / 0.1f);  // Fade out
+            } else if (t < 0.1f) {
+                durationAlpha = t / 0.1f;  // Fade in
+            } else {
+                durationAlpha = 0.0f;  // Hidden
+            }
+            
+            if (durationAlpha > 0.0f) {
+                const char* durationText = "5s";
+                ImVec2 textSize = ImGui::CalcTextSize(durationText);
+                ImVec2 textPos = ImVec2(buttonCenter.x - textSize.x * 0.5f, buttonCenter.y + state.controlButtonSize * 0.7f);
+                animDrawList->AddText(ImGui::GetFont(), 14.0f, textPos,
+                    IM_COL32(255, 255, 255, (int)(255 * durationAlpha)), durationText);
+            }
+            
+            // Accumulation label
+            float accumAlpha = 0.0f;
+            float accumOffset = 0.0f;
+            
+            if (t > 0.9f) {
+                accumAlpha = 1.0f - ((t - 0.9f) / 0.1f);
+                accumOffset = 0.0f;
+            } else if (t > 0.5f) {
+                accumAlpha = 1.0f;
+                float movePhase = (0.9f - t) / 0.4f;
+                movePhase = 1.0f - powf(1.0f - movePhase, 3.0f);
+                accumOffset = movePhase * 80.0f;  // Move 80px to the right
+            } else if (t > 0.05f) {
+                accumAlpha = 1.0f;
+                accumOffset = 80.0f;
+            } else {
+                accumAlpha = t / 0.05f;
+                accumOffset = 80.0f;
+            }
+            
+            if (accumAlpha > 0.0f) {
+                char accumText[16];
+                snprintf(accumText, sizeof(accumText), "+%ds", state.accumulatedSkipForwardSeconds);
+                ImVec2 accumTextSize = ImGui::CalcTextSize(accumText);
+                ImVec2 accumPos = ImVec2(
+                    buttonCenter.x + accumOffset - accumTextSize.x * 0.5f,
+                    buttonCenter.y - accumTextSize.y * 0.5f
+                );
+                animDrawList->AddText(ImGui::GetFont(), 24.0f, accumPos,
+                    IM_COL32(255, 255, 255, (int)(255 * accumAlpha)), accumText);
+            }
         }
     }
     
