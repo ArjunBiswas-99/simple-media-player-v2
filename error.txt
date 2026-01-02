@@ -1,27 +1,133 @@
-e\Desktop\Test\simple-media-player-v2> cmake --build build --config Release
-MSBuild version 18.0.5+e22287bf1 for .NET Framework
-
-  1>Checking Build System
-  Building Custom Rule C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/CMakeLists.txt
-  imgui.cpp
-  imgui_demo.cpp
-  imgui_draw.cpp
-  imgui_tables.cpp
-  imgui_widgets.cpp
-  imgui_impl_win32.cpp
-  imgui_impl_dx11.cpp
-  Generating Code...
-  imgui.vcxproj -> C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\Release\imgui.lib
-  Building Custom Rule C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/CMakeLists.txt
-  main.cpp
-  VideoDecoder.cpp
-  AudioOutput.cpp
-  platform_windows.cpp
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(459,44): error C2065: 'frameSamples': unde
-clared identifier [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(483,52): error C2065: 'frameSamples': unde
-clared identifier [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(487,44): error C2065: 'frameSamples': unde 
-clared identifier [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
-  Generating Code...
-PS C:\Users\arjun\
+=== Simple Media Player V2 - Debug Console ===
+Windows build with Direct3D11 and WASAPI
+===============================================
+[MAIN] Entering main loop
+Opened: C:\Users\arjun\Downloads\The Heat.mp4
+Duration: 7220.25 seconds
+Video: 1920x800
+Audio: 48000Hz, 2 channels
+[AUDIO INIT] Requested format: 48000Hz, 2 channels
+[AUDIO INIT] nAvgBytesPerSec: 384000
+[AUDIO INIT] Audio client initialized successfully
+WASAPI Audio initialized: 48000Hz, 2 channels
+[AUDIO] Frame 0: PTS=0 (no correction)
+[AUDIO CHECK] PTS scaling is correct, no fix needed
+  Expected: 0.0213333s, Actual: 0.0213333s
+[AUDIO] Frame 1: PTS=0.0213333 (no correction)
+[AUDIO] Playing
+Loaded: The Heat.mp4
+[AUDIO] Frame 2: PTS=0.0426667 (no correction)
+[MAIN] First audio frame: PTS=0 size=8192
+[AUDIO THREAD] Frame PTS: 0, Clock: 1.02133, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=0.083 audioClock=1.02133 drift=-0.938333 useSync=1
+[VIDEO] Texture created: 1920x800
+[VIDEO SYNC] videoPTS=0.541789 audioClock=0.488333 drift=0.0534556 useSync=1
+[VIDEO SYNC] videoPTS=0.958867 audioClock=0.915 drift=0.0438667 useSync=1
+[VIDEO SYNC] videoPTS=1.37596 audioClock=1.32033 drift=0.0556222 useSync=1
+[VIDEO SYNC] videoPTS=1.79303 audioClock=1.747 drift=0.0460333 useSync=1
+[VIDEO SYNC] videoPTS=2.21012 audioClock=2.15233 drift=0.0577889 useSync=1
+[AUDIO THREAD] Frame PTS: 2.13333, Clock: 2.21633, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=2.6272 audioClock=2.579 drift=0.0482 useSync=1
+[VIDEO SYNC] videoPTS=3.04429 audioClock=2.98433 drift=0.0599556 useSync=1
+[VIDEO SYNC] videoPTS=3.46137 audioClock=3.411 drift=0.0503667 useSync=1
+[VIDEO SYNC] videoPTS=3.87846 audioClock=3.81633 drift=0.0621222 useSync=1
+[VIDEO SYNC] videoPTS=4.29553 audioClock=4.243 drift=0.0525333 useSync=1
+[AUDIO THREAD] Frame PTS: 4.26667, Clock: 4.34967, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=4.71262 audioClock=4.64833 drift=0.0642889 useSync=1
+[VIDEO SYNC] videoPTS=5.1297 audioClock=5.075 drift=0.0547 useSync=1
+[VIDEO SYNC] videoPTS=5.54679 audioClock=5.48033 drift=0.0664556 useSync=1
+[VIDEO SYNC] videoPTS=5.96387 audioClock=5.907 drift=0.0568667 useSync=1
+[VIDEO SYNC] videoPTS=6.38096 audioClock=6.31233 drift=0.0686222 useSync=1
+[AUDIO THREAD] Frame PTS: 6.4, Clock: 6.483, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=6.79803 audioClock=6.739 drift=0.0590333 useSync=1
+[VIDEO SYNC] videoPTS=7.21512 audioClock=7.14433 drift=0.0707889 useSync=1
+[VIDEO SYNC] videoPTS=7.5905 audioClock=7.571 drift=0.0195 useSync=1
+[VIDEO SYNC] videoPTS=8.04929 audioClock=7.97633 drift=0.0729556 useSync=1
+[VIDEO SYNC] videoPTS=8.42467 audioClock=8.403 drift=0.0216667 useSync=1
+[AUDIO THREAD] Frame PTS: 8.53333, Clock: 8.61633, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=8.88346 audioClock=8.80833 drift=0.0751222 useSync=1
+[DEBUG VideoDecoder::seek] Called with seconds=845.729
+[DEBUG VideoDecoder::seek] this pointer=000001856E1E3760
+[DEBUG VideoDecoder::seek] Setting m_seeking=true
+[DEBUG VideoDecoder::seek] m_seeking is now: 1
+[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
+[DEBUG VideoDecoder::seek] FFmpeg mutex locked
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=845729064
+[DEBUG VideoDecoder::seek] av_seek_frame completed
+[DEBUG VideoDecoder::seek] Flushing video codec buffers
+[DEBUG VideoDecoder::seek] Flushing audio codec buffers
+[DEBUG VideoDecoder::seek] About to call clearQueues()
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000001856E1E3760
+[DEBUG VideoDecoder::clearQueues] m_seeking=1
+[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
+[DEBUG VideoDecoder::clearQueues] Sleep completed
+[DEBUG VideoDecoder::clearQueues] About to lock video queue
+[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001857173B2B0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001857173B220
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001857173B460
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001857173B5B0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001857173B1F0
+[DEBUG VideoDecoder::clearQueues] Video queue cleared
+[DEBUG VideoDecoder::clearQueues] About to lock audio queue
+[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
+[DEBUG VideoDecoder::clearQueues] Audio queue cleared
+[DEBUG VideoDecoder::clearQueues] clearQueues completed
+[DEBUG VideoDecoder::seek] clearQueues() returned
+[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
+[DEBUG VideoDecoder::seek] Seek completed successfully
+[AUDIO THREAD] Clock sync to PTS: 838.037
+[VIDEO SYNC] videoPTS=838.17 audioClock=838.123 drift=0.0475778 useSync=1
+[VIDEO SYNC] videoPTS=838.587 audioClock=838.549 drift=0.038 useSync=1
+[VIDEO SYNC] videoPTS=839.004 audioClock=838.955 drift=0.0497444 useSync=1
+[AUDIO THREAD] Frame PTS: 839.317, Clock: 839.317, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=839.422 audioClock=839.381 drift=0.0401667 useSync=1
+[VIDEO SYNC] videoPTS=839.839 audioClock=839.787 drift=0.0519111 useSync=1
+[VIDEO SYNC] videoPTS=840.256 audioClock=840.213 drift=0.0423333 useSync=1
+[VIDEO SYNC] videoPTS=840.673 audioClock=840.619 drift=0.0540778 useSync=1
+[VIDEO SYNC] videoPTS=841.09 audioClock=841.045 drift=0.0445 useSync=1
+[AUDIO THREAD] Frame PTS: 841.451, Clock: 841.451, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=841.507 audioClock=841.451 drift=0.0562444 useSync=1
+[VIDEO SYNC] videoPTS=841.924 audioClock=841.877 drift=0.0466667 useSync=1
+[VIDEO SYNC] videoPTS=842.341 audioClock=842.283 drift=0.0584111 useSync=1
+[VIDEO SYNC] videoPTS=842.758 audioClock=842.709 drift=0.0488333 useSync=1
+[VIDEO SYNC] videoPTS=843.175 audioClock=843.136 drift=0.0392444 useSync=1
+[VIDEO SYNC] videoPTS=843.592 audioClock=843.541 drift=0.051 useSync=1
+[AUDIO THREAD] Frame PTS: 843.584, Clock: 843.584, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=844.009 audioClock=843.968 drift=0.0414111 useSync=1
+[VIDEO SYNC] videoPTS=844.427 audioClock=844.373 drift=0.0531667 useSync=1
+[VIDEO SYNC] videoPTS=844.844 audioClock=844.8 drift=0.0435778 useSync=1
+[VIDEO SYNC] videoPTS=845.261 audioClock=845.205 drift=0.0553333 useSync=1
+[VIDEO SYNC] videoPTS=845.678 audioClock=845.632 drift=0.0457444 useSync=1
+[AUDIO THREAD] Frame PTS: 845.717, Clock: 845.717, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=846.095 audioClock=846.037 drift=0.0575 useSync=1
+[VIDEO SYNC] videoPTS=846.512 audioClock=846.464 drift=0.0479111 useSync=1
+[VIDEO SYNC] videoPTS=846.929 audioClock=846.869 drift=0.0596667 useSync=1
+[VIDEO SYNC] videoPTS=847.346 audioClock=847.296 drift=0.0500778 useSync=1
+[VIDEO SYNC] videoPTS=847.721 audioClock=847.701 drift=0.0201222 useSync=1
+[AUDIO THREAD] Frame PTS: 847.851, Clock: 847.851, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=848.347 audioClock=848.309 drift=0.0377444 useSync=1
+[VIDEO SYNC] videoPTS=848.764 audioClock=848.736 drift=0.0281667 useSync=1
+[VIDEO SYNC] videoPTS=849.181 audioClock=849.141 drift=0.0399111 useSync=1
+[VIDEO SYNC] videoPTS=849.598 audioClock=849.568 drift=0.0303333 useSync=1
+[AUDIO THREAD] Frame PTS: 849.984, Clock: 849.828, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=850.057 audioClock=850.02 drift=0.0369222 useSync=1
+[VIDEO SYNC] videoPTS=850.474 audioClock=850.426 drift=0.0486667 useSync=1
+[VIDEO SYNC] videoPTS=850.891 audioClock=850.852 drift=0.0390889 useSync=1
+[VIDEO SYNC] videoPTS=851.308 audioClock=851.258 drift=0.0508333 useSync=1
+[VIDEO SYNC] videoPTS=851.725 audioClock=851.684 drift=0.0412556 useSync=1
+[AUDIO THREAD] Frame PTS: 852.117, Clock: 851.962, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=852.143 audioClock=852.09 drift=0.053 useSync=1
+[VIDEO SYNC] videoPTS=852.56 audioClock=852.516 drift=0.0434222 useSync=1
+[VIDEO SYNC] videoPTS=852.977 audioClock=852.922 drift=0.0551667 useSync=1
+[VIDEO SYNC] videoPTS=853.394 audioClock=853.348 drift=0.0455889 useSync=1
+[VIDEO SYNC] videoPTS=853.811 audioClock=853.754 drift=0.0573333 useSync=1
+[AUDIO THREAD] Frame PTS: 854.251, Clock: 854.095, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=854.27 audioClock=854.202 drift=0.0681333 useSync=1
+[VIDEO SYNC] videoPTS=854.687 audioClock=854.628 drift=0.0585444 useSync=1
+[VIDEO SYNC] videoPTS=855.104 audioClock=855.034 drift=0.0703 useSync=1
+[VIDEO SYNC] videoPTS=855.479 audioClock=855.46 drift=0.019 useSync=1
+[VIDEO SYNC] videoPTS=855.938 audioClock=855.866 drift=0.0724667 useSync=1
+[AUDIO THREAD] Frame PTS: 856.384, Clock: 856.228, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=856.355 audioClock=856.314 drift=0.0415444 useSync=1
+[AUDIO] Paused
