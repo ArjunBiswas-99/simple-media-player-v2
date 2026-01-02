@@ -432,6 +432,10 @@ void AudioOutput::audioThreadFunc() {
         while (framesFilled < numFramesAvailable) {
             AudioFrame* frame = nullptr;
             
+            static int totalFramesProcessed = 0;
+            static double totalClockAdvance = 0.0;
+            static int loopIterations = 0;
+            
             {
                 std::lock_guard<std::mutex> lock(m_queueMutex);
                 if (!m_frameQueue.empty()) {
@@ -451,6 +455,16 @@ void AudioOutput::audioThreadFunc() {
                     double bufferDuration = (double)remainingFrames / m_sampleRate;
                     m_audioClock = m_audioClock + bufferDuration;
                 }
+                
+                // Log diagnostic every 100 iterations
+                if (loopIterations % 100 == 0 && loopIterations > 0) {
+                    std::cout << "[AUDIO DIAG] Last 100 loops: processed=" << totalFramesProcessed 
+                              << " frames, clockAdvance=" << totalClockAdvance 
+                              << "s, iterations=" << loopIterations << std::endl;
+                    totalFramesProcessed = 0;
+                    totalClockAdvance = 0.0;
+                }
+                loopIterations++;
                 break;
             }
             
@@ -460,6 +474,7 @@ void AudioOutput::audioThreadFunc() {
             // Update audio clock - advance gradually based on samples played
             // Don't jump to frame PTS as this causes video sync issues
             double frameDuration = (double)frameSamples / m_sampleRate;
+            double oldClock = m_audioClock;
             
             // Use frame PTS for initial sync or large discontinuities only
             if (m_audioClock < 0.001 || fabs(frame->pts - m_audioClock) > 1.0) {
@@ -475,6 +490,9 @@ void AudioOutput::audioThreadFunc() {
                 // Normal playback - advance clock by actual duration
                 m_audioClock += frameDuration;
                 m_lastClockUpdate = frame->pts;
+                
+                totalClockAdvance += (m_audioClock - oldClock);
+                totalFramesProcessed++;
             }
             
             static int audioLogCounter = 0;
@@ -485,6 +503,16 @@ void AudioOutput::audioThreadFunc() {
                           << ", SampleRate: " << m_sampleRate 
                           << ", FrameSamples: " << frameSamples << std::endl;
             }
+            
+            // Log diagnostic every 100 iterations
+            if (loopIterations % 100 == 0 && loopIterations > 0) {
+                std::cout << "[AUDIO DIAG] Last 100 loops: processed=" << totalFramesProcessed 
+                          << " frames, clockAdvance=" << totalClockAdvance 
+                          << "s, iterations=" << loopIterations << std::endl;
+                totalFramesProcessed = 0;
+                totalClockAdvance = 0.0;
+            }
+            loopIterations++;
             
             // Calculate how many frames we can copy
             UINT32 framesToCopy = std::min(frameSamples, numFramesAvailable - framesFilled);
