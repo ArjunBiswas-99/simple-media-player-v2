@@ -42,6 +42,9 @@ public:
     // Clear audio queue (for seeking)
     void clearQueue();
     
+    // Check and perform WASAPI flush if requested (call from main thread)
+    void checkAndFlushIfNeeded();
+    
 private:
 #ifdef __APPLE__
     AudioQueueRef m_audioQueue;
@@ -59,6 +62,10 @@ private:
     HANDLE m_audioEvent;
     std::thread m_audioThread;
     std::atomic<bool> m_stopAudioThread;
+    
+    // Flag-based seek flush mechanism
+    std::atomic<bool> m_flushRequested;
+    std::mutex m_flushMutex;
     
     // Partial frame handling for WASAPI
     AudioFrame* m_partialFrame;

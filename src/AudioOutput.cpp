@@ -21,6 +21,7 @@ AudioOutput::AudioOutput()
     , m_renderClient(nullptr)
     , m_audioEvent(nullptr)
     , m_stopAudioThread(false)
+    , m_flushRequested(false)
     , m_partialFrame(nullptr)
     , m_partialFrameOffset(0)
 #endif
@@ -539,28 +540,41 @@ void AudioOutput::audioThreadFunc() {
                                   (fabs(frame->pts - m_audioClock) > 1.0);
             
             if (isSeekDetected) {
-                // Seek detected - sync to frame PTS and clear any stale partial frame
+                // Seek detected - request flush and fill silence until flush completes
                 m_audioClock = frame->pts;
                 m_lastClockUpdate = frame->pts;
+                m_flushRequested.store(true);
+                std::cout << "[AUDIO THREAD] Seek detected at PTS: " << frame->pts 
+                          << " - flush requested" << std::endl;
                 
-                // Reset WASAPI client to flush old buffered audio
-                hr = m_audioClient->Stop();
-                if (SUCCEEDED(hr)) {
-                    hr = m_audioClient->Reset();  // Flush internal buffer
-                    if (SUCCEEDED(hr)) {
-                        hr = m_audioClient->Start();
-                        std::cout << "[AUDIO THREAD] Clock sync to PTS: " << frame->pts 
-                                  << " (buffer flushed)" << std::endl;
-                    }
+                // Put frame back and fill silence
+                {
+                    std::lock_guard<std::mutex> lock(m_queueMutex);
+                    m_frameQueue.push(frame);
                 }
-                if (FAILED(hr)) {
-                    std::cout << "[AUDIO THREAD] Clock sync to PTS: " << frame->pts 
-                              << " (flush failed)" << std::endl;
-                }
+                
+                // Fill with silence and return
+                memset(floatBuffer, 0, numFramesAvailable * m_channels * sizeof(float));
+                hr = m_renderClient->ReleaseBuffer(numFramesAvailable, 0);
+                continue;  // Skip to next iteration
             } else if (m_audioClock < 0.001 && frameOffset == 0) {
                 // Very first frame - initialize clock
                 m_audioClock = frame->pts;
                 m_lastClockUpdate = frame->pts;
+            }
+            
+            // If flush is pending, fill silence and wait
+            if (m_flushRequested.load()) {
+                // Put frame back
+                {
+                    std::lock_guard<std::mutex> lock(m_queueMutex);
+                    m_frameQueue.push(frame);
+                }
+                
+                // Fill with silence
+                memset(floatBuffer, 0, numFramesAvailable * m_channels * sizeof(float));
+                hr = m_renderClient->ReleaseBuffer(numFramesAvailable, 0);
+                continue;
             }
             
             static int audioLogCounter = 0;
@@ -618,5 +632,51 @@ void AudioOutput::audioThreadFunc() {
             std::cerr << "Failed to release buffer: " << std::hex << hr << std::endl;
         }
     }
+}
+
+void AudioOutput::checkAndFlushIfNeeded() {
+#ifdef _WIN32
+    if (!m_flushRequested.load()) {
+        return;  // No flush needed
+    }
+    
+    // Lock to prevent multiple simultaneous flushes
+    std::lock_guard<std::mutex> lock(m_flushMutex);
+    
+    // Double-check after acquiring lock
+    if (!m_flushRequested.load()) {
+        return;
+    }
+    
+    std::cout << "[FLUSH] Starting WASAPI buffer flush..." << std::endl;
+    
+    // Stop, reset, and restart audio client to flush buffer
+    HRESULT hr = m_audioClient->Stop();
+    if (FAILED(hr)) {
+        std::cerr << "[FLUSH] Failed to stop audio client: " << std::hex << hr << std::endl;
+        m_flushRequested.store(false);
+        return;
+    }
+    
+    hr = m_audioClient->Reset();
+    if (FAILED(hr)) {
+        std::cerr << "[FLUSH] Failed to reset audio client: " << std::hex << hr << std::endl;
+        m_audioClient->Start();  // Try to restart anyway
+        m_flushRequested.store(false);
+        return;
+    }
+    
+    hr = m_audioClient->Start();
+    if (FAILED(hr)) {
+        std::cerr << "[FLUSH] Failed to restart audio client: " << std::hex << hr << std::endl;
+        m_flushRequested.store(false);
+        return;
+    }
+    
+    std::cout << "[FLUSH] WASAPI buffer flushed successfully" << std::endl;
+    
+    // Clear the flush request flag - audio callback will resume normal operation
+    m_flushRequested.store(false);
+#endif
 }
 #endif
