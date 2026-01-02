@@ -147,6 +147,17 @@ bool AudioOutput::initialize(int sampleRate, int channels) {
     
     std::cout << "[AUDIO INIT] Audio client initialized successfully" << std::endl;
     
+    // Verify actual format WASAPI negotiated
+    WAVEFORMATEX* actualFormat = nullptr;
+    hr = m_audioClient->GetMixFormat(&actualFormat);
+    if (SUCCEEDED(hr) && actualFormat) {
+        std::cout << "[AUDIO INIT] ACTUAL format WASAPI is using: " 
+                  << actualFormat->nSamplesPerSec << "Hz, "
+                  << actualFormat->nChannels << " channels, "
+                  << actualFormat->wBitsPerSample << " bits" << std::endl;
+        CoTaskMemFree(actualFormat);
+    }
+    
     // Create event for audio callback
     m_audioEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
     if (!m_audioEvent) {
