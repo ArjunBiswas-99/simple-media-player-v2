@@ -2,6 +2,7 @@
 #include "VideoDecoder.h"
 #include <iostream>
 #include <chrono>
+#include <iomanip>
 
 AudioOutput::AudioOutput()
     : m_sampleRate(0)
@@ -471,10 +472,6 @@ void AudioOutput::audioThreadFunc() {
             AudioFrame* frame = nullptr;
             UINT32 frameOffset = 0;
             
-            static int totalFramesProcessed = 0;
-            static double totalClockAdvance = 0.0;
-            static int loopIterations = 0;
-            
             // Check for partial frame first
             {
                 std::lock_guard<std::mutex> lock(m_partialFrameMutex);
@@ -486,7 +483,6 @@ void AudioOutput::audioThreadFunc() {
                         delete m_partialFrame;
                         m_partialFrame = nullptr;
                         m_partialFrameOffset = 0;
-                        std::cout << "[AUDIO THREAD] Discarded stale partial frame after seek" << std::endl;
                     } else {
                         frame = m_partialFrame;
                         frameOffset = m_partialFrameOffset;
@@ -517,16 +513,6 @@ void AudioOutput::audioThreadFunc() {
                     double bufferDuration = (double)remainingFrames / m_sampleRate;
                     m_audioClock = m_audioClock + bufferDuration;
                 }
-                
-                // Log diagnostic every 100 iterations
-                if (loopIterations % 100 == 0 && loopIterations > 0) {
-                    std::cout << "[AUDIO DIAG] Last 100 loops: processed=" << totalFramesProcessed 
-                              << " frames, clockAdvance=" << totalClockAdvance 
-                              << "s, iterations=" << loopIterations << std::endl;
-                    totalFramesProcessed = 0;
-                    totalClockAdvance = 0.0;
-                }
-                loopIterations++;
                 break;
             }
             
@@ -541,11 +527,14 @@ void AudioOutput::audioThreadFunc() {
             
             if (isSeekDetected) {
                 // Seek detected - request flush and fill silence until flush completes
+                double oldClock = m_audioClock;
                 m_audioClock = frame->pts;
                 m_lastClockUpdate = frame->pts;
                 m_flushRequested.store(true);
-                std::cout << "[AUDIO THREAD] Seek detected at PTS: " << frame->pts 
-                          << " - flush requested" << std::endl;
+                std::cout << "[SEEK] Detected: oldClock=" << oldClock 
+                          << " newPTS=" << frame->pts 
+                          << " diff=" << fabs(frame->pts - oldClock) 
+                          << " | Flush REQUESTED" << std::endl;
                 
                 // Delete stale frame (decoder will provide fresh frames from new position)
                 delete frame;
@@ -563,6 +552,11 @@ void AudioOutput::audioThreadFunc() {
             // If flush is pending, fill silence and wait
             if (m_flushRequested.load()) {
                 // Delete frame - it's from old position, decoder will provide fresh frames
+                static int silenceCounter = 0;
+                if (silenceCounter++ % 10 == 0) {
+                    std::cout << "[FLUSH] Waiting... deleted frame PTS=" << frame->pts 
+                              << " (filling silence)" << std::endl;
+                }
                 delete frame;
                 
                 // Fill with silence
@@ -571,12 +565,19 @@ void AudioOutput::audioThreadFunc() {
                 continue;
             }
             
-            static int audioLogCounter = 0;
-            if (audioLogCounter++ % 100 == 0) {
-                std::cout << "[AUDIO THREAD] Frame PTS: " << frame->pts 
-                          << ", Clock: " << m_audioClock 
-                          << ", Offset: " << frameOffset
-                          << "/" << totalFrameSamples << " samples" << std::endl;
+            // Log first frame after flush completes
+            static bool wasFlushRequested = false;
+            static bool logNextFrame = false;
+            if (m_flushRequested.load()) {
+                wasFlushRequested = true;
+            } else if (wasFlushRequested) {
+                logNextFrame = true;
+                wasFlushRequested = false;
+            }
+            if (logNextFrame && frameOffset == 0) {
+                std::cout << "[RESUME] First frame after flush: PTS=" << frame->pts 
+                          << " clock=" << m_audioClock << std::endl;
+                logNextFrame = false;
             }
             
             // Calculate how many samples we can copy from this frame
@@ -590,11 +591,8 @@ void AudioOutput::audioThreadFunc() {
             
             // Advance clock by the actual samples written
             double actualDuration = (double)samplesToCopy / m_sampleRate;
-            double oldClock = m_audioClock;
             m_audioClock += actualDuration;
             m_lastClockUpdate = frame->pts;
-            
-            totalClockAdvance += (m_audioClock - oldClock);
             
             // Check if frame has remaining data
             UINT32 newOffset = frameOffset + samplesToCopy;
@@ -606,18 +604,7 @@ void AudioOutput::audioThreadFunc() {
             } else {
                 // Frame fully consumed
                 delete frame;
-                totalFramesProcessed++;
             }
-            
-            // Log diagnostic every 100 iterations
-            if (loopIterations % 100 == 0 && loopIterations > 0) {
-                std::cout << "[AUDIO DIAG] Last 100 loops: processed=" << totalFramesProcessed 
-                          << " frames, clockAdvance=" << totalClockAdvance 
-                          << "s, iterations=" << loopIterations << std::endl;
-                totalFramesProcessed = 0;
-                totalClockAdvance = 0.0;
-            }
-            loopIterations++;
         }
         
         // Release buffer
@@ -642,7 +629,8 @@ void AudioOutput::checkAndFlushIfNeeded() {
         return;
     }
     
-    std::cout << "[FLUSH] Starting WASAPI buffer flush..." << std::endl;
+    std::cout << "[FLUSH] Main thread executing Stop/Reset/Start..." << std::endl;
+    auto flushStartTime = std::chrono::high_resolution_clock::now();
     
     // Stop, reset, and restart audio client to flush buffer
     HRESULT hr = m_audioClient->Stop();
@@ -667,7 +655,9 @@ void AudioOutput::checkAndFlushIfNeeded() {
         return;
     }
     
-    std::cout << "[FLUSH] WASAPI buffer flushed successfully" << std::endl;
+    auto flushEndTime = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(flushEndTime - flushStartTime).count();
+    std::cout << "[FLUSH] COMPLETE - took " << duration << "ms | Audio resumed" << std::endl;
     
     // Clear the flush request flag - audio callback will resume normal operation
     m_flushRequested.store(false);
