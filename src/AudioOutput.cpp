@@ -1,6 +1,7 @@
 #include "AudioOutput.h"
 #include "VideoDecoder.h"
 #include <iostream>
+#include <chrono>
 
 AudioOutput::AudioOutput()
     : m_sampleRate(0)
@@ -404,6 +405,9 @@ void AudioOutput::audioThreadFunc() {
         return;
     }
     
+    static auto lastCallbackTime = std::chrono::high_resolution_clock::now();
+    static int callbackCount = 0;
+    
     while (!m_stopAudioThread) {
         // Wait for buffer event
         DWORD waitResult = WaitForSingleObject(m_audioEvent, 100);
@@ -421,6 +425,17 @@ void AudioOutput::audioThreadFunc() {
         
         // Calculate available frames
         UINT32 numFramesAvailable = bufferFrameCount - numFramesPadding;
+        
+        // Log timing diagnostics every 10 callbacks
+        if (callbackCount++ % 10 == 0 && callbackCount > 1) {
+            auto now = std::chrono::high_resolution_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCallbackTime).count();
+            double avgPerCallback = elapsed / 10.0;
+            std::cout << "[AUDIO TIMING] 10 callbacks took " << elapsed << "ms (avg " 
+                      << avgPerCallback << "ms/callback), numFramesAvailable=" 
+                      << numFramesAvailable << std::endl;
+            lastCallbackTime = now;
+        }
         
         if (numFramesAvailable == 0) continue;
         
