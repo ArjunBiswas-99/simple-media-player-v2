@@ -800,8 +800,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                         
                         // Update texture with frame data
                         if (state.videoTexture && state.pendingFrame->data) {
-                            UpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
-                                             state.pendingFrame->width, state.pendingFrame->height);
+                            __try {
+                                std::cout << "[VIDEO] Updating texture with frame data..." << std::endl;
+                                std::cout.flush();
+                                UpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
+                                                 state.pendingFrame->width, state.pendingFrame->height);
+                                std::cout << "[VIDEO] Texture updated successfully" << std::endl;
+                                std::cout.flush();
+                            }
+                            __except(EXCEPTION_EXECUTE_HANDLER) {
+                                std::cerr << "[VIDEO ERROR] SEH exception in UpdateVideoTexture! Code: " 
+                                          << GetExceptionCode() << std::endl;
+                                std::cerr.flush();
+                                videoErrorCount++;
+                            }
                         }
                         
                         // Update time
@@ -841,31 +853,52 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
 
         // Start ImGui frame
-        ImGui_ImplDX11_NewFrame();
-        ImGui_ImplWin32_NewFrame();
-        ImGui::NewFrame();
+        __try {
+            ImGui_ImplDX11_NewFrame();
+            ImGui_ImplWin32_NewFrame();
+            ImGui::NewFrame();
+        }
+        __except(EXCEPTION_EXECUTE_HANDLER) {
+            std::cerr << "[MAIN ERROR] SEH exception in ImGui NewFrame! Code: " 
+                      << GetExceptionCode() << std::endl;
+            std::cerr.flush();
+            continue;
+        }
 
         // Render UI (wrapped in try-catch to prevent crashes)
-        try {
-            RenderMenuBar(state);
-            RenderNetflixUI(state, hwnd);
-            RenderPlaylistPanel(state, ImVec2((float)io.DisplaySize.x, (float)io.DisplaySize.y));
-        } catch (const std::exception& e) {
-            std::cerr << "[UI ERROR] Exception in UI rendering: " << e.what() << std::endl;
-            std::cerr.flush();
-        } catch (...) {
-            std::cerr << "[UI ERROR] Unknown exception in UI rendering" << std::endl;
+        __try {
+            try {
+                RenderMenuBar(state);
+                RenderNetflixUI(state, hwnd);
+                RenderPlaylistPanel(state, ImVec2((float)io.DisplaySize.x, (float)io.DisplaySize.y));
+            } catch (const std::exception& e) {
+                std::cerr << "[UI ERROR] Exception in UI rendering: " << e.what() << std::endl;
+                std::cerr.flush();
+            } catch (...) {
+                std::cerr << "[UI ERROR] Unknown exception in UI rendering" << std::endl;
+                std::cerr.flush();
+            }
+        }
+        __except(EXCEPTION_EXECUTE_HANDLER) {
+            std::cerr << "[UI ERROR] SEH exception in UI rendering! Code: " 
+                      << GetExceptionCode() << std::endl;
             std::cerr.flush();
         }
 
         // Rendering
-        ImGui::Render();
-        const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-        g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
-        g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color);
-        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-
-        g_pSwapChain->Present(1, 0);
+        __try {
+            ImGui::Render();
+            const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+            g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
+            g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color);
+            ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+            g_pSwapChain->Present(1, 0);
+        }
+        __except(EXCEPTION_EXECUTE_HANDLER) {
+            std::cerr << "[RENDER ERROR] SEH exception in D3D11 rendering! Code: " 
+                      << GetExceptionCode() << std::endl;
+            std::cerr.flush();
+        }
     }
 
     // Cleanup
