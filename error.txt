@@ -1,45 +1,47 @@
-e-media-player-v2\build>ninja                                                    
-[13/13] Linking CXX executable MediaPlayer.exe
-FAILED: [code=4294967295] MediaPlayer.exe
-C:\WINDOWS\system32\cmd.exe /C "cd . && "C:\Program Files\CMake\bin\cmake.exe" -E vs_link_exe --msvc-ver=1950 --intdir=CMakeFiles\MediaPlayer.dir --rc=C:\PROGRA~2\WI3CF2~1\10\bin\100261~1.0\x86\rc.exe --mt=C:\PROGRA~2\WI3CF2~1\10\bin\100261~1.0\x86\mt.exe --manifests  -- C:\PROGRA~2\MICROS~4\18\BUILDT~1\VC\Tools\MSVC\1450~1.357\bin\Hostx86\x86\link.exe /nologo CMakeFiles\MediaPlayer.dir\src\main.cpp.obj CMakeFiles\MediaPlayer.dir\src\VideoDecoder.cpp.obj CMakeFiles\MediaPlayer.dir\src\AudioOutput.cpp.obj CMakeFiles\MediaPlayer.dir\src\platform_windows.cpp.obj  /out:MediaPlayer.exe /implib:MediaPlayer.lib /pdb:MediaPlayer.pdb /version:0.0 /machine:X86 /INCREMENTAL /debug /INCREMENTAL /subsystem:console  imgui.lib  d3d11.lib  dxgi.lib  d3dcompiler.lib  ole32.lib  shell32.lib  d3d11.lib  dxgi.lib  d3dcompiler.lib  ole32.lib  shell32.lib  C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\avcodec.lib  C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\avformat.lib  C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\avutil.lib  C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\swscale.lib  C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\swresample.lib  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
-LINK Pass 1: command "C:\PROGRA~2\MICROS~4\18\BUILDT~1\VC\Tools\MSVC\1450~1.357\bin\Hostx86\x86\link.exe /nologo CMakeFiles\MediaPlayer.dir\src\main.cpp.obj CMakeFiles\MediaPlayer.dir\src\VideoDecoder.cpp.obj CMakeFiles\MediaPlayer.dir\src\AudioOutput.cpp.obj CMakeFiles\MediaPlayer.dir\src\platform_windows.cpp.obj /out:MediaPlayer.exe /implib:MediaPlayer.lib /pdb:MediaPlayer.pdb /version:0.0 /machine:X86 /INCREMENTAL /debug /INCREMENTAL /subsystem:console imgui.lib d3d11.lib dxgi.lib d3dcompiler.lib ole32.lib shell32.lib d3d11.lib dxgi.lib d3dcompiler.lib ole32.lib shell32.lib C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\avcodec.lib C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\avformat.lib C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\avutil.lib C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\swscale.lib C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\swresample.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\MediaPlayer.dir/intermediate.manifest CMakeFiles\MediaPlayer.dir/manifest.res" failed (exit code 1120) with the following output:
-main.cpp.obj : error LNK2019: unresolved external symbol _av_free referenced in function "public: __thiscall VideoFrame::~VideoFrame(void)" (??1VideoFrame@@QAE@XZ)
-VideoDecoder.cpp.obj : error LNK2001: unresolved external symbol _av_free
-AudioOutput.cpp.obj : error LNK2001: unresolved external symbol _av_free
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _av_malloc referenced in function "private: struct VideoFrame * __thiscall VideoDecoder::decodeVideoPacket(struct AVPacket *)" (?decodeVideoPacket@VideoDecoder@@AAEPAUVideoFrame@@PAUAVPacket@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _av_frame_alloc referenced in function "private: struct VideoFrame * __thiscall VideoDecoder::decodeVideoPacket(struct AVPacket *)" (?decodeVideoPacket@VideoDecoder@@AAEPAUVideoFrame@@PAUAVPacket@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _av_frame_free referenced in function "private: struct VideoFrame * __thiscall VideoDecoder::decodeVideoPacket(struct AVPacket *)" (?decodeVideoPacket@VideoDecoder@@AAEPAUVideoFrame@@PAUAVPacket@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _avcodec_find_decoder referenced in function "private: bool __thiscall VideoDecoder::openCodecContext(enum AVMediaType)" (?openCodecContext@VideoDecoder@@AAE_NW4AVMediaType@@@Z)    
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _av_packet_alloc referenced in function "private: void __thiscall VideoDecoder::decodeLoop(void)" (?decodeLoop@VideoDecoder@@AAEXXZ)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _av_packet_free referenced in function "private: void __thiscall VideoDecoder::decodeLoop(void)" (?decodeLoop@VideoDecoder@@AAEXXZ)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _av_packet_unref referenced in function "private: void __thiscall VideoDecoder::decodeLoop(void)" (?decodeLoop@VideoDecoder@@AAEXXZ)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _avcodec_alloc_context3 referenced in function "private: bool __thiscall VideoDecoder::openCodecContext(enum AVMediaType)" (?openCodecContext@VideoDecoder@@AAE_NW4AVMediaType@@@Z)  
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _avcodec_free_context referenced in function "public: void __thiscall VideoDecoder::close(void)" (?close@VideoDecoder@@QAEXXZ)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _avcodec_parameters_to_context referenced in function "private: bool __thiscall VideoDecoder::openCodecContext(enum AVMediaType)" (?openCodecContext@VideoDecoder@@AAE_NW4AVMediaType@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _avcodec_open2 referenced in function "private: bool __thiscall VideoDecoder::openCodecContext(enum AVMediaType)" (?openCodecContext@VideoDecoder@@AAE_NW4AVMediaType@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _avcodec_send_packet referenced in function "private: struct VideoFrame * __thiscall VideoDecoder::decodeVideoPacket(struct AVPacket *)" (?decodeVideoPacket@VideoDecoder@@AAEPAUVideoFrame@@PAUAVPacket@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _avcodec_receive_frame referenced in function "private: struct VideoFrame * __thiscall VideoDecoder::decodeVideoPacket(struct AVPacket *)" (?decodeVideoPacket@VideoDecoder@@AAEPAUVideoFrame@@PAUAVPacket@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _avcodec_flush_buffers referenced in function "public: void __thiscall VideoDecoder::seek(double)" (?seek@VideoDecoder@@QAEXN@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _avformat_open_input referenced in function "public: bool __thiscall VideoDecoder::open(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?open@VideoDecoder@@QAE_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _avformat_find_stream_info referenced in function "public: bool __thiscall VideoDecoder::open(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?open@VideoDecoder@@QAE_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _av_read_frame referenced in function "private: void __thiscall VideoDecoder::decodeLoop(void)" (?decodeLoop@VideoDecoder@@AAEXXZ)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _av_seek_frame referenced in function "public: void __thiscall VideoDecoder::seek(double)" (?seek@VideoDecoder@@QAEXN@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _avformat_close_input referenced in function "public: bool __thiscall VideoDecoder::open(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?open@VideoDecoder@@QAE_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _av_image_get_buffer_size referenced in function "private: struct VideoFrame * __thiscall VideoDecoder::decodeVideoPacket(struct AVPacket *)" (?decodeVideoPacket@VideoDecoder@@AAEPAUVideoFrame@@PAUAVPacket@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _sws_freeContext referenced in function "public: void __thiscall VideoDecoder::close(void)" (?close@VideoDecoder@@QAEXXZ)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _sws_getContext referenced in function "public: bool __thiscall VideoDecoder::open(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?open@VideoDecoder@@QAE_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _sws_scale referenced in function "private: struct VideoFrame * __thiscall VideoDecoder::decodeVideoPacket(struct AVPacket *)" (?decodeVideoPacket@VideoDecoder@@AAEPAUVideoFrame@@PAUAVPacket@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _swr_init referenced in function "public: bool __thiscall VideoDecoder::open(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?open@VideoDecoder@@QAE_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _swr_alloc_set_opts2 referenced in function "public: bool __thiscall VideoDecoder::open(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > const &)" (?open@VideoDecoder@@QAE_NABV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _swr_free referenced in function "public: void __thiscall VideoDecoder::close(void)" (?close@VideoDecoder@@QAEXXZ)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _swr_convert referenced in function "private: struct AudioFrame * __thiscall VideoDecoder::decodeAudioPacket(struct AVPacket *)" (?decodeAudioPacket@VideoDecoder@@AAEPAUAudioFrame@@PAUAVPacket@@@Z)
-VideoDecoder.cpp.obj : error LNK2019: unresolved external symbol _swr_get_out_samples referenced in function "private: struct AudioFrame * __thiscall VideoDecoder::decodeAudioPacket(struct AVPacket *)" (?decodeAudioPacket@VideoDecoder@@AAEPAUAudioFrame@@PAUAVPacket@@@Z)
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\avcodec.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\avformat.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\avutil.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\swscale.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\lib\swresample.lib : warning LNK4272: library machine type 'x64' conflicts with target machine type 'x86'
-MediaPlayer.exe : fatal error LNK1120: 29 unresolved externals
-ninja: build stopped: subcommand failed.
-
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build>
+\Downloads\The Heat.mp4
+Duration: 7220.25 seconds
+Video: 1920x800
+Audio: 48000Hz, 2 channels
+Loaded: The Heat.mp4
+[DEBUG VideoDecoder::seek] Called with seconds=1186.55
+[DEBUG VideoDecoder::seek] this pointer=000002027E73CF60
+[DEBUG VideoDecoder::seek] Setting m_seeking=true
+[DEBUG VideoDecoder::seek] m_seeking is now: 1
+[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
+[DEBUG VideoDecoder::seek] FFmpeg mutex locked
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=1186545288
+[DEBUG VideoDecoder::seek] av_seek_frame completed
+[DEBUG VideoDecoder::seek] Flushing video codec buffers
+[DEBUG VideoDecoder::seek] Flushing audio codec buffers
+[DEBUG VideoDecoder::seek] About to call clearQueues()
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002027E73CF60
+[DEBUG VideoDecoder::clearQueues] m_seeking=1
+[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
+[DEBUG VideoDecoder::clearQueues] Sleep completed
+[DEBUG VideoDecoder::clearQueues] About to lock video queue
+[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002027E77F7C0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002027E77F5E0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002027E77F550
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002027E77F850
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002027E77F7F0
+[DEBUG VideoDecoder::clearQueues] Video queue cleared
+[DEBUG VideoDecoder::clearQueues] About to lock audio queue
+[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 12
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A17A0
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1700
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1720
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1860
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A15A0
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1540
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A15C0
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1880
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1580
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1620
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002027E7A1640
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 0000020273160F40
+[DEBUG VideoDecoder::clearQueues] Audio queue cleared
+[DEBUG VideoDecoder::clearQueues] clearQueues completed
+[DEBUG VideoDecoder::seek] clearQueues() returned
+[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
+[DEBUG VideoDecoder::seek] Seek completed successfully
