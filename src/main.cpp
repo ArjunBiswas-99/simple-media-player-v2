@@ -542,7 +542,7 @@ int main(int, char**) {
     }
 
     // Set the D3D device for platform-specific texture functions
-    SetD3D11Device(g_pd3dDevice, g_pd3dDeviceContext);
+    SetD3D11Device(g_pd3dDevice, g_pd3dDeviceContext, g_pSwapChain, g_mainRenderTargetView);
 
     ShowWindow(hwnd, SW_SHOWDEFAULT);
     UpdateWindow(hwnd);
