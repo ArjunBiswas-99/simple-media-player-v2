@@ -1,4 +1,7 @@
-esktop\Test\simple-media-player-v2> cmake --build build --config Release
+s)
+-- Generating done (0.1s)
+-- Build files have been written to: C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/build
+PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> cmake --build build --config Release
 MSBuild version 18.0.5+e22287bf1 for .NET Framework
 
   1>Checking Build System
@@ -14,18 +17,7 @@ MSBuild version 18.0.5+e22287bf1 for .NET Framework
   imgui.vcxproj -> C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\Release\imgui.lib
   Building Custom Rule C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/CMakeLists.txt
   main.cpp
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\main.cpp(803,29): error C2713: Only one form of exception 
-handling permitted per function [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]    
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\main.cpp(856,9): error C2713: Only one form of exception h
-andling permitted per function [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]     
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\main.cpp(869,9): error C2713: Only one form of exception h 
-andling permitted per function [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]     
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\main.cpp(870,13): error C2713: Only one form of exception  
-handling permitted per function [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]    
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\main.cpp(889,9): error C2713: Only one form of exception h 
-andling permitted per function [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]     
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\main.cpp(588,12): error C2712: Cannot use __try in functio 
+C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\main.cpp(588,12): error C2712: Cannot use __try in functio
 ns that require object unwinding [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]   
   VideoDecoder.cpp
   AudioOutput.cpp
-  platform_windows.cpp
