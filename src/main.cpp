@@ -403,11 +403,6 @@ void ScanDirectoryForMediaFiles(AppState& state, const std::string& filePath) {
                     state.pendingFrame = nullptr;  // Frame consumed
                     framesProcessed++;
                     
-                    std::cout << "[FRAME DISPLAY] Displaying frame " << framesProcessed 
-                              << " PTS=" << videoPTS << std::endl;
-                    std::cout << "[FRAME DISPLAY] Displaying frame " << framesProcessed 
-                              << " PTS=" << videoPTS << std::endl;
-                    
                     // Update tracking
                     state.lastVideoFramePTS = videoPTS;
                     
@@ -492,8 +487,6 @@ void ScanDirectoryForMediaFiles(AppState& state, const std::string& filePath) {
                 state.pendingFrame = nullptr;
             }
         }  // End of frame processing loop
-        
-        std::cout << "[FRAME PROCESSING] Processed " << framesProcessed << " frames this loop" << std::endl;
         
         // Process audio frames
         if (state.audioOutput && state.decoder->hasAudio()) {
@@ -1108,16 +1101,12 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
         // Clickable area
         ImGui::SetCursorPos(ImVec2(0, ImGui::GetCursorPosY()));
         if (ImGui::InvisibleButton("##Item", itemSize)) {
-            std::cout << "[LOAD] Playlist item clicked, index=" << i << std::endl;
             // Load the selected file
             if (state.decoder) {
                 std::string filepath = state.playlistFiles[i];
-                std::cout << "[LOAD] Opening file: " << filepath << std::endl;
                 if (state.decoder->open(filepath)) {
-                    std::cout << "[LOAD] File opened successfully" << std::endl;
                     state.currentPlaylistIndex = (int)i;
                     state.fileLoaded = true;
-                    std::cout << "[LOAD] fileLoaded=true" << std::endl;
                     state.duration = (float)state.decoder->getDuration();
                     state.currentTime = 0.0f;
                     state.currentTitle = state.playlistNames[i];
@@ -1140,18 +1129,13 @@ void RenderPlaylistPanel(AppState& state, ImVec2 screenSize) {
                     }
                     
                     // Auto-start playback
-                    std::cout << "[LOAD] Auto-starting playback" << std::endl;
                     state.isPlaying = true;
-                    std::cout << "[LOAD] isPlaying=true" << std::endl;
                     state.decoder->play();
-                    std::cout << "[LOAD] decoder->play() called" << std::endl;
                     if (state.audioOutput) {
                         state.audioOutput->play();
-                        std::cout << "[LOAD] audioOutput->play() called" << std::endl;
                     }
                     
                     state.timeSinceFileLoad = 0.0f;
-                    std::cout << "[LOAD] Load complete, ready to play" << std::endl;
                 }
             }
         }
@@ -1284,7 +1268,6 @@ void RenderMenuBar(AppState& state) {
                             state.audioOutput->play();
                         }
                         
-                        std::cout << "[LOAD] File loaded via dialog, starting playback" << std::endl;
                         state.ignoreNextClick = true;  // Prevent file dialog click from toggling play/pause
                         
                         std::cout << "Loaded: " << state.currentTitle << std::endl;
@@ -1527,6 +1510,8 @@ void RenderNetflixUI(AppState& state, HWND window) {
     static bool playPauseHandled = false;
     static double lastHoldDuration = 0.0; // Preserve duration for release check
     static double lastClickTime = 0.0;     // Track last click for double-click detection
+    static bool hasPendingClick = false;   // Delayed click to check for double-click
+    static double pendingClickTime = 0.0;  // When the pending click occurred
     
     const double HOLD_THRESHOLD = 0.2; // 200ms to distinguish click from hold
     bool itemActive = ImGui::IsItemActive();
@@ -1539,11 +1524,36 @@ void RenderNetflixUI(AppState& state, HWND window) {
         wasDoubleClick = true;
         doubleClickTime = currentTime;
         playPauseHandled = true; // Don't process as click
+        hasPendingClick = false; // Cancel any pending click
     }
     
     // Clear double-click flag after 500ms
     if (wasDoubleClick && (currentTime - doubleClickTime) > 0.5) {
         wasDoubleClick = false;
+    }
+    
+    // Process pending click if enough time has passed without double-click
+    // Wait 150ms (half of typical 300ms double-click threshold) to be safe
+    if (hasPendingClick && (currentTime - pendingClickTime) > 0.15 && !wasDoubleClick) {
+        state.isPlaying = !state.isPlaying;
+        state.showControls = true;
+        state.controlsTimer = 3.0f;
+        
+        // Control decoder and audio
+        if (state.decoder) {
+            if (state.isPlaying) {
+                state.decoder->play();
+                if (state.audioOutput) {
+                    state.audioOutput->play();
+                }
+            } else {
+                state.decoder->pause();
+                if (state.audioOutput) {
+                    state.audioOutput->pause();
+                }
+            }
+        }
+        hasPendingClick = false;
     }
     
     // Track mouse down event
@@ -1573,31 +1583,21 @@ void RenderNetflixUI(AppState& state, HWND window) {
     
     // Entering 2x speed mode
     if (state.is2xSpeedMode && !wasHoldingMouse && state.fileLoaded) {
-        std::cout << "[2X MODE] ENTERING 2x speed mode" << std::endl;
-        std::cout << "[2X MODE] Previous playbackSpeed: " << state.playbackSpeed << std::endl;
         state.normalPlaybackSpeed = state.playbackSpeed;
         state.playbackSpeed = 2.0f;
         state.show2xSpeedIndicator = true;
-        std::cout << "[2X MODE] Set playbackSpeed to: " << state.playbackSpeed << std::endl;
         // Apply 2x speed to audio
         if (state.audioOutput) {
-            std::cout << "[2X MODE] Calling audioOutput->setPlaybackRate(2.0f)" << std::endl;
             state.audioOutput->setPlaybackRate(2.0f);
-            std::cout << "[2X MODE] Audio playback rate set, current rate: " << state.audioOutput->getPlaybackRate() << std::endl;
-        } else {
-            std::cout << "[2X MODE] WARNING: No audioOutput available!" << std::endl;
         }
     }
     
     // Exiting 2x speed mode
     if (!state.is2xSpeedMode && wasHoldingMouse) {
-        std::cout << "[2X MODE] EXITING 2x speed mode" << std::endl;
-        std::cout << "[2X MODE] Restoring playbackSpeed to: " << state.normalPlaybackSpeed << std::endl;
         state.playbackSpeed = state.normalPlaybackSpeed;
         state.show2xSpeedIndicator = false;
         // Restore normal speed to audio
         if (state.audioOutput) {
-            std::cout << "[2X MODE] Calling audioOutput->setPlaybackRate(1.0f)" << std::endl;
             state.audioOutput->setPlaybackRate(1.0f);
         }
     }
@@ -1607,7 +1607,6 @@ void RenderNetflixUI(AppState& state, HWND window) {
     if (mouseWasDown && !mouseDown) {
         // Check if we should ignore this click
         if (state.ignoreNextClick) {
-            std::cout << "[CLICK] Ignoring click (file dialog)" << std::endl;
             state.ignoreNextClick = false;
         } else {
             // Mouse just released
@@ -1624,26 +1623,10 @@ void RenderNetflixUI(AppState& state, HWND window) {
             
             // Only toggle play/pause if not handled, not a double-click, file is loaded, AND not in controls area
             if (!playPauseHandled && lastHoldDuration < HOLD_THRESHOLD && !wasDoubleClick && !mightBeDoubleClick && state.fileLoaded && !clickInControlsArea) {
-                std::cout << "[CLICK] Toggling play/pause" << std::endl;
-                // It was a quick click - toggle play/pause
-                state.isPlaying = !state.isPlaying;
-                state.showControls = true;
-                state.controlsTimer = 3.0f;
-                
-                // Control decoder and audio
-                if (state.decoder) {
-                    if (state.isPlaying) {
-                        state.decoder->play();
-                        if (state.audioOutput) {
-                            state.audioOutput->play();
-                        }
-                    } else {
-                        state.decoder->pause();
-                        if (state.audioOutput) {
-                            state.audioOutput->pause();
-                        }
-                    }
-                }
+                // Don't toggle immediately - set pending flag to wait one frame for potential double-click
+                hasPendingClick = true;
+                pendingClickTime = currentTime;
+
             }
         }
         // Reset for next interaction only after mouse is fully released
@@ -2022,7 +2005,6 @@ void RenderNetflixUI(AppState& state, HWND window) {
         // Update hover animation
         state.playButtonHovered = false;
         if (ImGui::Button("##PlayPause", ImVec2(64, 64))) {
-            std::cout << "[BUTTON] Play/Pause clicked, toggling to " << (!state.isPlaying ? "play" : "pause") << std::endl;
             state.isPlaying = !state.isPlaying;
             playPauseHandled = true;  // Prevent video click from also firing
             
