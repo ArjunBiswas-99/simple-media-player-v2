@@ -534,15 +534,14 @@ void AudioOutput::audioThreadFunc() {
                                   (fabs(frame->pts - m_audioClock) > 1.0);
             
             if (isSeekDetected) {
-                // Seek detected - request flush and fill silence until flush completes
+                // Seek detected - request flush but DON'T update clock yet
+                // Clock will be updated when we start copying new audio after flush
                 double oldClock = m_audioClock;
-                m_audioClock = frame->pts;
-                m_lastClockUpdate = frame->pts;
                 m_flushRequested.store(true);
                 std::cout << "[SEEK] Detected: oldClock=" << oldClock 
                           << " newPTS=" << frame->pts 
                           << " diff=" << fabs(frame->pts - oldClock) 
-                          << " | Flush REQUESTED" << std::endl;
+                          << " | Flush REQUESTED (clock NOT updated yet)" << std::endl;
                 
                 // Delete stale frame (decoder will provide fresh frames from new position)
                 delete frame;
@@ -587,15 +586,15 @@ void AudioOutput::audioThreadFunc() {
                 wasFlushRequested = false;
             }
             
-            if (logNextFrame) {
-                std::cout << "[RESUME LOGIC] logNextFrame=true, frameOffset=" << frameOffset << std::endl;
-                if (frameOffset == 0) {
-                    std::cout << "[RESUME] First frame after flush: PTS=" << frame->pts 
-                              << " clock=" << m_audioClock << std::endl;
-                    logNextFrame = false;
-                } else {
-                    std::cout << "[RESUME LOGIC] Skipping - frameOffset != 0" << std::endl;
-                }
+            if (logNextFrame && frameOffset == 0) {
+                // First complete frame after flush - synchronize clock to new position
+                double oldClock = m_audioClock;
+                m_audioClock = frame->pts;
+                m_lastClockUpdate = frame->pts;
+                std::cout << "[RESUME] First frame after flush: PTS=" << frame->pts 
+                          << " oldClock=" << oldClock 
+                          << " | Clock synchronized to new position" << std::endl;
+                logNextFrame = false;
             }
             
             // Calculate how many samples we can copy from this frame
