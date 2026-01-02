@@ -454,20 +454,36 @@ void AudioOutput::audioThreadFunc() {
                 break;
             }
             
-            // Update audio clock with frame PTS
-            m_audioClock = frame->pts;
-            m_lastClockUpdate = frame->pts;
+            // Update audio clock - advance gradually based on samples played
+            // Don't jump to frame PTS as this causes video sync issues
+            double frameDuration = (double)frameSamples / m_sampleRate;
+            
+            // Use frame PTS for initial sync or large discontinuities only
+            if (m_audioClock < 0.001 || fabs(frame->pts - m_audioClock) > 1.0) {
+                // First frame or seek detected - sync to frame PTS
+                m_audioClock = frame->pts;
+                m_lastClockUpdate = frame->pts;
+                
+                static int initLogCount = 0;
+                if (initLogCount++ < 2) {
+                    std::cout << "[AUDIO THREAD] Clock sync to PTS: " << frame->pts << std::endl;
+                }
+            } else {
+                // Normal playback - advance clock by actual duration
+                m_audioClock += frameDuration;
+                m_lastClockUpdate = frame->pts;
+            }
             
             static int audioLogCounter = 0;
             if (audioLogCounter++ % 100 == 0) {
                 std::cout << "[AUDIO THREAD] Frame PTS: " << frame->pts 
                           << ", Clock: " << m_audioClock 
+                          << ", Duration: " << frameDuration
                           << ", SampleRate: " << m_sampleRate 
-                          << ", FrameSamples: " << (frame->size / (m_channels * sizeof(float))) << std::endl;
+                          << ", FrameSamples: " << frameSamples << std::endl;
             }
             
             // Calculate how many frames we can copy
-            UINT32 frameSamples = frame->size / (m_channels * sizeof(float));
             UINT32 framesToCopy = std::min(frameSamples, numFramesAvailable - framesFilled);
             
             // Copy audio data
