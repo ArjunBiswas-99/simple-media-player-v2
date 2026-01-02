@@ -454,6 +454,9 @@ void AudioOutput::audioThreadFunc() {
                 break;
             }
             
+            // Calculate frame size first
+            UINT32 frameSamples = frame->size / (m_channels * sizeof(float));
+            
             // Update audio clock - advance gradually based on samples played
             // Don't jump to frame PTS as this causes video sync issues
             double frameDuration = (double)frameSamples / m_sampleRate;
