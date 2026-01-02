@@ -11,88 +11,162 @@ Audio: 48000Hz, 2 channels
 [AUDIO INIT] Audio client initialized successfully
 [AUDIO INIT] ACTUAL format WASAPI is using: 48000Hz, 2 channels, 32 bits
 WASAPI Audio initialized: 48000Hz, 2 channels
-[AUDIO] Playing
+[AUDIO THREAD] WASAPI buffer size: 48000 frames (1s)[AUDIO] Playing
+
 Loaded: The Heat.mp4
-[AUDIO THREAD] WASAPI buffer size: 48000 frames (1s)
 [AUDIO] Frame 0: PTS=0 (no correction)
 [AUDIO CHECK] PTS scaling is correct, no fix needed
   Expected: 0.0213333s, Actual: 0.0213333s
 [AUDIO] Frame 1: PTS=0.0213333 (no correction)
+[CALLBACK] Entry #1 flushRequested=0 clock=0
 [AUDIO] Frame 2: PTS=0.0426667 (no correction)
-[MAIN] First audio frame: PTS=0 size=8192
 [MAIN] Initial A/V sync: set audio clock to 0.083
 [VIDEO SYNC] videoPTS=0.083 audioClock=0.083 drift=0 useSync=1
 [VIDEO] Texture created: 1920x800
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[MAIN] First audio frame: PTS=0 size=8192
+[COPY] Frame PTS=0 offset=0/1024 copying 480 samples timestamp=50213401
+[AUDIO TIMING] 10 callbacks took 103ms (avg 10.3ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=0.128 offset=576/1024 copying 448 samples timestamp=50213541
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
 [VIDEO SYNC] videoPTS=0.333244 audioClock=0.303 drift=0.0302444 useSync=1
+[COPY] Frame PTS=0.277333 offset=0/1024 copying 128 samples timestamp=50213670
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=0.5835 audioClock=0.503 drift=0.0805 useSync=1
+[VIDEO SYNC] videoPTS=0.5835 audioClock=0.513 drift=0.0705 useSync=1
+[COPY] Frame PTS=0.405333 offset=704/1024 copying 320 samples timestamp=50213821
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #51 flushRequested=0 clock=0.573
+[COPY] Frame PTS=0.554667 offset=0/1024 copying 256 samples timestamp=50213951
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=0.792033 audioClock=0.713 drift=0.0790333 useSync=1
+[VIDEO SYNC] videoPTS=0.792033 audioClock=0.723 drift=0.0690333 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=0.958867 audioClock=0.913 drift=0.0458667 useSync=1
-[AUDIO TIMING] 10 callbacks took 110ms (avg 11ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1.16741 audioClock=1.123 drift=0.0444111 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1.37596 audioClock=1.333 drift=0.0429556 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=0.682667 offset=832/1024 copying 192 samples timestamp=50214101
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1.5845 audioClock=1.533 drift=0.0515 useSync=1
+[VIDEO SYNC] videoPTS=1.00058 audioClock=0.923 drift=0.0775778 useSync=[COPY] Frame PTS=0.832 offset=0/1024 copying 384 samples timestamp=502142311
+
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1.79303 audioClock=1.743 drift=0.0500333 useSync=1
+[CALLBACK] Entry #101 flushRequested=0 clock=1.073
+[COPY] Frame PTS=0.96 offset=960/1024 copying 64 samples timestamp=50214381
+[VIDEO SYNC] videoPTS=1.20912 audioClock=1.133 drift=0.0761222 useSync=1
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1.10933 offset=32/1024 copying 480 samples timestamp=50214511
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=1.37596 audioClock=1.343 drift=0.0329556 useSync=1
+[COPY] Frame PTS=1.23733 offset=608/1024 copying 416 samples timestamp=50214651
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=2.00158 audioClock=1.953 drift=0.0485778 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=2.21012 audioClock=2.163 drift=0.0471222 useSync=1
+[COPY] Frame PTS=1.38667 offset=160/1024 copying 480 samples timestamp=50214790
+[VIDEO SYNC] videoPTS=1.5845 audioClock=1.553 drift=0.0315 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #151 flushRequested=0 clock=1.573
+[COPY] Frame PTS=1.51467 offset=736/1024 copying 288 samples timestamp=50214931
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=1.79303 audioClock=1.763 drift=0.0300333 useSync=1
+[COPY] Frame PTS=1.664 offset=288/1024 copying 480 samples timestamp=50215070
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1.792 offset=864/1024 copying 160 samples timestamp=50215211
+[VIDEO SYNC] videoPTS=2.04329 audioClock=1.97033 drift=0.0729556 useSync=1
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1.94133 offset=416/1024 copying 480 samples timestamp=50215351
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #201 flushRequested=0 clock=2.073
+[VIDEO SYNC] videoPTS=2.25183 audioClock=2.173 drift=0.0788333 useSync=1
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=2.06933 offset=992/1024 copying 32 samples timestamp=50215491
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=2.21867 offset=64/1024 copying 480 samples timestamp=50215620
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=2.41867 audioClock=2.383 drift=0.0356667 useSync=1
+[COPY] Frame PTS=2.368 offset=0/1024 copying 96 samples timestamp=50215761
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #251 flushRequested=0 clock=2.573
+[VIDEO SYNC] videoPTS=2.6272 audioClock=2.593 drift=0.0342 useSync=1
+[COPY] Frame PTS=2.496 offset=192/1024 copying 480 samples timestamp=50215901
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=2.64533 offset=0/1024 copying 224 samples timestamp=50216041
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=2.83574 audioClock=2.803 drift=0.0327444 useSync=1
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=2.77333 offset=320/1024 copying 480 samples timestamp=50216181
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=3.04429 audioClock=3.013 drift=0.0312889 useSync=1
+[COPY] Frame PTS=2.92267 offset=0/1024 copying 352 samples timestamp=50216321
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #301 flushRequested=0 clock=3.073
+[COPY] Frame PTS=3.05067 offset=448/1024 copying 480 samples timestamp=50216461
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=3.29453 audioClock=3.223 drift=0.0715333 useSync=1
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=3.2 offset=0/1024 copying 480 samples timestamp=50216601
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=3.328 offset=576/1024 copying 448 samples timestamp=50216741
+[VIDEO SYNC] videoPTS=3.50308 audioClock=3.443 drift=0.0600778 useSync=1
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=3.47733 offset=0/1024 copying 128 samples timestamp=50216871
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #351 flushRequested=0 clock=3.573
+[VIDEO SYNC] videoPTS=3.71162 audioClock=3.643 drift=0.0686222 useSync=1
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=3.60533 offset=704/1024 copying 320 samples timestamp=50217021
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=3.75467 offset=0/1024 copying 256 samples timestamp=50217151
+[VIDEO SYNC] videoPTS=3.92017 audioClock=3.853 drift=0.0671667 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=2.41867 audioClock=2.373 drift=0.0456667 useSync=1
+[COPY] Frame PTS=3.88267 offset=832/1024 copying 192 samples timestamp=50217301
+[VIDEO SYNC] videoPTS=4.1287 audioClock=4.063 drift=0.0657 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #401 flushRequested=0 clock=4.073
+[COPY] Frame PTS=4.032 offset=0/1024 copying 384 samples timestamp=50217430
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=2.6272 audioClock=2.573 drift=0.0542 useSync=1
+[VIDEO SYNC] videoPTS=4.33724 audioClock=4.273 drift=0.0642444 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=4.16 offset=960/1024 copying 64 samples timestamp=50217581
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=2.83574 audioClock=2.783 drift=0.0527444 useSync=1
+[COPY] Frame PTS=4.30933 offset=32/1024 copying 480 samples timestamp=50217711
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3.04429 audioClock=2.993 drift=0.0512889 useSync=1
+[VIDEO SYNC] videoPTS=4.54579 audioClock=4.483 drift=0.0627889 useSync=1
+[COPY] Frame PTS=4.43733 offset=608/1024 copying 416 samples timestamp=50217851
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #451 flushRequested=0 clock=4.573
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3.25283 audioClock=3.203 drift=0.0498333 useSync=1
+[VIDEO SYNC] videoPTS=4.75433 audioClock=4.683 drift=0.0713333 useSync=1
+[COPY] Frame PTS=4.58667 offset=160/1024 copying 480 samples timestamp=50217991
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::seek] Called with seconds=1420.07
-[DEBUG VideoDecoder::seek] this pointer=000002517DB55920
+[COPY] Frame PTS=4.71467 offset=736/1024 copying 288 samples timestamp=50218130
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=4.96287 audioClock=4.893 drift=0.0698667 useSync=1
+[COPY] Frame PTS=4.864 offset=288/1024 copying 480 samples timestamp=50218270
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[DEBUG VideoDecoder::seek] Called with seconds=751.058
+[DEBUG VideoDecoder::seek] this pointer=000001E46D408FF0
 [DEBUG VideoDecoder::seek] Setting m_seeking=true
 [DEBUG VideoDecoder::seek] m_seeking is now: 1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #501 flushRequested=0 clock=5.073
+[COPY] Frame PTS=4.992 offset=864/1024 copying 160 samples timestamp=50218410
 [DEBUG VideoDecoder::seek] Locking FFmpeg mutex
 [DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=1420067504
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=751057922
 [DEBUG VideoDecoder::seek] av_seek_frame completed
 [DEBUG VideoDecoder::seek] Flushing video codec buffers
 [DEBUG VideoDecoder::seek] Flushing audio codec buffers
 [DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002517DB55920
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000001E46D408FF0
 [DEBUG VideoDecoder::clearQueues] m_seeking=1
 [DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
 [DEBUG VideoDecoder::clearQueues] Sleep completed
 [DEBUG VideoDecoder::clearQueues] About to lock video queue
 [DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA619C0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA61AE0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA61AB0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA61CF0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA618A0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001E46D3959C0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001E46D395CF0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001E46D395D80
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001E46D395960
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001E46D395660
 [DEBUG VideoDecoder::clearQueues] Video queue cleared
 [DEBUG VideoDecoder::clearQueues] About to lock audio queue
 [DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
@@ -101,134 +175,105 @@ Loaded: The Heat.mp4
 [DEBUG VideoDecoder::seek] clearQueues() returned
 [DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
 [DEBUG VideoDecoder::seek] Seek completed successfully
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[SEEK] Detected: oldClock=1420.09 newPTS=1416.49 diff=3.59684 | Flush REQUESTED
+[SEEK] Detected: oldClock=751.078 newPTS=747.371 diff=[FLUSH] Main thread executing Stop/Reset/Start...
+3.70726 | Flush REQUESTED
+[FLUSH] BEFORE - Buffer has 47520 frames (0.99s of audio)
 Failed to release buffer: 88890007
-[FLUSH] Main thread executing Stop/Reset/Start...
-[FLUSH] COMPLETE - took 1ms | Audio resumed
+[FLUSH] Stop() completed
+[FLUSH] Reset() completed
+[FLUSH] AFTER Reset() - Buffer has 0 frames
+[FLUSH] Start() completed
+[FLUSH] AFTER Start() - Buffer has 0 frames
+[FLUSH] COMPLETE - took 6ms | Clearing flag
+[FLUSH] Flag cleared - audio callback will resume normal operation
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=747.435 offset=0/1024 copying 480 samples timestamp=50218581
+[VIDEO SYNC] videoPTS=747.58 audioClock=747.505 drift=0.0751222 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1416.75 audioClock=1416.69 drift=0.0568333 useSync=1
+[COPY] Frame PTS=747.563 offset=576/1024 copying 448 samples timestamp=50218720
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=747.747 audioClock=747.715 drift=0.0319556 useSync=1
+[COPY] Frame PTS=747.712 offset=0/1024 copying 128 samples timestamp=50218850
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1416.96 audioClock=1416.9 drift=0.0553778 useSync=1
+[CALLBACK] Entry #551 flushRequested=0 clock=747.755
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=747.84 offset=704/1024 copying 320 samples timestamp=50219001
+[VIDEO SYNC] videoPTS=747.955 audioClock=747.925 drift=0.0305 useSync=1
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=747.989 offset=0/1024 copying 256 samples timestamp=50219130
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=748.205 audioClock=748.135 drift=0.0707444 useSync=1
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=748.117 offset=832/1024 copying 192 samples timestamp=50219281
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #601 flushRequested=0 clock=748.255
+[COPY] Frame PTS=748.267 offset=0/1024 copying 384 samples timestamp=50219411
+[VIDEO SYNC] videoPTS=748.414 audioClock=748.335 drift=0.0792889 useSync=1
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=748.395 offset=960/1024 copying 64 samples timestamp=50219561
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=748.622 audioClock=748.545 drift=0.0778333 useSync=1
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=748.544 offset=32/1024 copying 480 samples timestamp=50219691
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=748.672 offset=608/1024 copying 416 samples timestamp=50219831
+[VIDEO SYNC] videoPTS=748.831 audioClock=748.755 drift=0.0763778 useSync=1
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #651 flushRequested=0 clock=748.755
+[COPY] Frame PTS=748.821 offset=160/1024 copying 480 samples timestamp=50219971
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1417.17 audioClock=1417.1 drift=0.0639222 useSync=1
+[VIDEO SYNC] videoPTS=748.998 audioClock=748.965 drift=0.0332111 useSync=1
+[COPY] Frame PTS=748.949 offset=736/1024 copying 288 samples timestamp=50220111
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1417.37 audioClock=1417.31 drift=0.0624556 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=749.099 offset=288/1024 copying 480 samples timestamp=50220251
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1417.58 audioClock=1417.52 drift=0.061 useSync=1
+[VIDEO SYNC] videoPTS=749.206 audioClock=749.175 drift=0.0317444 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #701 flushRequested=0 clock=749.255
+[COPY] Frame PTS=749.227 offset=864/1024 copying 160 samples timestamp=50220391
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1417.79 audioClock=1417.73 drift=0.0595444 useSync=1
+[VIDEO SYNC] videoPTS=749.415 audioClock=749.385 drift=0.0302889 useSync=1
+[COPY] Frame PTS=749.376 offset=416/1024 copying 480 samples timestamp=50220530
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=749.504 offset=992/1024 copying 32 samples timestamp=50220670
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1418 audioClock=1417.94 drift=0.0580889 useSync=1
+[VIDEO SYNC] videoPTS=749.665 audioClock=749.585 drift=0.0805444 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=749.653 offset=64/1024 copying 480 samples timestamp=50220801
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1418.21 audioClock=1418.14 drift=0.0666222 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1418.42 audioClock=1418.35 drift=0.0651667 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1418.63 audioClock=1418.56 drift=0.0637111 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1418.83 audioClock=1418.77 drift=0.0622556 useSync=1
+[CALLBACK] Entry #751 flushRequested=0 clock=749.755
+[VIDEO SYNC] videoPTS=749.832 audioClock=749.795 drift=0.0373778 useSync=1
+[COPY] Frame PTS=749.803 offset=0/1024 copying 96 samples timestamp=50220941
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1419.04 audioClock=1418.98 drift=0.0607889 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1419.25 audioClock=1419.19 drift=0.0593333 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1419.46 audioClock=1419.39 drift=0.0678778 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1419.67 audioClock=1419.6 drift=0.0664222 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1419.88 audioClock=1419.81 drift=0.0649556 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1420.08 audioClock=1420.02 drift=0.0635 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1420.29 audioClock=1420.23 drift=0.0620444 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1420.5 audioClock=1420.43 drift=0.0705889 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1420.71 audioClock=1420.64 drift=0.0691222 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1420.92 audioClock=1420.85 drift=0.0676667 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1421.13 audioClock=1421.06 drift=0.0662111 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1421.34 audioClock=1421.27 drift=0.0647556 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1421.54 audioClock=1421.47 drift=0.0732889 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1421.75 audioClock=1421.68 drift=0.0718333 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1421.96 audioClock=1421.89 drift=0.0703778 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1422.17 audioClock=1422.1 drift=0.0689222 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1422.38 audioClock=1422.31 drift=0.0674556 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1422.59 audioClock=1422.52 drift=0.066 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1422.8 audioClock=1422.72 drift=0.0745444 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1422.96 audioClock=1422.93 drift=0.0313778 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1423.21 audioClock=1423.14 drift=0.0716222 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::seek] Called with seconds=3136.77
-[DEBUG VideoDecoder::seek] this pointer=000002517DB55920
+[COPY] Frame PTS=749.931 offset=192/1024 copying 480 samples timestamp=50221082
+[VIDEO SYNC] videoPTS=750.041 audioClock=750.005 drift=0.0359111 useSync=1
+[DEBUG VideoDecoder::seek] Called with seconds=1773.51
+[DEBUG VideoDecoder::seek] this pointer=000001E46D408FF0
 [DEBUG VideoDecoder::seek] Setting m_seeking=true
 [DEBUG VideoDecoder::seek] m_seeking is now: 1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=750.08 offset=0/1024 copying 224 samples timestamp=50221221
 [DEBUG VideoDecoder::seek] Locking FFmpeg mutex
 [DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=3136771240
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=1773506591
 [DEBUG VideoDecoder::seek] av_seek_frame completed
 [DEBUG VideoDecoder::seek] Flushing video codec buffers
 [DEBUG VideoDecoder::seek] Flushing audio codec buffers
 [DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002517DB55920
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000001E46D408FF0
 [DEBUG VideoDecoder::clearQueues] m_seeking=1
 [DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
 [DEBUG VideoDecoder::clearQueues] Sleep completed
 [DEBUG VideoDecoder::clearQueues] About to lock video queue
 [DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA617B0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA615D0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA612A0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA61750
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA617E0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001E46D3959F0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001E46D3958D0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001E46D395900
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001E46D3956F0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001E46D395C00
 [DEBUG VideoDecoder::clearQueues] Video queue cleared
 [DEBUG VideoDecoder::clearQueues] About to lock audio queue
 [DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
@@ -237,322 +282,154 @@ Failed to release buffer: 88890007
 [DEBUG VideoDecoder::seek] clearQueues() returned
 [DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
 [DEBUG VideoDecoder::seek] Seek completed successfully
-[SEEK] Detected: oldClock=3136.79 newPTS=3134.66 diff=2.13524 | Flush REQUESTED
+[SEEK] Detected: oldClock=1773.53 newPTS=1768.21 diff=5.31326 | Flush REQUESTED
 Failed to release buffer: 88890007
 [FLUSH] Main thread executing Stop/Reset/Start...
-[FLUSH] COMPLETE - took 0ms | Audio resumed
-[DEBUG VideoDecoder::seek] Called with seconds=3136.77
-[DEBUG VideoDecoder::seek] this pointer=000002517DB55920
-[DEBUG VideoDecoder::seek] Setting m_seeking=true
-[DEBUG VideoDecoder::seek] m_seeking is now: 1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
-[DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=3136771240
-[DEBUG VideoDecoder::seek] av_seek_frame completed
-[DEBUG VideoDecoder::seek] Flushing video codec buffers
-[DEBUG VideoDecoder::seek] Flushing audio codec buffers
-[DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002517DB55920
-[DEBUG VideoDecoder::clearQueues] m_seeking=1
-[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::clearQueues] Sleep completed
-[DEBUG VideoDecoder::clearQueues] About to lock video queue
-[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 4
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA61750
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA617B0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA617E0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA612A0
-[DEBUG VideoDecoder::clearQueues] Video queue cleared
-[DEBUG VideoDecoder::clearQueues] About to lock audio queue
-[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 9
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D4D0
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D330
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D850
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D9B0
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D950
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D810
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D310
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D510
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D7F0
-[DEBUG VideoDecoder::clearQueues] Audio queue cleared
-[DEBUG VideoDecoder::clearQueues] clearQueues completed
-[DEBUG VideoDecoder::seek] clearQueues() returned
-[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
-[DEBUG VideoDecoder::seek] Seek completed successfully
-[SEEK] Detected: oldClock=3136.78 newPTS=3134.66 diff=2.12524 | Flush REQUESTED
-Failed to release buffer: 88890007
-[FLUSH] Main thread executing Stop/Reset/Start...
-[FLUSH] COMPLETE - took 1ms | Audio resumed
-[VIDEO SYNC] videoPTS=3134.84 audioClock=3134.79 drift=0.0534222 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3135.05 audioClock=3135 drift=0.0519667 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3135.26 audioClock=3135.21 drift=0.0505 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3135.47 audioClock=3135.41 drift=0.0590444 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3135.67 audioClock=3135.62 drift=0.0575889 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3135.88 audioClock=3135.83 drift=0.0561333 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3136.09 audioClock=3136.04 drift=0.0546667 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3136.3 audioClock=3136.25 drift=0.0532111 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3136.51 audioClock=3136.45 drift=0.0617556 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3136.72 audioClock=3136.66 drift=0.0603 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3136.93 audioClock=3136.87 drift=0.0588333 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3137.13 audioClock=3137.08 drift=0.0573778 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3137.34 audioClock=3137.29 drift=0.0559222 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3137.55 audioClock=3137.5 drift=0.0544667 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3137.76 audioClock=3137.7 drift=0.063 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3137.97 audioClock=3137.91 drift=0.0615444 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3138.18 audioClock=3138.12 drift=0.0600889 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3138.38 audioClock=3138.33 drift=0.0586333 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3138.59 audioClock=3138.54 drift=0.0571667 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3138.8 audioClock=3138.74 drift=0.0657111 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[FLUSH] BEFORE - Buffer has 48000 frames (1s of audio)
+[FLUSH] Stop() completed
+[FLUSH] Reset() completed
+[FLUSH] AFTER Reset() - Buffer has 0 frames
+[FLUSH] Start() completed
+[FLUSH] AFTER Start() - Buffer has 0 frames
+[FLUSH] COMPLETE - took 1ms | Clearing flag
+[FLUSH] Flag cleared - audio callback will resume normal operation
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3139.01 audioClock=3138.95 drift=0.0642556 useSync=1
+[CALLBACK] Entry #801 flushRequested=0 clock=1768.31
+[COPY] Frame PTS=1768.26 offset=960/1024 copying 64 samples timestamp=50221401
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3139.22 audioClock=3139.16 drift=0.0628 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3139.43 audioClock=3139.37 drift=0.0613333 useSync=1
+[COPY] Frame PTS=1768.41 offset=32/1024 copying 480 samples timestamp=50221531
+[VIDEO SYNC] videoPTS=1768.56 audioClock=1768.48 drift=0.0802444 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3139.64 audioClock=3139.58 drift=0.0598778 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1768.53 offset=608/1024 copying 416 samples timestamp=50221671
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3139.84 audioClock=3139.78 drift=0.0684222 useSync=1
+[VIDEO SYNC] videoPTS=1768.72 audioClock=1768.69 drift=0.0370778 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3140.05 audioClock=3139.99 drift=0.0669667 useSync=1
+[COPY] Frame PTS=1768.68 offset=160/1024 copying 480 samples timestamp=50221811
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3140.26 audioClock=3140.2 drift=0.0655 useSync=1
+[CALLBACK] Entry #851 flushRequested=0 clock=1768.81
+[COPY] Frame PTS=1768.81 offset=736/1024 copying 288 samples timestamp=50221951
+[VIDEO SYNC] videoPTS=1768.93 audioClock=1768.9 drift=0.0356222 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1768.96 offset=288/1024 copying 480 samples timestamp=50222091
+[VIDEO SYNC] videoPTS=1769.14 audioClock=1769.11 drift=0.0341667 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3140.47 audioClock=3140.41 drift=0.0640444 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3140.68 audioClock=3140.62 drift=0.0625889 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3140.89 audioClock=3140.83 drift=0.0611333 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1769.09 offset=864/1024 copying 160 samples timestamp=50222231
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3141.1 audioClock=3141.03 drift=0.0696667 useSync=1
+[COPY] Frame PTS=1769.24 offset=416/1024 copying 480 samples timestamp=50222370
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3141.3 audioClock=3141.24 drift=0.0682111 useSync=1
-[DEBUG VideoDecoder::seek] Called with seconds=3146.26
-[DEBUG VideoDecoder::seek] this pointer=000002517DB55920
-[DEBUG VideoDecoder::seek] Setting m_seeking=true
-[DEBUG VideoDecoder::seek] m_seeking is now: 1
+[CALLBACK] Entry #901 flushRequested=0 clock=1769.31
+[VIDEO SYNC] videoPTS=1769.35 audioClock=1769.31 drift=0.0427111 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
-[DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=3146262695
-[DEBUG VideoDecoder::seek] av_seek_frame completed
-[DEBUG VideoDecoder::seek] Flushing video codec buffers
-[DEBUG VideoDecoder::seek] Flushing audio codec buffers
-[DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002517DB55920
-[DEBUG VideoDecoder::clearQueues] m_seeking=1
-[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::clearQueues] Sleep completed
-[DEBUG VideoDecoder::clearQueues] About to lock video queue
-[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA617B0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA617E0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA612A0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA61750
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA615D0
-[DEBUG VideoDecoder::clearQueues] Video queue cleared
-[DEBUG VideoDecoder::clearQueues] About to lock audio queue
-[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
-[DEBUG VideoDecoder::clearQueues] Audio queue cleared
-[DEBUG VideoDecoder::clearQueues] clearQueues completed
-[DEBUG VideoDecoder::seek] clearQueues() returned
-[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
-[DEBUG VideoDecoder::seek] Seek completed successfully
-[SEEK] Detected: oldClock=3146.28 newPTS=3141.55 diff=4.73603 | Flush REQUESTED
-Failed to release buffer: 88890007
-[FLUSH] Main thread executing Stop/Reset/Start...
-[FLUSH] COMPLETE - took 1ms | Audio resumed
-[DEBUG VideoDecoder::seek] Called with seconds=3146.68
-[DEBUG VideoDecoder::seek] this pointer=000002517DB55920
-[DEBUG VideoDecoder::seek] Setting m_seeking=true
-[DEBUG VideoDecoder::seek] m_seeking is now: 1
+[COPY] Frame PTS=1769.37 offset=992/1024 copying 32 samples timestamp=50222511
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
-[DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=3146679687
-[DEBUG VideoDecoder::seek] av_seek_frame completed
-[DEBUG VideoDecoder::seek] Flushing video codec buffers
-[DEBUG VideoDecoder::seek] Flushing audio codec buffers
-[DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002517DB55920
-[DEBUG VideoDecoder::clearQueues] m_seeking=1
-[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
+[VIDEO SYNC] videoPTS=1769.56 audioClock=1769.52 drift=0.0412444 useSync=1
+[COPY] Frame PTS=1769.51 offset=64/1024 copying 480 samples timestamp=50222641
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::clearQueues] Sleep completed
-[DEBUG VideoDecoder::clearQueues] About to lock video queue
-[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA615D0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA61750
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA617B0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA612A0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002517DA617E0
-[DEBUG VideoDecoder::clearQueues] Video queue cleared
-[DEBUG VideoDecoder::clearQueues] About to lock audio queue
-[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 12
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D6B0
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D8D0
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D7F0
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D870
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D8F0
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D470
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D4B0
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D4D0
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D530
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D970
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D250
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002517482D890
-[DEBUG VideoDecoder::clearQueues] Audio queue cleared
-[DEBUG VideoDecoder::clearQueues] clearQueues completed
-[DEBUG VideoDecoder::seek] clearQueues() returned
-[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
-[DEBUG VideoDecoder::seek] Seek completed successfully
-[SEEK] Detected: oldClock=3146.69 newPTS=3141.55 diff=5.14302 | Flush REQUESTED
-[FLUSH] Waiting... deleted frame PTS=3141.57 (filling silence)
-Failed to release buffer: 88890007
-[FLUSH] Main thread executing Stop/Reset/Start...
-[FLUSH] COMPLETE - took 1ms | Audio resumed
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1769.66 offset=0/1024 copying 96 samples timestamp=50222781
+[VIDEO SYNC] videoPTS=1769.77 audioClock=1769.73 drift=0.0397889 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3141.85 audioClock=3141.8 drift=0.0485444 useSync=1
+[CALLBACK] Entry #951 flushRequested=0 clock=1769.81
+[COPY] Frame PTS=1769.79 offset=192/1024 copying 480 samples timestamp=50222920
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=1769.98 audioClock=1769.94 drift=0.0383333 useSync=1
+[COPY] Frame PTS=1769.94 offset=0/1024 copying 224 samples timestamp=50223060
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3142.06 audioClock=3142.01 drift=0.0470889 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3142.26 audioClock=3142.22 drift=0.0456222 useSync=1
+[COPY] Frame PTS=1770.07 offset=320/1024 copying 480 samples timestamp=50223200
+[VIDEO SYNC] videoPTS=1770.18 audioClock=1770.15 drift=0.0368778 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1770.22 offset=0/1024 copying 352 samples timestamp=50223340
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3142.47 audioClock=3142.43 drift=0.0441667 useSync=1
+[CALLBACK] Entry #1001 flushRequested=0 clock=1770.31
+[VIDEO SYNC] videoPTS=1770.39 audioClock=1770.36 drift=0.0354111 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3142.68 audioClock=3142.64 drift=0.0427111 useSync=1
+[COPY] Frame PTS=1770.35 offset=448/1024 copying 480 samples timestamp=50223481
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1770.5 offset=0/1024 copying 480 samples timestamp=50223620
+[VIDEO SYNC] videoPTS=1770.6 audioClock=1770.56 drift=0.0439556 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3142.89 audioClock=3142.85 drift=0.0412556 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3143.1 audioClock=3143.05 drift=0.0497889 useSync=1
+[COPY] Frame PTS=1770.62 offset=576/1024 copying 448 samples timestamp=50223760
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3143.31 audioClock=3143.26 drift=0.0483333 useSync=1
+[VIDEO SYNC] videoPTS=1770.81 audioClock=1770.77 drift=0.0425 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #1051 flushRequested=0 clock=1770.81
+[COPY] Frame PTS=1770.77 offset=0/1024 copying 128 samples timestamp=50223891
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1770.9 offset=704/1024 copying 320 samples timestamp=50224041
+[VIDEO SYNC] videoPTS=1771.02 audioClock=1770.98 drift=0.0410444 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3143.51 audioClock=3143.47 drift=0.0468778 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1771.05 offset=0/1024 copying 256 samples timestamp=50224171
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3143.72 audioClock=3143.68 drift=0.0454222 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3143.93 audioClock=3143.89 drift=0.0439556 useSync=1
+[VIDEO SYNC] videoPTS=1771.23 audioClock=1771.19 drift=0.0395778 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1771.18 offset=832/1024 copying 192 samples timestamp=50224320
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3144.14 audioClock=3144.09 drift=0.0525 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #1101 flushRequested=0 clock=1771.31
+[COPY] Frame PTS=1771.33 offset=0/1024 copying 384 samples timestamp=50224451
+[VIDEO SYNC] videoPTS=1771.44 audioClock=1771.4 drift=0.0381222 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3144.35 audioClock=3144.3 drift=0.0510444 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3144.56 audioClock=3144.51 drift=0.0495889 useSync=1
+[COPY] Frame PTS=1771.46 offset=960/1024 copying 64 samples timestamp=50224600
+[VIDEO SYNC] videoPTS=1771.64 audioClock=1771.6 drift=0.0466667 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3144.77 audioClock=3144.72 drift=0.0481222 useSync=1
+[COPY] Frame PTS=1771.61 offset=32/1024 copying 480 samples timestamp=50224731
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1771.73 offset=608/1024 copying 416 samples timestamp=50224870
+[VIDEO SYNC] videoPTS=1771.85 audioClock=1771.81 drift=0.0452111 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3144.97 audioClock=3144.93 drift=0.0466667 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #1151 flushRequested=0 clock=1771.81
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3145.18 audioClock=3145.13 drift=0.0552111 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1771.88 offset=160/1024 copying 480 samples timestamp=50225010
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3145.39 audioClock=3145.34 drift=0.0537556 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3145.6 audioClock=3145.55 drift=0.0522889 useSync=1
+[VIDEO SYNC] videoPTS=1772.06 audioClock=1772.02 drift=0.0437444 useSync=1
+[COPY] Frame PTS=1772.01 offset=736/1024 copying 288 samples timestamp=50225151
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3145.81 audioClock=3145.76 drift=0.0508333 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO] Paused
+[COPY] Frame PTS=1772.16 offset=288/1024 copying 480 samples timestamp=50225291
+[VIDEO SYNC] videoPTS=1772.27 audioClock=1772.23 drift=0.0422889 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #1201 flushRequested=0 clock=1772.31
+[COPY] Frame PTS=1772.29 offset=864/1024 copying 160 samples timestamp=50225431
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=1772.48 audioClock=1772.44 drift=0.0408333 useSync=1
+[COPY] Frame PTS=1772.44 offset=416/1024 copying 480 samples timestamp=50225570
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1772.57 offset=992/1024 copying 32 samples timestamp=50225710
+[VIDEO SYNC] videoPTS=1772.69 audioClock=1772.65 drift=0.0393778 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1772.71 offset=64/1024 copying 480 samples timestamp=50225840
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #1251 flushRequested=0 clock=1772.81
+[VIDEO SYNC] videoPTS=1772.9 audioClock=1772.85 drift=0.0479111 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1772.86 offset=0/1024 copying 96 samples timestamp=50225981
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1772.99 offset=192/1024 copying 480 samples timestamp=50226121
+[VIDEO SYNC] videoPTS=1773.1 audioClock=1773.06 drift=0.0464556 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1773.14 offset=0/1024 copying 224 samples timestamp=50226261
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[VIDEO SYNC] videoPTS=1773.31 audioClock=1773.27 drift=0.045 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #1301 flushRequested=0 clock=1773.31
+[COPY] Frame PTS=1773.27 offset=320/1024 copying 480 samples timestamp=50226401
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1773.42 offset=0/1024 copying 352 samples timestamp=50226540
+[VIDEO SYNC] videoPTS=1773.52 audioClock=1773.48 drift=0.0435444 useSync=1
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1773.55 offset=448/1024 copying 480 samples timestamp=50226682
+[VIDEO SYNC] videoPTS=1773.73 audioClock=1773.69 drift=0.0420778 useSync=1
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1773.7 offset=0/1024 copying 480 samples timestamp=50226821
 [AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[CALLBACK] Entry #1351 flushRequested=0 clock=1773.81
+[VIDEO SYNC] videoPTS=1773.94 audioClock=1773.89 drift=0.0506222 useSync=1
+[COPY] Frame PTS=1773.82 offset=576/1024 copying 448 samples timestamp=50226961
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
 [AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[COPY] Frame PTS=1773.97 offset=0/1024 copying 128 samples timestamp=50227090
+[
