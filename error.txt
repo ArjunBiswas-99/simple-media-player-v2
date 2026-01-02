@@ -1,31 +1,94 @@
-
--- FFmpeg DLLs will be copied from: C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/external/ffmpeg/windows/bin
--- Configuration complete. Build with: cmake --build build
--- Configuring done (2.2s)
--- Generating done (0.1s)
--- Build files have been written to: C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/build
-PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> cmake --build build --config Release
-MSBuild version 18.0.5+e22287bf1 for .NET Framework
-
-  1>Checking Build System
-  Building Custom Rule C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/CMakeLists.txt
-  imgui.cpp
-  imgui_demo.cpp
-  imgui_draw.cpp
-  imgui_tables.cpp
-  imgui_widgets.cpp
-  imgui_impl_win32.cpp
-  imgui_impl_dx11.cpp
-  Generating Code...
-  imgui.vcxproj -> C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\Release\imgui.lib
-  Building Custom Rule C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/CMakeLists.txt
-  main.cpp
-  VideoDecoder.cpp
-  AudioOutput.cpp
-  platform_windows.cpp
-  Generating Code...
-MSVCRT.lib(exe_winmain.obj) : error LNK2019: unresolved external symbol WinMain referenced in function "int __cdecl __scrt
-_common_main_seh(void)" (?__scrt_common_main_seh@@YAHXZ) [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\buil 
-d\MediaPlayer.vcxproj]
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\Release\MediaPlayer.exe : fatal error LNK1120: 1 unresol 
-ved externals [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
+= Simple Media Player V2 - Debug Console ===
+Windows build with Direct3D11 and WASAPI
+===============================================
+Opened: C:\Users\arjun\Downloads\The Heat.mp4
+Duration: 7220.25 seconds
+Video: 1920x800
+Audio: 48000Hz, 2 channels
+WASAPI Audio initialized: 48000Hz, 2 channels
+Loaded: The Heat.mp4
+[DEBUG VideoDecoder::seek] Called with seconds=1129.74
+[DEBUG VideoDecoder::seek] this pointer=000002319726D030
+[DEBUG VideoDecoder::seek] Setting m_seeking=true
+[DEBUG VideoDecoder::seek] m_seeking is now: 1
+[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
+[DEBUG VideoDecoder::seek] FFmpeg mutex locked
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=1129742553
+[DEBUG VideoDecoder::seek] av_seek_frame completed
+[DEBUG VideoDecoder::seek] Flushing video codec buffers
+[DEBUG VideoDecoder::seek] Flushing audio codec buffers
+[DEBUG VideoDecoder::seek] About to call clearQueues()
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002319726D030
+[DEBUG VideoDecoder::clearQueues] m_seeking=1
+[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
+[DEBUG VideoDecoder::clearQueues] Sleep completed
+[DEBUG VideoDecoder::clearQueues] About to lock video queue
+[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000023197154D30
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000023197287010
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000023197286E30
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002318C500B50
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002319512D870
+[DEBUG VideoDecoder::clearQueues] Video queue cleared
+[DEBUG VideoDecoder::clearQueues] About to lock audio queue
+[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 12
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CF50
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511D0D0
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511D170
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CFB0
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511D090
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CF90
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CE70
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511D030
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CFD0
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511D0F0
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CFF0
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511D130
+[DEBUG VideoDecoder::clearQueues] Audio queue cleared
+[DEBUG VideoDecoder::clearQueues] clearQueues completed
+[DEBUG VideoDecoder::seek] clearQueues() returned
+[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
+[DEBUG VideoDecoder::seek] Seek completed successfully
+[DEBUG VideoDecoder::seek] Called with seconds=467.044
+[DEBUG VideoDecoder::seek] this pointer=000002319726D030
+[DEBUG VideoDecoder::seek] Setting m_seeking=true
+[DEBUG VideoDecoder::seek] m_seeking is now: 1
+[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
+[DEBUG VideoDecoder::seek] FFmpeg mutex locked
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=467044433
+[DEBUG VideoDecoder::seek] av_seek_frame completed
+[DEBUG VideoDecoder::seek] Flushing video codec buffers
+[DEBUG VideoDecoder::seek] Flushing audio codec buffers
+[DEBUG VideoDecoder::seek] About to call clearQueues()
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002319726D030
+[DEBUG VideoDecoder::clearQueues] m_seeking=1
+[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
+[DEBUG VideoDecoder::clearQueues] Sleep completed
+[DEBUG VideoDecoder::clearQueues] About to lock video queue
+[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000023197286E30
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000023197287010
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000023197154D30
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002318C500B50
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 00000231972AADC0
+[DEBUG VideoDecoder::clearQueues] Video queue cleared
+[DEBUG VideoDecoder::clearQueues] About to lock audio queue
+[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 13
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CE70
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CF30
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511D130
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511D170
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CF90
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511D190
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CF50
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CFB0
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CFD0
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511CFF0
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511D010
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319511D030
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000002319736D3A0
+[DEBUG VideoDecoder::clearQueues] Audio queue cleared
+[DEBUG VideoDecoder::clearQueues] clearQueues completed
+[DEBUG VideoDecoder::seek] clearQueues() returned
+[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
+[DEBUG VideoDecoder::seek] Seek completed successfully
