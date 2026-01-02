@@ -2142,7 +2142,8 @@ void RenderNetflixUI(AppState& state, HWND window) {
 #ifdef __APPLE__
                 ToggleFullscreen(window, state.isFullscreen);
 #else
-                state.isFullscreen = !state.isFullscreen;
+                // Windows: Actually call the ToggleFullscreen function
+                ToggleFullscreen((HWND)window, state.isFullscreen);
 #endif
                 lastButtonToggle = currentTime;
             }

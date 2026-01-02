@@ -3,9 +3,16 @@
 #include <atomic>
 #include <queue>
 #include <mutex>
+#include <thread>
 
 #ifdef __APPLE__
 #include <AudioToolbox/AudioToolbox.h>
+#endif
+
+#ifdef _WIN32
+#include <mmdeviceapi.h>
+#include <audioclient.h>
+#include <comdef.h>
 #endif
 
 struct AudioFrame;
@@ -41,6 +48,18 @@ private:
     AudioQueueBufferRef m_buffers[NUM_BUFFERS];
     
     static void audioCallback(void* userData, AudioQueueRef queue, AudioQueueBufferRef buffer);
+#endif
+
+#ifdef _WIN32
+    IMMDeviceEnumerator* m_deviceEnumerator;
+    IMMDevice* m_device;
+    IAudioClient* m_audioClient;
+    IAudioRenderClient* m_renderClient;
+    HANDLE m_audioEvent;
+    std::thread m_audioThread;
+    std::atomic<bool> m_stopAudioThread;
+    
+    void audioThreadFunc();
 #endif
     
     std::queue<AudioFrame*> m_frameQueue;

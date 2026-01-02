@@ -56,6 +56,8 @@ elseif(WIN32)
         d3dcompiler.lib
         ole32.lib
         shell32.lib
+        winmm.lib
+        ksuser.lib
     )
     
     # Enable incremental linking
@@ -151,14 +153,26 @@ elseif(WIN32)
 endif()
 
 # Main executable
-add_executable(MediaPlayer
-    src/main.cpp
-    src/VideoDecoder.cpp
-    src/VideoDecoder.h
-    src/AudioOutput.cpp
-    src/AudioOutput.h
-    src/platform.h
-)
+if(WIN32)
+    # WIN32 flag hides console window on Windows (creates GUI app, not console app)
+    add_executable(MediaPlayer WIN32
+        src/main.cpp
+        src/VideoDecoder.cpp
+        src/VideoDecoder.h
+        src/AudioOutput.cpp
+        src/AudioOutput.h
+        src/platform.h
+    )
+else()
+    add_executable(MediaPlayer
+        src/main.cpp
+        src/VideoDecoder.cpp
+        src/VideoDecoder.h
+        src/AudioOutput.cpp
+        src/AudioOutput.h
+        src/platform.h
+    )
+endif()
 
 # Platform-specific source files
 if(APPLE)
@@ -196,6 +210,15 @@ if(APPLE)
         ${FFMPEG_LIB_DIR} $<TARGET_FILE_DIR:MediaPlayer>
         COMMENT "Copying FFmpeg libraries to build directory"
     )
+elseif(WIN32)
+    # Copy FFmpeg DLLs to build directory (CRITICAL for video playback)
+    add_custom_command(TARGET MediaPlayer POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${FFMPEG_ROOT}/bin $<TARGET_FILE_DIR:MediaPlayer>
+        COMMENT "Copying FFmpeg DLLs to build directory"
+    )
+    
+    message(STATUS "FFmpeg DLLs will be copied from: ${FFMPEG_ROOT}/bin")
 endif()
 
 # Hot-reloadable UI library (will be implemented later)

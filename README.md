@@ -9,19 +9,24 @@ cd simple-media-player-v2
 # Clone Dear ImGui into external folder
 git clone https://github.com/ocornut/imgui.git external/imgui
 
-# Launch Visual Studio Developer Command Prompt (for MSVC compiler)
-& "C:\Program Files (x86)\Microsoft Visual Studio\18\BuildTools\Common7\Tools\LaunchDevCmd.bat"
+## Windows Build (Simple - No Special Command Prompts Required!)
 
-# Configure with Ninja
-cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug
+# Configure and build (auto-detects VS Build Tools, uses 64-bit)
+cmake -B build -A x64
+cmake --build build --config Release
 
-# Build
-ninja
+# Copy FFmpeg DLLs to executable folder (required for runtime)
+copy external\ffmpeg\windows\bin\*.dll build\Release\
 
-# Run the executable
-.\build\MediaPlayer.exe
+# Run
+.\build\Release\MediaPlayer.exe
 
-copy C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\bin\*.dll C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\Release\
+## macOS Build
+
+cmake -B build
+cmake --build build
+./build/MediaPlayer
+
 ---
 
 ## 📋 Functional Specification

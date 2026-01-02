@@ -13,6 +13,14 @@ AudioOutput::AudioOutput()
 #ifdef __APPLE__
     , m_audioQueue(nullptr)
 #endif
+#ifdef _WIN32
+    , m_deviceEnumerator(nullptr)
+    , m_device(nullptr)
+    , m_audioClient(nullptr)
+    , m_renderClient(nullptr)
+    , m_audioEvent(nullptr)
+    , m_stopAudioThread(false)
+#endif
 {
 #ifdef __APPLE__
     for (int i = 0; i < NUM_BUFFERS; i++) {
@@ -74,6 +82,78 @@ bool AudioOutput::initialize(int sampleRate, int channels) {
     }
     
     std::cout << "Audio initialized: " << sampleRate << "Hz, " << channels << " channels" << std::endl;
+    
+#elif defined(_WIN32)
+    // Windows WASAPI implementation
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    if (FAILED(hr) && hr != RPC_E_CHANGED_MODE) {
+        std::cerr << "Failed to initialize COM: " << std::hex << hr << std::endl;
+        return false;
+    }
+    
+    // Create device enumerator
+    hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
+                          __uuidof(IMMDeviceEnumerator), (void**)&m_deviceEnumerator);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to create device enumerator: " << std::hex << hr << std::endl;
+        return false;
+    }
+    
+    // Get default audio endpoint
+    hr = m_deviceEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &m_device);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to get default audio endpoint: " << std::hex << hr << std::endl;
+        return false;
+    }
+    
+    // Activate audio client
+    hr = m_device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, (void**)&m_audioClient);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to activate audio client: " << std::hex << hr << std::endl;
+        return false;
+    }
+    
+    // Set up audio format
+    WAVEFORMATEX waveFormat = {};
+    waveFormat.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
+    waveFormat.nChannels = channels;
+    waveFormat.nSamplesPerSec = sampleRate;
+    waveFormat.wBitsPerSample = 32;
+    waveFormat.nBlockAlign = (waveFormat.nChannels * waveFormat.wBitsPerSample) / 8;
+    waveFormat.nAvgBytesPerSec = waveFormat.nSamplesPerSec * waveFormat.nBlockAlign;
+    waveFormat.cbSize = 0;
+    
+    // Initialize audio client
+    REFERENCE_TIME bufferDuration = 10000000; // 1 second in 100-nanosecond units
+    hr = m_audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED,
+                                   AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+                                   bufferDuration, 0, &waveFormat, nullptr);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to initialize audio client: " << std::hex << hr << std::endl;
+        return false;
+    }
+    
+    // Create event for audio callback
+    m_audioEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    if (!m_audioEvent) {
+        std::cerr << "Failed to create audio event" << std::endl;
+        return false;
+    }
+    
+    hr = m_audioClient->SetEventHandle(m_audioEvent);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to set event handle: " << std::hex << hr << std::endl;
+        return false;
+    }
+    
+    // Get render client
+    hr = m_audioClient->GetService(__uuidof(IAudioRenderClient), (void**)&m_renderClient);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to get render client: " << std::hex << hr << std::endl;
+        return false;
+    }
+    
+    std::cout << "WASAPI Audio initialized: " << sampleRate << "Hz, " << channels << " channels" << std::endl;
 #endif
     
     return true;
@@ -85,6 +165,42 @@ void AudioOutput::shutdown() {
         AudioQueueStop(m_audioQueue, true);
         AudioQueueDispose(m_audioQueue, true);
         m_audioQueue = nullptr;
+    }
+#elif defined(_WIN32)
+    // Stop audio thread
+    if (m_audioThread.joinable()) {
+        m_stopAudioThread = true;
+        if (m_audioEvent) {
+            SetEvent(m_audioEvent);
+        }
+        m_audioThread.join();
+    }
+    
+    // Stop audio client
+    if (m_audioClient) {
+        m_audioClient->Stop();
+    }
+    
+    // Release COM interfaces
+    if (m_renderClient) {
+        m_renderClient->Release();
+        m_renderClient = nullptr;
+    }
+    if (m_audioClient) {
+        m_audioClient->Release();
+        m_audioClient = nullptr;
+    }
+    if (m_device) {
+        m_device->Release();
+        m_device = nullptr;
+    }
+    if (m_deviceEnumerator) {
+        m_deviceEnumerator->Release();
+        m_deviceEnumerator = nullptr;
+    }
+    if (m_audioEvent) {
+        CloseHandle(m_audioEvent);
+        m_audioEvent = nullptr;
     }
 #endif
     
@@ -104,6 +220,22 @@ void AudioOutput::play() {
             m_playing = true;
         }
     }
+#elif defined(_WIN32)
+    if (m_audioClient && !m_playing) {
+        // Start audio client
+        HRESULT hr = m_audioClient->Start();
+        if (SUCCEEDED(hr)) {
+            m_playing = true;
+            
+            // Start audio rendering thread
+            if (!m_audioThread.joinable()) {
+                m_stopAudioThread = false;
+                m_audioThread = std::thread(&AudioOutput::audioThreadFunc, this);
+            }
+        } else {
+            std::cerr << "Failed to start audio client: " << std::hex << hr << std::endl;
+        }
+    }
 #endif
 }
 
@@ -111,6 +243,11 @@ void AudioOutput::pause() {
 #ifdef __APPLE__
     if (m_audioQueue && m_playing) {
         AudioQueuePause(m_audioQueue);
+        m_playing = false;
+    }
+#elif defined(_WIN32)
+    if (m_audioClient && m_playing) {
+        m_audioClient->Stop();
         m_playing = false;
     }
 #endif
@@ -187,5 +324,94 @@ void AudioOutput::audioCallback(void* userData, AudioQueueRef queue, AudioQueueB
     
     // Re-enqueue buffer
     AudioQueueEnqueueBuffer(queue, buffer, 0, nullptr);
+}
+#endif
+
+#ifdef _WIN32
+void AudioOutput::audioThreadFunc() {
+    // Get buffer size
+    UINT32 bufferFrameCount;
+    HRESULT hr = m_audioClient->GetBufferSize(&bufferFrameCount);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to get buffer size: " << std::hex << hr << std::endl;
+        return;
+    }
+    
+    while (!m_stopAudioThread) {
+        // Wait for buffer event
+        DWORD waitResult = WaitForSingleObject(m_audioEvent, 100);
+        
+        if (waitResult != WAIT_OBJECT_0) {
+            continue;
+        }
+        
+        if (m_stopAudioThread) break;
+        
+        // Get current padding (how much buffer is filled)
+        UINT32 numFramesPadding;
+        hr = m_audioClient->GetCurrentPadding(&numFramesPadding);
+        if (FAILED(hr)) continue;
+        
+        // Calculate available frames
+        UINT32 numFramesAvailable = bufferFrameCount - numFramesPadding;
+        
+        if (numFramesAvailable == 0) continue;
+        
+        // Get buffer
+        BYTE* data;
+        hr = m_renderClient->GetBuffer(numFramesAvailable, &data);
+        if (FAILED(hr)) continue;
+        
+        // Fill buffer with audio data
+        UINT32 framesFilled = 0;
+        float* floatBuffer = (float*)data;
+        
+        while (framesFilled < numFramesAvailable) {
+            AudioFrame* frame = nullptr;
+            
+            {
+                std::lock_guard<std::mutex> lock(m_queueMutex);
+                if (!m_frameQueue.empty()) {
+                    frame = m_frameQueue.front();
+                    m_frameQueue.pop();
+                }
+            }
+            
+            if (!frame) {
+                // No audio data, fill with silence
+                UINT32 remainingFrames = numFramesAvailable - framesFilled;
+                memset(floatBuffer, 0, remainingFrames * m_channels * sizeof(float));
+                framesFilled = numFramesAvailable;
+                
+                // Advance audio clock based on buffer duration
+                if (m_playing) {
+                    double bufferDuration = (double)remainingFrames / m_sampleRate;
+                    m_audioClock = m_audioClock + bufferDuration;
+                }
+                break;
+            }
+            
+            // Update audio clock with frame PTS
+            m_audioClock = frame->pts;
+            m_lastClockUpdate = frame->pts;
+            
+            // Calculate how many frames we can copy
+            UINT32 frameSamples = frame->size / (m_channels * sizeof(float));
+            UINT32 framesToCopy = std::min(frameSamples, numFramesAvailable - framesFilled);
+            
+            // Copy audio data
+            memcpy(floatBuffer, frame->data, framesToCopy * m_channels * sizeof(float));
+            floatBuffer += framesToCopy * m_channels;
+            framesFilled += framesToCopy;
+            
+            delete frame;
+        }
+        
+        // Release buffer
+        hr = m_renderClient->ReleaseBuffer(numFramesAvailable, 0);
+        if (FAILED(hr)) {
+            std::cerr << "Failed to release buffer: " << std::hex << hr << std::endl;
+        }
+    }
 }
 #endif
