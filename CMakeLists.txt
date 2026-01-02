@@ -196,6 +196,11 @@ target_link_libraries(MediaPlayer PRIVATE
     ${FFMPEG_LIBRARIES}
 )
 
+if(WIN32)
+    # Enable SEH with C++ exceptions for Windows
+    target_compile_options(MediaPlayer PRIVATE /EHa)
+endif()
+
 if(APPLE)
     # Enable Objective-C++ for macOS
     set_source_files_properties(src/main.cpp src/platform_macos.mm PROPERTIES

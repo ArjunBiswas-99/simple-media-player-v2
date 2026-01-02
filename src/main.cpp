@@ -584,6 +584,46 @@ void CleanupRenderTarget();
 void LoadMediaFile(AppState& state, const std::string& filepath, PlatformWindow window);
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+// SEH-protected helper functions (no C++ objects with destructors)
+static int SafeImGuiNewFrame() {
+    __try {
+        ImGui_ImplDX11_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
+        return 0;
+    }
+    __except(EXCEPTION_EXECUTE_HANDLER) {
+        return GetExceptionCode();
+    }
+}
+
+static int SafeRenderUI(AppState* state, HWND hwnd, float displayWidth, float displayHeight) {
+    __try {
+        RenderMenuBar(*state);
+        RenderNetflixUI(*state, hwnd);
+        RenderPlaylistPanel(*state, ImVec2(displayWidth, displayHeight));
+        return 0;
+    }
+    __except(EXCEPTION_EXECUTE_HANDLER) {
+        return GetExceptionCode();
+    }
+}
+
+static int SafeRenderFrame() {
+    __try {
+        ImGui::Render();
+        const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+        g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
+        g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color);
+        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+        g_pSwapChain->Present(1, 0);
+        return 0;
+    }
+    __except(EXCEPTION_EXECUTE_HANDLER) {
+        return GetExceptionCode();
+    }
+}
+
 // Windows entry point
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     // Allocate console for debug output
@@ -666,14 +706,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (!initialFile.empty()) {
         std::cout << "[MAIN] Loading file from command line: " << initialFile << std::endl;
         std::cout.flush();
-        __try {
-            LoadMediaFile(state, initialFile, hwnd);
-        }
-        __except(EXCEPTION_EXECUTE_HANDLER) {
-            std::cerr << "[MAIN ERROR] SEH exception loading file! Code: " 
-                      << GetExceptionCode() << std::endl;
-            std::cerr.flush();
-        }
+        LoadMediaFile(state, initialFile, hwnd);
     }
 
     std::cout << "[MAIN] Entering main loop" << std::endl;
@@ -695,136 +728,47 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (done)
             break;
 
-        // Process video frames with A/V synchronization (Windows)
+        // Process video frames - keep simple without SEH
         if (state.fileLoaded && state.decoder && state.decoder->hasVideo() && state.isPlaying && videoErrorCount < MAX_VIDEO_ERRORS) {
-            __try {
-                // Get audio clock for synchronization
-                double audioClock = 0.0;
-                bool useAudioSync = false;
-                
-                if (state.audioOutput && state.decoder->hasAudio()) {
-                    audioClock = state.audioOutput->getAudioClock();
-                    useAudioSync = (audioClock > 0.1);
-                }
-                
-                // Fetch new frame if we don't have a pending one
-                if (!state.pendingFrame) {
-                    state.pendingFrame = state.decoder->getNextVideoFrame();
-                    
-                    if (!state.pendingFrame) {
-                        // No more frames - check if decoder is done
-                        if (!state.decoder->isPlaying()) {
-                            state.isPlaying = false;
-                            if (state.audioOutput) {
-                                state.audioOutput->pause();
-                            }
-                        }
-                    }
-                }
-                
-                // Process the pending frame
-                if (state.pendingFrame && state.pendingFrame->data && 
-                    state.pendingFrame->width > 0 && state.pendingFrame->height > 0) {
-                    
-                    double videoPTS = state.pendingFrame->pts;
-                    double drift = 0.0;
-                    bool shouldDisplay = false;
-                    
-                    if (useAudioSync) {
-                        drift = videoPTS - audioClock;
-                        const double SYNC_THRESHOLD = 0.040;
-                        const double DROP_THRESHOLD = 0.100;
-                        
-                        static int logCounter = 0;
-                        if (logCounter++ % 60 == 0) {  // Log every 60 frames to reduce spam
-                            std::cout << "[VIDEO SYNC] videoPTS=" << videoPTS 
-                                      << " audioClock=" << audioClock 
-                                      << " drift=" << drift << std::endl;
-                            std::cout.flush();
-                        }
-                        
-                        if (drift < -DROP_THRESHOLD) {
-                            // Drop frame
-                            delete state.pendingFrame;
-                            state.pendingFrame = nullptr;
-                        } else if (drift < -SYNC_THRESHOLD) {
-                            shouldDisplay = true;
-                        } else if (drift > SYNC_THRESHOLD) {
-                            // Video ahead - wait (keep frame pending)
-                            shouldDisplay = false;
-                        } else {
-                            shouldDisplay = true;
-                        }
-                    } else {
-                        // No audio sync - just display
-                        shouldDisplay = true;
-                        
-                        static int noAudioLogCounter = 0;
-                        if (noAudioLogCounter++ % 60 == 0) {
-                            std::cout << "[VIDEO] No audio sync, displaying frame PTS=" << videoPTS << std::endl;
-                            std::cout.flush();
-                        }
-                    }
-                    
-                    if (shouldDisplay && state.pendingFrame) {
-                        // Create or update texture
-                        if (!state.videoTexture || 
-                            state.videoTextureWidth != state.pendingFrame->width || 
-                            state.videoTextureHeight != state.pendingFrame->height) {
-                            
-                            if (state.videoTexture) {
-                                std::cout << "[VIDEO] Destroying old texture" << std::endl;
-                                std::cout.flush();
-                                DestroyVideoTexture(state.videoTexture);
-                                state.videoTexture = nullptr;
-                            }
-                            
-                            std::cout << "[VIDEO] Creating texture: " << state.pendingFrame->width 
-                                      << "x" << state.pendingFrame->height << std::endl;
-                            std::cout.flush();
-                            
-                            state.videoTexture = CreateVideoTexture(state.pendingFrame->width, state.pendingFrame->height);
-                            
-                            if (state.videoTexture) {
-                                state.videoTextureWidth = state.pendingFrame->width;
-                                state.videoTextureHeight = state.pendingFrame->height;
-                                std::cout << "[VIDEO] Texture created successfully" << std::endl;
-                                std::cout.flush();
-                            } else {
-                                std::cerr << "[VIDEO ERROR] FAILED to create texture!" << std::endl;
-                                std::cerr.flush();
-                                videoErrorCount++;
-                            }
-                        }
-                        
-                        // Update texture with frame data
-                        if (state.videoTexture && state.pendingFrame->data) {
-                            std::cout << "[VIDEO] Updating texture with frame data..." << std::endl;
-                            std::cout.flush();
-                            UpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
-                                             state.pendingFrame->width, state.pendingFrame->height);
-                            std::cout << "[VIDEO] Texture updated successfully" << std::endl;
-                            std::cout.flush();
-                        }
-                        
-                        // Update time
-                        state.currentTime = (float)videoPTS;
-                        
-                        // Release frame
-                        delete state.pendingFrame;
-                        state.pendingFrame = nullptr;
-                    }
-                }
+            if (!state.pendingFrame) {
+                state.pendingFrame = state.decoder->getNextVideoFrame();
             }
-            __except(EXCEPTION_EXECUTE_HANDLER) {
-                std::cerr << "[VIDEO ERROR] SEH exception in video processing! Code: " 
-                          << GetExceptionCode() << std::endl;
-                std::cerr.flush();
-                videoErrorCount++;
-                if (state.pendingFrame) {
-                    delete state.pendingFrame;
-                    state.pendingFrame = nullptr;
+            
+            if (state.pendingFrame && state.pendingFrame->data && 
+                state.pendingFrame->width > 0 && state.pendingFrame->height > 0) {
+                
+                // Create or update texture
+                if (!state.videoTexture || 
+                    state.videoTextureWidth != state.pendingFrame->width || 
+                    state.videoTextureHeight != state.pendingFrame->height) {
+                    
+                    if (state.videoTexture) {
+                        DestroyVideoTexture(state.videoTexture);
+                        state.videoTexture = nullptr;
+                    }
+                    
+                    state.videoTexture = CreateVideoTexture(state.pendingFrame->width, state.pendingFrame->height);
+                    
+                    if (state.videoTexture) {
+                        state.videoTextureWidth = state.pendingFrame->width;
+                        state.videoTextureHeight = state.pendingFrame->height;
+                        std::cout << "[VIDEO] Texture created: " << state.videoTextureWidth << "x" << state.videoTextureHeight << std::endl;
+                        std::cout.flush();
+                    }
                 }
+                
+                // Update texture with frame data
+                if (state.videoTexture && state.pendingFrame->data) {
+                    UpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
+                                     state.pendingFrame->width, state.pendingFrame->height);
+                }
+                
+                // Update time
+                state.currentTime = (float)state.pendingFrame->pts;
+                
+                // Release frame
+                delete state.pendingFrame;
+                state.pendingFrame = nullptr;
             }
         }
         
@@ -838,42 +782,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
 
         // Start ImGui frame
-        __try {
-            ImGui_ImplDX11_NewFrame();
-            ImGui_ImplWin32_NewFrame();
-            ImGui::NewFrame();
-        }
-        __except(EXCEPTION_EXECUTE_HANDLER) {
-            std::cerr << "[MAIN ERROR] SEH exception in ImGui NewFrame! Code: " 
-                      << GetExceptionCode() << std::endl;
+        int imguiResult = SafeImGuiNewFrame();
+        if (imguiResult != 0) {
+            std::cerr << "[MAIN ERROR] SEH exception in ImGui NewFrame! Code: 0x" 
+                      << std::hex << imguiResult << std::dec << std::endl;
             std::cerr.flush();
             continue;
         }
 
         // Render UI (wrapped in SEH to prevent crashes)
-        __try {
-            RenderMenuBar(state);
-            RenderNetflixUI(state, hwnd);
-            RenderPlaylistPanel(state, ImVec2((float)io.DisplaySize.x, (float)io.DisplaySize.y));
-        }
-        __except(EXCEPTION_EXECUTE_HANDLER) {
-            std::cerr << "[UI ERROR] SEH exception in UI rendering! Code: " 
-                      << GetExceptionCode() << std::endl;
+        int uiResult = SafeRenderUI(&state, hwnd, (float)io.DisplaySize.x, (float)io.DisplaySize.y);
+        if (uiResult != 0) {
+            std::cerr << "[UI ERROR] SEH exception in UI rendering! Code: 0x" 
+                      << std::hex << uiResult << std::dec << std::endl;
             std::cerr.flush();
         }
 
         // Rendering
-        __try {
-            ImGui::Render();
-            const float clear_color[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-            g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, nullptr);
-            g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color);
-            ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-            g_pSwapChain->Present(1, 0);
-        }
-        __except(EXCEPTION_EXECUTE_HANDLER) {
-            std::cerr << "[RENDER ERROR] SEH exception in D3D11 rendering! Code: " 
-                      << GetExceptionCode() << std::endl;
+        int renderResult = SafeRenderFrame();
+        if (renderResult != 0) {
+            std::cerr << "[RENDER ERROR] SEH exception in D3D11 rendering! Code: 0x" 
+                      << std::hex << renderResult << std::dec << std::endl;
             std::cerr.flush();
         }
     }
