@@ -599,6 +599,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     std::cout << "=== Simple Media Player V2 - Debug Console ===" << std::endl;
     std::cout << "Windows build with Direct3D11 and WASAPI" << std::endl;
     std::cout << "===============================================" << std::endl;
+    std::cout.flush();
     
     // Parse command line to get initial file (if provided)
     std::string initialFile;
@@ -663,12 +664,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     
     // Load initial file if provided via command line
     if (!initialFile.empty()) {
-        std::cout << "Loading file from command line: " << initialFile << std::endl;
-        LoadMediaFile(state, initialFile, hwnd);
+        std::cout << "[MAIN] Loading file from command line: " << initialFile << std::endl;
+        std::cout.flush();
+        try {
+            LoadMediaFile(state, initialFile, hwnd);
+        } catch (const std::exception& e) {
+            std::cerr << "[MAIN ERROR] Failed to load file: " << e.what() << std::endl;
+            std::cerr.flush();
+        } catch (...) {
+            std::cerr << "[MAIN ERROR] Unknown error loading file" << std::endl;
+            std::cerr.flush();
+        }
     }
+
+    std::cout << "[MAIN] Entering main loop" << std::endl;
+    std::cout.flush();
 
     // Main loop
     bool done = false;
+    static int videoErrorCount = 0;
+    const int MAX_VIDEO_ERRORS = 10;
+    
     while (!done) {
         MSG msg;
         while (PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE)) {
@@ -681,95 +697,146 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             break;
 
         // Process video frames with A/V synchronization (Windows)
-        if (state.fileLoaded && state.decoder && state.decoder->hasVideo() && state.isPlaying) {
-            // Get audio clock for synchronization
-            double audioClock = 0.0;
-            bool useAudioSync = false;
-            
-            if (state.audioOutput && state.decoder->hasAudio()) {
-                audioClock = state.audioOutput->getAudioClock();
-                useAudioSync = (audioClock > 0.1);
-            }
-            
-            // Fetch new frame if we don't have a pending one
-            if (!state.pendingFrame) {
-                state.pendingFrame = state.decoder->getNextVideoFrame();
+        if (state.fileLoaded && state.decoder && state.decoder->hasVideo() && state.isPlaying && videoErrorCount < MAX_VIDEO_ERRORS) {
+            try {
+                // Get audio clock for synchronization
+                double audioClock = 0.0;
+                bool useAudioSync = false;
                 
+                if (state.audioOutput && state.decoder->hasAudio()) {
+                    audioClock = state.audioOutput->getAudioClock();
+                    useAudioSync = (audioClock > 0.1);
+                }
+                
+                // Fetch new frame if we don't have a pending one
                 if (!state.pendingFrame) {
-                    // No more frames - check if decoder is done
-                    if (!state.decoder->isPlaying()) {
-                        state.isPlaying = false;
-                        if (state.audioOutput) {
-                            state.audioOutput->pause();
+                    state.pendingFrame = state.decoder->getNextVideoFrame();
+                    
+                    if (!state.pendingFrame) {
+                        // No more frames - check if decoder is done
+                        if (!state.decoder->isPlaying()) {
+                            state.isPlaying = false;
+                            if (state.audioOutput) {
+                                state.audioOutput->pause();
+                            }
                         }
                     }
                 }
-            }
-            
-            // Process the pending frame
-            if (state.pendingFrame && state.pendingFrame->data) {
-                double videoPTS = state.pendingFrame->pts;
-                double drift = 0.0;
-                bool shouldDisplay = false;
                 
-                if (useAudioSync) {
-                    drift = videoPTS - audioClock;
-                    const double SYNC_THRESHOLD = 0.040;
-                    const double DROP_THRESHOLD = 0.100;
+                // Process the pending frame
+                if (state.pendingFrame && state.pendingFrame->data && 
+                    state.pendingFrame->width > 0 && state.pendingFrame->height > 0) {
                     
-                    static int logCounter = 0;
-                    if (logCounter++ % 30 == 0) {
-                        std::cout << "[VIDEO SYNC] videoPTS=" << videoPTS 
-                                  << " audioClock=" << audioClock 
-                                  << " drift=" << drift << std::endl;
+                    double videoPTS = state.pendingFrame->pts;
+                    double drift = 0.0;
+                    bool shouldDisplay = false;
+                    
+                    if (useAudioSync) {
+                        drift = videoPTS - audioClock;
+                        const double SYNC_THRESHOLD = 0.040;
+                        const double DROP_THRESHOLD = 0.100;
+                        
+                        static int logCounter = 0;
+                        if (logCounter++ % 60 == 0) {  // Log every 60 frames to reduce spam
+                            std::cout << "[VIDEO SYNC] videoPTS=" << videoPTS 
+                                      << " audioClock=" << audioClock 
+                                      << " drift=" << drift << std::endl;
+                            std::cout.flush();
+                        }
+                        
+                        if (drift < -DROP_THRESHOLD) {
+                            // Drop frame
+                            delete state.pendingFrame;
+                            state.pendingFrame = nullptr;
+                        } else if (drift < -SYNC_THRESHOLD) {
+                            shouldDisplay = true;
+                        } else if (drift > SYNC_THRESHOLD) {
+                            // Video ahead - wait (keep frame pending)
+                            shouldDisplay = false;
+                        } else {
+                            shouldDisplay = true;
+                        }
+                    } else {
+                        // No audio sync - just display
+                        shouldDisplay = true;
+                        
+                        static int noAudioLogCounter = 0;
+                        if (noAudioLogCounter++ % 60 == 0) {
+                            std::cout << "[VIDEO] No audio sync, displaying frame PTS=" << videoPTS << std::endl;
+                            std::cout.flush();
+                        }
                     }
                     
-                    if (drift < -DROP_THRESHOLD) {
-                        // Drop frame
+                    if (shouldDisplay && state.pendingFrame) {
+                        // Create or update texture
+                        if (!state.videoTexture || 
+                            state.videoTextureWidth != state.pendingFrame->width || 
+                            state.videoTextureHeight != state.pendingFrame->height) {
+                            
+                            if (state.videoTexture) {
+                                std::cout << "[VIDEO] Destroying old texture" << std::endl;
+                                std::cout.flush();
+                                DestroyVideoTexture(state.videoTexture);
+                                state.videoTexture = nullptr;
+                            }
+                            
+                            std::cout << "[VIDEO] Creating texture: " << state.pendingFrame->width 
+                                      << "x" << state.pendingFrame->height << std::endl;
+                            std::cout.flush();
+                            
+                            state.videoTexture = CreateVideoTexture(state.pendingFrame->width, state.pendingFrame->height);
+                            
+                            if (state.videoTexture) {
+                                state.videoTextureWidth = state.pendingFrame->width;
+                                state.videoTextureHeight = state.pendingFrame->height;
+                                std::cout << "[VIDEO] Texture created successfully" << std::endl;
+                                std::cout.flush();
+                            } else {
+                                std::cerr << "[VIDEO ERROR] FAILED to create texture!" << std::endl;
+                                std::cerr.flush();
+                                videoErrorCount++;
+                            }
+                        }
+                        
+                        // Update texture with frame data
+                        if (state.videoTexture && state.pendingFrame->data) {
+                            UpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
+                                             state.pendingFrame->width, state.pendingFrame->height);
+                        }
+                        
+                        // Update time
+                        state.currentTime = (float)videoPTS;
+                        
+                        // Release frame
                         delete state.pendingFrame;
                         state.pendingFrame = nullptr;
-                    } else if (drift < -SYNC_THRESHOLD) {
-                        shouldDisplay = true;
-                    } else if (drift > SYNC_THRESHOLD) {
-                        // Video ahead - wait (keep frame pending)
-                        shouldDisplay = false;
-                    } else {
-                        shouldDisplay = true;
                     }
-                } else {
-                    // No audio sync - just display
-                    shouldDisplay = true;
                 }
-                
-                if (shouldDisplay && state.pendingFrame) {
-                    // Create or update texture
-                    if (!state.videoTexture || 
-                        state.videoTextureWidth != state.pendingFrame->width || 
-                        state.videoTextureHeight != state.pendingFrame->height) {
-                        
-                        if (state.videoTexture) {
-                            DestroyVideoTexture(state.videoTexture);
-                        }
-                        
-                        state.videoTexture = CreateVideoTexture(state.pendingFrame->width, state.pendingFrame->height);
-                        state.videoTextureWidth = state.pendingFrame->width;
-                        state.videoTextureHeight = state.pendingFrame->height;
-                        std::cout << "Created D3D11 texture: " << state.videoTextureWidth << "x" << state.videoTextureHeight << std::endl;
-                    }
-                    
-                    // Update texture with frame data
-                    if (state.videoTexture) {
-                        UpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
-                                         state.pendingFrame->width, state.pendingFrame->height);
-                    }
-                    
-                    // Update time
-                    state.currentTime = (float)videoPTS;
-                    
-                    // Release frame
+            } catch (const std::exception& e) {
+                std::cerr << "[VIDEO ERROR] Exception in video processing: " << e.what() << std::endl;
+                std::cerr.flush();
+                videoErrorCount++;
+                if (state.pendingFrame) {
                     delete state.pendingFrame;
                     state.pendingFrame = nullptr;
                 }
+            } catch (...) {
+                std::cerr << "[VIDEO ERROR] Unknown exception in video processing!" << std::endl;
+                std::cerr.flush();
+                videoErrorCount++;
+                if (state.pendingFrame) {
+                    delete state.pendingFrame;
+                    state.pendingFrame = nullptr;
+                }
+            }
+        }
+        
+        if (videoErrorCount >= MAX_VIDEO_ERRORS) {
+            static bool errorLogged = false;
+            if (!errorLogged) {
+                std::cerr << "[VIDEO] Too many errors, stopping video processing" << std::endl;
+                std::cerr.flush();
+                errorLogged = true;
             }
         }
 
@@ -778,10 +845,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        // Render UI
-        RenderMenuBar(state);
-        RenderNetflixUI(state, hwnd);
-        RenderPlaylistPanel(state, ImVec2((float)io.DisplaySize.x, (float)io.DisplaySize.y));
+        // Render UI (wrapped in try-catch to prevent crashes)
+        try {
+            RenderMenuBar(state);
+            RenderNetflixUI(state, hwnd);
+            RenderPlaylistPanel(state, ImVec2((float)io.DisplaySize.x, (float)io.DisplaySize.y));
+        } catch (const std::exception& e) {
+            std::cerr << "[UI ERROR] Exception in UI rendering: " << e.what() << std::endl;
+            std::cerr.flush();
+        } catch (...) {
+            std::cerr << "[UI ERROR] Unknown exception in UI rendering" << std::endl;
+            std::cerr.flush();
+        }
 
         // Rendering
         ImGui::Render();
@@ -854,25 +929,33 @@ void CleanupRenderTarget() {
 // Helper function to load a media file
 void LoadMediaFile(AppState& state, const std::string& filepath, PlatformWindow window) {
     std::cout << "[LoadMediaFile] Starting to load: " << filepath << std::endl;
+    std::cout.flush();
     
     // Initialize decoder if needed
     if (!state.decoder) {
         std::cout << "[LoadMediaFile] Creating VideoDecoder" << std::endl;
+        std::cout.flush();
         state.decoder = new VideoDecoder();
     }
     if (!state.audioOutput) {
         std::cout << "[LoadMediaFile] Creating AudioOutput" << std::endl;
+        std::cout.flush();
         state.audioOutput = new AudioOutput();
     }
     
     // Open file
     std::cout << "[LoadMediaFile] Calling decoder->open()" << std::endl;
+    std::cout.flush();
+    
     if (state.decoder->open(filepath)) {
         std::cout << "[LoadMediaFile] File opened successfully!" << std::endl;
+        std::cout.flush();
+        
         state.fileLoaded = true;
         state.duration = (float)state.decoder->getDuration();
         state.currentTime = 0.0f;
         std::cout << "[LoadMediaFile] Duration: " << state.duration << " seconds" << std::endl;
+        std::cout.flush();
         
         // Extract filename for title
         size_t lastSlash = filepath.find_last_of("/\\");
@@ -882,6 +965,8 @@ void LoadMediaFile(AppState& state, const std::string& filepath, PlatformWindow 
         state.currentFile = state.currentTitle;
         
         // Scan directory for playlist
+        std::cout << "[LoadMediaFile] Scanning directory for playlist..." << std::endl;
+        std::cout.flush();
         ScanDirectoryForMediaFiles(state, filepath);
         
         // CRITICAL: Clear any stale pending frame
@@ -895,13 +980,17 @@ void LoadMediaFile(AppState& state, const std::string& filepath, PlatformWindow 
             std::cout << "[LoadMediaFile] Has audio - initializing AudioOutput" << std::endl;
             std::cout << "[LoadMediaFile] Sample rate: " << state.decoder->getSampleRate() << " Hz" << std::endl;
             std::cout << "[LoadMediaFile] Channels: " << state.decoder->getChannels() << std::endl;
+            std::cout.flush();
+            
             bool audioInit = state.audioOutput->initialize(
                 state.decoder->getSampleRate(),
                 state.decoder->getChannels()
             );
             std::cout << "[LoadMediaFile] Audio initialized: " << (audioInit ? "SUCCESS" : "FAILED") << std::endl;
+            std::cout.flush();
         } else {
             std::cout << "[LoadMediaFile] No audio stream found" << std::endl;
+            std::cout.flush();
         }
         
         // Auto-start playback
@@ -922,14 +1011,18 @@ void LoadMediaFile(AppState& state, const std::string& filepath, PlatformWindow 
         }
         
         std::cout << "[LoadMediaFile] Starting playback..." << std::endl;
+        std::cout.flush();
+        
         state.decoder->play();
         if (state.audioOutput) {
             state.audioOutput->play();
         }
         
         std::cout << "[LoadMediaFile] Load complete!" << std::endl;
+        std::cout.flush();
     } else {
         std::cerr << "[LoadMediaFile] FAILED to open file!" << std::endl;
+        std::cerr.flush();
     }
 }
 
