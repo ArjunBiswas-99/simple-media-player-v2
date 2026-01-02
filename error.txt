@@ -1,79 +1,27 @@
-=== Simple Media Player V2 - Debug Console ===
-Windows build with Direct3D11 and WASAPI
-===============================================
-[MAIN] Entering main loop
-Opened: C:\Users\arjun\Downloads\The Heat.mp4
-Duration: 7220.25 seconds
-Video: 1920x800
-Audio: 48000Hz, 2 channels
-[AUDIO INIT] Requested format: 48000Hz, 2 channels
-[AUDIO INIT] nAvgBytesPerSec: 384000
-[AUDIO INIT] Audio client initialized successfully
-WASAPI Audio initialized: 48000Hz, 2 channels
-[AUDIO] Frame 0: PTS=0 (no correction)
-[AUDIO CHECK] PTS scaling is correct, no fix needed
-  Expected: 0.0213333s, Actual: 0.0213333s
-[AUDIO] Frame 1: PTS=0.0213333 (no correction)
-[AUDIO] Playing
-Loaded: The Heat.mp4
-[AUDIO] Frame 2: PTS=0.0426667 (no correction)
-[MAIN] First audio frame: PTS=0 size=8192
-[AUDIO THREAD] Frame PTS: 0, Clock: 0, SampleRate: 48000, FrameSamples: 1024
-[VIDEO] Texture created: 1920x800
-[VIDEO SYNC] videoPTS=0.416667 audioClock=0.106667 drift=0.31 useSync=1
-[VIDEO SYNC] videoPTS=0.5835 audioClock=0.512 drift=0.0715 useSync=1
-[VIDEO SYNC] videoPTS=0.958867 audioClock=0.938667 drift=0.0202 useSync=1
-[VIDEO SYNC] videoPTS=1.41767 audioClock=1.344 drift=0.0736667 useSync=1
-[VIDEO SYNC] videoPTS=1.79303 audioClock=1.77067 drift=0.0223667 useSync=1
-[AUDIO THREAD] Frame PTS: 2.13333, Clock: 2.13333, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=2.25183 audioClock=2.19733 drift=0.0545 useSync=1
-[VIDEO SYNC] videoPTS=2.6272 audioClock=2.60267 drift=0.0245333 useSync=1
-[VIDEO SYNC] videoPTS=3.04429 audioClock=3.008 drift=0.0362889 useSync=1
-[VIDEO SYNC] videoPTS=3.46137 audioClock=3.41333 drift=0.0480333 useSync=1
-[VIDEO SYNC] videoPTS=3.87846 audioClock=3.84 drift=0.0384556 useSync=1
-[VIDEO SYNC] videoPTS=4.29553 audioClock=4.24533 drift=0.0502 useSync=1
-[AUDIO THREAD] Frame PTS: 4.26667, Clock: 4.26667, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=4.71262 audioClock=4.672 drift=0.0406222 useSync=1
-[VIDEO SYNC] videoPTS=5.17141 audioClock=5.12 drift=0.0514111 useSync=1
-[VIDEO SYNC] videoPTS=5.5885 audioClock=5.52533 drift=0.0631667 useSync=1
-[VIDEO SYNC] videoPTS=6.00558 audioClock=5.952 drift=0.0535778 useSync=1
-[VIDEO SYNC] videoPTS=6.42267 audioClock=6.35733 drift=0.0653333 useSync=1
-[AUDIO THREAD] Frame PTS: 6.4, Clock: 6.4, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=6.83974 audioClock=6.784 drift=0.0557444 useSync=1
-[VIDEO SYNC] videoPTS=7.25683 audioClock=7.18933 drift=0.0675 useSync=1
-[VIDEO SYNC] videoPTS=7.67391 audioClock=7.616 drift=0.0579111 useSync=1
-[VIDEO SYNC] videoPTS=8.091 audioClock=8.02133 drift=0.0696667 useSync=1
-[VIDEO SYNC] videoPTS=8.50808 audioClock=8.448 drift=0.0600778 useSync=1
-[AUDIO THREAD] Frame PTS: 8.53333, Clock: 8.53333, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=8.92517 audioClock=8.85333 drift=0.0718333 useSync=1
-[VIDEO SYNC] videoPTS=9.30053 audioClock=9.28 drift=0.0205333 useSync=1
-[VIDEO SYNC] videoPTS=9.75933 audioClock=9.68533 drift=0.074 useSync=1
-[VIDEO SYNC] videoPTS=10.1347 audioClock=10.112 drift=0.0227 useSync=1
-[VIDEO SYNC] videoPTS=10.5935 audioClock=10.5173 drift=0.0761667 useSync=1
-[AUDIO THREAD] Frame PTS: 10.6667, Clock: 10.6667, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=10.9689 audioClock=10.944 drift=0.0248667 useSync=1
-[VIDEO SYNC] videoPTS=11.4277 audioClock=11.3493 drift=0.0783333 useSync=1
-[VIDEO SYNC] videoPTS=11.803 audioClock=11.776 drift=0.0270333 useSync=1
-[VIDEO SYNC] videoPTS=12.2618 audioClock=12.1813 drift=0.0805 useSync=1
-[VIDEO SYNC] videoPTS=12.6372 audioClock=12.608 drift=0.0292 useSync=1
-[AUDIO THREAD] Frame PTS: 12.8, Clock: 12.8, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=13.0543 audioClock=13.0133 drift=0.0409556 useSync=1
-[VIDEO SYNC] videoPTS=13.4714 audioClock=13.44 drift=0.0313667 useSync=1
-[VIDEO SYNC] videoPTS=14.097 audioClock=14.0373 drift=0.0596667 useSync=1
-[VIDEO SYNC] videoPTS=14.5141 audioClock=14.464 drift=0.0500778 useSync=1
-[VIDEO SYNC] videoPTS=14.8895 audioClock=14.8693 drift=0.0201222 useSync=1
-[AUDIO THREAD] Frame PTS: 14.9333, Clock: 14.9333, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=15.3482 audioClock=15.296 drift=0.0522444 useSync=1
-[VIDEO SYNC] videoPTS=15.7236 audioClock=15.7013 drift=0.0222889 useSync=1
-[VIDEO SYNC] videoPTS=16.1824 audioClock=16.128 drift=0.0544111 useSync=1
-[VIDEO SYNC] videoPTS=16.5578 audioClock=16.5333 drift=0.0244556 useSync=1
-[VIDEO SYNC] videoPTS=17.0166 audioClock=16.96 drift=0.0565778 useSync=1
-[AUDIO THREAD] Frame PTS: 17.0667, Clock: 17.0667, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=17.6005 audioClock=17.536 drift=0.0645 useSync=1
-[VIDEO SYNC] videoPTS=18.0176 audioClock=17.9627 drift=0.0549111 useSync=1
-[VIDEO SYNC] videoPTS=18.4347 audioClock=18.368 drift=0.0666667 useSync=1
-[VIDEO SYNC] videoPTS=18.8517 audioClock=18.7947 drift=0.0570778 useSync=1
-[AUDIO THREAD] Frame PTS: 19.2, Clock: 19.2, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=19.2688 audioClock=19.2 drift=0.0688333 useSync=1
-[VIDEO SYNC] videoPTS=19.6859 audioClock=19.6267 drift=0.0592444 useSync=1
-[VIDEO SYNC] videoPTS=20.103 audi
+e\Desktop\Test\simple-media-player-v2> cmake --build build --config Release
+MSBuild version 18.0.5+e22287bf1 for .NET Framework
+
+  1>Checking Build System
+  Building Custom Rule C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/CMakeLists.txt
+  imgui.cpp
+  imgui_demo.cpp
+  imgui_draw.cpp
+  imgui_tables.cpp
+  imgui_widgets.cpp
+  imgui_impl_win32.cpp
+  imgui_impl_dx11.cpp
+  Generating Code...
+  imgui.vcxproj -> C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\Release\imgui.lib
+  Building Custom Rule C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/CMakeLists.txt
+  main.cpp
+  VideoDecoder.cpp
+  AudioOutput.cpp
+  platform_windows.cpp
+C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(459,44): error C2065: 'frameSamples': unde
+clared identifier [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
+C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(483,52): error C2065: 'frameSamples': unde
+clared identifier [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
+C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(487,44): error C2065: 'frameSamples': unde 
+clared identifier [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
+  Generating Code...
+PS C:\Users\arjun\
