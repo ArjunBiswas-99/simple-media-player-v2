@@ -26,108 +26,162 @@ Loaded: The Heat.mp4
 [VIDEO SYNC] videoPTS=1.37596 audioClock=1.32033 drift=0.0556222 useSync=1
 [VIDEO SYNC] videoPTS=1.79303 audioClock=1.747 drift=0.0460333 useSync=1
 [VIDEO SYNC] videoPTS=2.21012 audioClock=2.15233 drift=0.0577889 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=100
 [AUDIO THREAD] Frame PTS: 2.13333, Clock: 2.21633, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
 [VIDEO SYNC] videoPTS=2.6272 audioClock=2.579 drift=0.0482 useSync=1
 [VIDEO SYNC] videoPTS=3.04429 audioClock=2.98433 drift=0.0599556 useSync=1
 [VIDEO SYNC] videoPTS=3.46137 audioClock=3.411 drift=0.0503667 useSync=1
 [VIDEO SYNC] videoPTS=3.87846 audioClock=3.81633 drift=0.0621222 useSync=1
 [VIDEO SYNC] videoPTS=4.29553 audioClock=4.243 drift=0.0525333 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=200
 [AUDIO THREAD] Frame PTS: 4.26667, Clock: 4.34967, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
 [VIDEO SYNC] videoPTS=4.71262 audioClock=4.64833 drift=0.0642889 useSync=1
 [VIDEO SYNC] videoPTS=5.1297 audioClock=5.075 drift=0.0547 useSync=1
 [VIDEO SYNC] videoPTS=5.54679 audioClock=5.48033 drift=0.0664556 useSync=1
 [VIDEO SYNC] videoPTS=5.96387 audioClock=5.907 drift=0.0568667 useSync=1
 [VIDEO SYNC] videoPTS=6.38096 audioClock=6.31233 drift=0.0686222 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=300
 [AUDIO THREAD] Frame PTS: 6.4, Clock: 6.483, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
 [VIDEO SYNC] videoPTS=6.79803 audioClock=6.739 drift=0.0590333 useSync=1
 [VIDEO SYNC] videoPTS=7.21512 audioClock=7.14433 drift=0.0707889 useSync=1
 [VIDEO SYNC] videoPTS=7.5905 audioClock=7.571 drift=0.0195 useSync=1
 [VIDEO SYNC] videoPTS=8.04929 audioClock=7.97633 drift=0.0729556 useSync=1
 [VIDEO SYNC] videoPTS=8.42467 audioClock=8.403 drift=0.0216667 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=400
 [AUDIO THREAD] Frame PTS: 8.53333, Clock: 8.61633, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
 [VIDEO SYNC] videoPTS=8.88346 audioClock=8.80833 drift=0.0751222 useSync=1
-[DEBUG VideoDecoder::seek] Called with seconds=845.729
-[DEBUG VideoDecoder::seek] this pointer=000001856E1E3760
+[VIDEO SYNC] videoPTS=9.25883 audioClock=9.235 drift=0.0238333 useSync=1
+[VIDEO SYNC] videoPTS=9.71762 audioClock=9.64033 drift=0.0772889 useSync=1
+[VIDEO SYNC] videoPTS=10.093 audioClock=10.067 drift=0.026 useSync=1
+[VIDEO SYNC] videoPTS=10.5518 audioClock=10.4937 drift=0.0581222 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=500
+[AUDIO THREAD] Frame PTS: 10.6667, Clock: 10.7497, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=10.9272 audioClock=10.899 drift=0.0281667 useSync=1
+[VIDEO SYNC] videoPTS=11.386 audioClock=11.3257 drift=0.0602889 useSync=1
+[VIDEO SYNC] videoPTS=11.7613 audioClock=11.731 drift=0.0303333 useSync=1
+[VIDEO SYNC] videoPTS=12.1784 audioClock=12.1577 drift=0.0207444 useSync=1
+[VIDEO SYNC] videoPTS=12.5955 audioClock=12.563 drift=0.0325 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=600
+[AUDIO THREAD] Frame PTS: 12.8, Clock: 12.883, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=13.0126 audioClock=12.9897 drift=0.0229111 useSync=1
+[VIDEO SYNC] videoPTS=13.4297 audioClock=13.395 drift=0.0346667 useSync=1
+[VIDEO SYNC] videoPTS=13.8467 audioClock=13.8217 drift=0.0250778 useSync=1
+[VIDEO SYNC] videoPTS=14.2638 audioClock=14.227 drift=0.0368333 useSync=1
+[VIDEO SYNC] videoPTS=14.6809 audioClock=14.6537 drift=0.0272444 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=700
+[AUDIO THREAD] Frame PTS: 14.9333, Clock: 15.0163, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=15.098 audioClock=15.059 drift=0.039 useSync=1
+[VIDEO SYNC] videoPTS=15.5151 audioClock=15.4857 drift=0.0294111 useSync=1
+[VIDEO SYNC] videoPTS=15.9322 audioClock=15.891 drift=0.0411667 useSync=1
+[VIDEO SYNC] videoPTS=16.3492 audioClock=16.3177 drift=0.0315778 useSync=1
+[VIDEO SYNC] videoPTS=16.7663 audioClock=16.723 drift=0.0433333 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=800
+[AUDIO THREAD] Frame PTS: 17.0667, Clock: 17.1497, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=17.1834 audioClock=17.1497 drift=0.0337444 useSync=1
+[VIDEO SYNC] videoPTS=17.6005 audioClock=17.555 drift=0.0455 useSync=1
+[VIDEO SYNC] videoPTS=18.0176 audioClock=17.9817 drift=0.0359111 useSync=1
+[VIDEO SYNC] videoPTS=18.4347 audioClock=18.387 drift=0.0476667 useSync=1
+[VIDEO SYNC] videoPTS=18.8517 audioClock=18.8137 drift=0.0380778 useSync=1
+[VIDEO SYNC] videoPTS=19.2688 audioClock=19.219 drift=0.0498333 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=900
+[AUDIO THREAD] Frame PTS: 19.2, Clock: 19.283, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=19.6859 audioClock=19.6457 drift=0.0402444 useSync=1
+[VIDEO SYNC] videoPTS=20.103 audioClock=20.051 drift=0.052 useSync=1
+[VIDEO SYNC] videoPTS=20.5201 audioClock=20.4777 drift=0.0424111 useSync=1
+[VIDEO SYNC] videoPTS=20.9372 audioClock=20.883 drift=0.0541667 useSync=1
+[VIDEO SYNC] videoPTS=21.3542 audioClock=21.3097 drift=0.0445778 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=1000
+[AUDIO THREAD] Frame PTS: 21.3333, Clock: 21.4163, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=21.7713 audioClock=21.715 drift=0.0563333 useSync=1
+[VIDEO SYNC] videoPTS=22.1884 audioClock=22.1417 drift=0.0467444 useSync=1
+[VIDEO SYNC] videoPTS=22.6055 audioClock=22.547 drift=0.0585 useSync=1
+[VIDEO SYNC] videoPTS=23.0226 audioClock=22.9737 drift=0.0489111 useSync=1
+[VIDEO SYNC] videoPTS=23.4397 audioClock=23.379 drift=0.0606667 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=1100
+[AUDIO THREAD] Frame PTS: 23.4667, Clock: 23.5497, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=23.8567 audioClock=23.8057 drift=0.0510778 useSync=1
+[VIDEO SYNC] videoPTS=24.2738 audioClock=24.211 drift=0.0628333 useSync=1
+[VIDEO SYNC] videoPTS=24.6909 audioClock=24.6377 drift=0.0532444 useSync=1
+[VIDEO SYNC] videoPTS=25.108 audioClock=25.043 drift=0.065 useSync=1
+[VIDEO SYNC] videoPTS=25.5251 audioClock=25.4697 drift=0.0554111 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=1200
+[AUDIO THREAD] Frame PTS: 25.6, Clock: 25.683, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=25.9422 audioClock=25.875 drift=0.0671667 useSync=1
+[VIDEO SYNC] videoPTS=26.3592 audioClock=26.3017 drift=0.0575778 useSync=1
+[VIDEO SYNC] videoPTS=26.7763 audioClock=26.707 drift=0.0693333 useSync=1
+[VIDEO SYNC] videoPTS=27.1934 audioClock=27.1337 drift=0.0597444 useSync=1
+[VIDEO SYNC] videoPTS=27.6105 audioClock=27.539 drift=0.0715 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=1300
+[AUDIO THREAD] Frame PTS: 27.7333, Clock: 27.8163, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=27.9859 audioClock=27.9657 drift=0.0202 useSync=1
+[VIDEO SYNC] videoPTS=28.4447 audioClock=28.371 drift=0.0736667 useSync=1
+[VIDEO SYNC] videoPTS=28.82 audioClock=28.7977 drift=0.0223667 useSync=1
+[VIDEO SYNC] videoPTS=29.2788 audioClock=29.203 drift=0.0758333 useSync=1
+[VIDEO SYNC] videoPTS=29.6542 audioClock=29.6297 drift=0.0245333 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=1400
+[AUDIO THREAD] Frame PTS: 29.8667, Clock: 29.9497, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[DEBUG VideoDecoder::seek] Called with seconds=662.698
+[DEBUG VideoDecoder::seek] this pointer=0000021867CFC5E0
 [DEBUG VideoDecoder::seek] Setting m_seeking=true
 [DEBUG VideoDecoder::seek] m_seeking is now: 1
 [DEBUG VideoDecoder::seek] Locking FFmpeg mutex
 [DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=845729064
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=662698181
 [DEBUG VideoDecoder::seek] av_seek_frame completed
 [DEBUG VideoDecoder::seek] Flushing video codec buffers
 [DEBUG VideoDecoder::seek] Flushing audio codec buffers
 [DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000001856E1E3760
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=0000021867CFC5E0
 [DEBUG VideoDecoder::clearQueues] m_seeking=1
 [DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
 [DEBUG VideoDecoder::clearQueues] Sleep completed
 [DEBUG VideoDecoder::clearQueues] About to lock video queue
 [DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001857173B2B0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001857173B220
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001857173B460
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001857173B5B0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001857173B1F0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000021867B003A0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000021867B00250
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000021867B00400
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000021867B00100
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 0000021867B00130
 [DEBUG VideoDecoder::clearQueues] Video queue cleared
 [DEBUG VideoDecoder::clearQueues] About to lock audio queue
-[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
+[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 1
+[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 0000021865B91490
 [DEBUG VideoDecoder::clearQueues] Audio queue cleared
 [DEBUG VideoDecoder::clearQueues] clearQueues completed
 [DEBUG VideoDecoder::seek] clearQueues() returned
 [DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
 [DEBUG VideoDecoder::seek] Seek completed successfully
-[AUDIO THREAD] Clock sync to PTS: 838.037
-[VIDEO SYNC] videoPTS=838.17 audioClock=838.123 drift=0.0475778 useSync=1
-[VIDEO SYNC] videoPTS=838.587 audioClock=838.549 drift=0.038 useSync=1
-[VIDEO SYNC] videoPTS=839.004 audioClock=838.955 drift=0.0497444 useSync=1
-[AUDIO THREAD] Frame PTS: 839.317, Clock: 839.317, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=839.422 audioClock=839.381 drift=0.0401667 useSync=1
-[VIDEO SYNC] videoPTS=839.839 audioClock=839.787 drift=0.0519111 useSync=1
-[VIDEO SYNC] videoPTS=840.256 audioClock=840.213 drift=0.0423333 useSync=1
-[VIDEO SYNC] videoPTS=840.673 audioClock=840.619 drift=0.0540778 useSync=1
-[VIDEO SYNC] videoPTS=841.09 audioClock=841.045 drift=0.0445 useSync=1
-[AUDIO THREAD] Frame PTS: 841.451, Clock: 841.451, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=841.507 audioClock=841.451 drift=0.0562444 useSync=1
-[VIDEO SYNC] videoPTS=841.924 audioClock=841.877 drift=0.0466667 useSync=1
-[VIDEO SYNC] videoPTS=842.341 audioClock=842.283 drift=0.0584111 useSync=1
-[VIDEO SYNC] videoPTS=842.758 audioClock=842.709 drift=0.0488333 useSync=1
-[VIDEO SYNC] videoPTS=843.175 audioClock=843.136 drift=0.0392444 useSync=1
-[VIDEO SYNC] videoPTS=843.592 audioClock=843.541 drift=0.051 useSync=1
-[AUDIO THREAD] Frame PTS: 843.584, Clock: 843.584, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=844.009 audioClock=843.968 drift=0.0414111 useSync=1
-[VIDEO SYNC] videoPTS=844.427 audioClock=844.373 drift=0.0531667 useSync=1
-[VIDEO SYNC] videoPTS=844.844 audioClock=844.8 drift=0.0435778 useSync=1
-[VIDEO SYNC] videoPTS=845.261 audioClock=845.205 drift=0.0553333 useSync=1
-[VIDEO SYNC] videoPTS=845.678 audioClock=845.632 drift=0.0457444 useSync=1
-[AUDIO THREAD] Frame PTS: 845.717, Clock: 845.717, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=846.095 audioClock=846.037 drift=0.0575 useSync=1
-[VIDEO SYNC] videoPTS=846.512 audioClock=846.464 drift=0.0479111 useSync=1
-[VIDEO SYNC] videoPTS=846.929 audioClock=846.869 drift=0.0596667 useSync=1
-[VIDEO SYNC] videoPTS=847.346 audioClock=847.296 drift=0.0500778 useSync=1
-[VIDEO SYNC] videoPTS=847.721 audioClock=847.701 drift=0.0201222 useSync=1
-[AUDIO THREAD] Frame PTS: 847.851, Clock: 847.851, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=848.347 audioClock=848.309 drift=0.0377444 useSync=1
-[VIDEO SYNC] videoPTS=848.764 audioClock=848.736 drift=0.0281667 useSync=1
-[VIDEO SYNC] videoPTS=849.181 audioClock=849.141 drift=0.0399111 useSync=1
-[VIDEO SYNC] videoPTS=849.598 audioClock=849.568 drift=0.0303333 useSync=1
-[AUDIO THREAD] Frame PTS: 849.984, Clock: 849.828, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=850.057 audioClock=850.02 drift=0.0369222 useSync=1
-[VIDEO SYNC] videoPTS=850.474 audioClock=850.426 drift=0.0486667 useSync=1
-[VIDEO SYNC] videoPTS=850.891 audioClock=850.852 drift=0.0390889 useSync=1
-[VIDEO SYNC] videoPTS=851.308 audioClock=851.258 drift=0.0508333 useSync=1
-[VIDEO SYNC] videoPTS=851.725 audioClock=851.684 drift=0.0412556 useSync=1
-[AUDIO THREAD] Frame PTS: 852.117, Clock: 851.962, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=852.143 audioClock=852.09 drift=0.053 useSync=1
-[VIDEO SYNC] videoPTS=852.56 audioClock=852.516 drift=0.0434222 useSync=1
-[VIDEO SYNC] videoPTS=852.977 audioClock=852.922 drift=0.0551667 useSync=1
-[VIDEO SYNC] videoPTS=853.394 audioClock=853.348 drift=0.0455889 useSync=1
-[VIDEO SYNC] videoPTS=853.811 audioClock=853.754 drift=0.0573333 useSync=1
-[AUDIO THREAD] Frame PTS: 854.251, Clock: 854.095, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=854.27 audioClock=854.202 drift=0.0681333 useSync=1
-[VIDEO SYNC] videoPTS=854.687 audioClock=854.628 drift=0.0585444 useSync=1
-[VIDEO SYNC] videoPTS=855.104 audioClock=855.034 drift=0.0703 useSync=1
-[VIDEO SYNC] videoPTS=855.479 audioClock=855.46 drift=0.019 useSync=1
-[VIDEO SYNC] videoPTS=855.938 audioClock=855.866 drift=0.0724667 useSync=1
-[AUDIO THREAD] Frame PTS: 856.384, Clock: 856.228, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
-[VIDEO SYNC] videoPTS=856.355 audioClock=856.314 drift=0.0415444 useSync=1
+[AUDIO THREAD] Clock sync to PTS: 657.28
+[VIDEO SYNC] videoPTS=657.448 audioClock=657.387 drift=0.0613667 useSync=1
+[VIDEO SYNC] videoPTS=657.865 audioClock=657.813 drift=0.0517889 useSync=1
+[VIDEO SYNC] videoPTS=658.282 audioClock=658.219 drift=0.0635333 useSync=1
+[VIDEO SYNC] videoPTS=658.699 audioClock=658.645 drift=0.0539556 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=96 frames, clockAdvance=2.048s, iterations=1500
+[VIDEO SYNC] videoPTS=659.116 audioClock=659.051 drift=0.0657 useSync=1
+[AUDIO THREAD] Frame PTS: 659.093, Clock: 659.093, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=659.533 audioClock=659.477 drift=0.0561222 useSync=1
+[VIDEO SYNC] videoPTS=659.951 audioClock=659.883 drift=0.0678667 useSync=1
+[VIDEO SYNC] videoPTS=660.368 audioClock=660.309 drift=0.0582889 useSync=1
+[VIDEO SYNC] videoPTS=660.785 audioClock=660.715 drift=0.0700333 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=1600
+[VIDEO SYNC] videoPTS=661.16 audioClock=661.141 drift=0.0187444 useSync=1
+[AUDIO THREAD] Frame PTS: 661.227, Clock: 661.227, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=661.619 audioClock=661.568 drift=0.0508667 useSync=1
+[VIDEO SYNC] videoPTS=661.994 audioClock=661.973 drift=0.0209111 useSync=1
+[VIDEO SYNC] videoPTS=662.453 audioClock=662.379 drift=0.0743667 useSync=1
+[VIDEO SYNC] videoPTS=662.828 audioClock=662.784 drift=0.0444111 useSync=1
+[VIDEO SYNC] videoPTS=663.245 audioClock=663.211 drift=0.0348333 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=1700
+[AUDIO THREAD] Frame PTS: 663.36, Clock: 663.36, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=663.663 audioClock=663.637 drift=0.0252444 useSync=1
+[VIDEO SYNC] videoPTS=664.08 audioClock=664.043 drift=0.037 useSync=1
+[VIDEO SYNC] videoPTS=664.497 audioClock=664.448 drift=0.0487444 useSync=1
+[VIDEO SYNC] videoPTS=664.914 audioClock=664.875 drift=0.0391667 useSync=1
+[VIDEO SYNC] videoPTS=665.331 audioClock=665.28 drift=0.0509111 useSync=1
+[AUDIO DIAG] Last 100 loops: processed=100 frames, clockAdvance=2.13333s, iterations=1800
+[AUDIO THREAD] Frame PTS: 665.493, Clock: 665.493, Duration: 0.0213333, SampleRate: 48000, FrameSamples: 1024
+[VIDEO SYNC] videoPTS=665.748 audioClock=665.707 drift=0.0413333 useSync=1
+[VIDEO SYNC] videoPTS=666.165 audioClock=666.112 drift=0.0530778 useSync=1
+[VIDEO SYNC] videoPTS=666.582 audioClock=666.539 drift=0.0435 useSync=1
+[VIDEO SYNC] videoPTS=666.999 audioClock=666.944 drift=0.0552444 useSync=1
 [AUDIO] Paused
