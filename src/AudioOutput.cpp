@@ -547,11 +547,8 @@ void AudioOutput::audioThreadFunc() {
                 std::cout << "[AUDIO THREAD] Seek detected at PTS: " << frame->pts 
                           << " - flush requested" << std::endl;
                 
-                // Put frame back and fill silence
-                {
-                    std::lock_guard<std::mutex> lock(m_queueMutex);
-                    m_frameQueue.push(frame);
-                }
+                // Delete stale frame (decoder will provide fresh frames from new position)
+                delete frame;
                 
                 // Fill with silence and return
                 memset(floatBuffer, 0, numFramesAvailable * m_channels * sizeof(float));
@@ -565,11 +562,8 @@ void AudioOutput::audioThreadFunc() {
             
             // If flush is pending, fill silence and wait
             if (m_flushRequested.load()) {
-                // Put frame back
-                {
-                    std::lock_guard<std::mutex> lock(m_queueMutex);
-                    m_frameQueue.push(frame);
-                }
+                // Delete frame - it's from old position, decoder will provide fresh frames
+                delete frame;
                 
                 // Fill with silence
                 memset(floatBuffer, 0, numFramesAvailable * m_channels * sizeof(float));
