@@ -21,7 +21,7 @@ ninja
 # Run the executable
 .\build\MediaPlayer.exe
 
-
+copy C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\external\ffmpeg\windows\bin\*.dll C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\Release\
 ---
 
 ## 📋 Functional Specification
