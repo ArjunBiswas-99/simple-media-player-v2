@@ -680,6 +680,99 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (done)
             break;
 
+        // Process video frames with A/V synchronization (Windows)
+        if (state.fileLoaded && state.decoder && state.decoder->hasVideo() && state.isPlaying) {
+            // Get audio clock for synchronization
+            double audioClock = 0.0;
+            bool useAudioSync = false;
+            
+            if (state.audioOutput && state.decoder->hasAudio()) {
+                audioClock = state.audioOutput->getAudioClock();
+                useAudioSync = (audioClock > 0.1);
+            }
+            
+            // Fetch new frame if we don't have a pending one
+            if (!state.pendingFrame) {
+                state.pendingFrame = state.decoder->getNextVideoFrame();
+                
+                if (!state.pendingFrame) {
+                    // No more frames - check if decoder is done
+                    if (!state.decoder->isPlaying()) {
+                        state.isPlaying = false;
+                        if (state.audioOutput) {
+                            state.audioOutput->pause();
+                        }
+                    }
+                }
+            }
+            
+            // Process the pending frame
+            if (state.pendingFrame && state.pendingFrame->data) {
+                double videoPTS = state.pendingFrame->pts;
+                double drift = 0.0;
+                bool shouldDisplay = false;
+                
+                if (useAudioSync) {
+                    drift = videoPTS - audioClock;
+                    const double SYNC_THRESHOLD = 0.040;
+                    const double DROP_THRESHOLD = 0.100;
+                    
+                    static int logCounter = 0;
+                    if (logCounter++ % 30 == 0) {
+                        std::cout << "[VIDEO SYNC] videoPTS=" << videoPTS 
+                                  << " audioClock=" << audioClock 
+                                  << " drift=" << drift << std::endl;
+                    }
+                    
+                    if (drift < -DROP_THRESHOLD) {
+                        // Drop frame
+                        delete state.pendingFrame;
+                        state.pendingFrame = nullptr;
+                    } else if (drift < -SYNC_THRESHOLD) {
+                        shouldDisplay = true;
+                    } else if (drift > SYNC_THRESHOLD) {
+                        // Video ahead - wait (keep frame pending)
+                        shouldDisplay = false;
+                    } else {
+                        shouldDisplay = true;
+                    }
+                } else {
+                    // No audio sync - just display
+                    shouldDisplay = true;
+                }
+                
+                if (shouldDisplay && state.pendingFrame) {
+                    // Create or update texture
+                    if (!state.videoTexture || 
+                        state.videoTextureWidth != state.pendingFrame->width || 
+                        state.videoTextureHeight != state.pendingFrame->height) {
+                        
+                        if (state.videoTexture) {
+                            DestroyVideoTexture(state.videoTexture);
+                        }
+                        
+                        state.videoTexture = CreateVideoTexture(state.pendingFrame->width, state.pendingFrame->height);
+                        state.videoTextureWidth = state.pendingFrame->width;
+                        state.videoTextureHeight = state.pendingFrame->height;
+                        std::cout << "Created D3D11 texture: " << state.videoTextureWidth << "x" << state.videoTextureHeight << std::endl;
+                    }
+                    
+                    // Update texture with frame data
+                    if (state.videoTexture) {
+                        UpdateVideoTexture(state.videoTexture, state.pendingFrame->data, 
+                                         state.pendingFrame->width, state.pendingFrame->height);
+                    }
+                    
+                    // Update time
+                    state.currentTime = (float)videoPTS;
+                    
+                    // Release frame
+                    delete state.pendingFrame;
+                    state.pendingFrame = nullptr;
+                }
+            }
+        }
+
         // Start ImGui frame
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplWin32_NewFrame();
