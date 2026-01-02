@@ -45,10 +45,17 @@ elseif(WIN32)
     set(VIDEO_BACKEND "Direct3D11")
     set(AUDIO_BACKEND "WASAPI")
     
+    # Require MSVC compiler (MinGW doesn't support Direct3D)
+    if(NOT MSVC)
+        message(FATAL_ERROR "Windows build requires MSVC compiler. Please use Visual Studio or run cmake with: cmake -G \"Visual Studio 17 2022\" -B build")
+    endif()
+    
     set(PLATFORM_LIBS
         d3d11.lib
         dxgi.lib
         d3dcompiler.lib
+        ole32.lib
+        shell32.lib
     )
     
     # Enable incremental linking

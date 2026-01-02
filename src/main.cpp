@@ -1417,7 +1417,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
     // Render video texture if available
     if (state.videoTexture) {
         // Calculate aspect ratio letterboxing
-        float videoAspect = (float)state.videoTexture.width / (float)state.videoTexture.height;
+        float videoAspect = (float)state.videoTextureWidth / (float)state.videoTextureHeight;
         float screenAspect = screenSize.x / screenSize.y;
         
         ImVec2 videoPos, videoSize;
