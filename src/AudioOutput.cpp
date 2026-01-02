@@ -542,7 +542,21 @@ void AudioOutput::audioThreadFunc() {
                 // Seek detected - sync to frame PTS and clear any stale partial frame
                 m_audioClock = frame->pts;
                 m_lastClockUpdate = frame->pts;
-                std::cout << "[AUDIO THREAD] Clock sync to PTS: " << frame->pts << std::endl;
+                
+                // Reset WASAPI client to flush old buffered audio
+                hr = m_audioClient->Stop();
+                if (SUCCEEDED(hr)) {
+                    hr = m_audioClient->Reset();  // Flush internal buffer
+                    if (SUCCEEDED(hr)) {
+                        hr = m_audioClient->Start();
+                        std::cout << "[AUDIO THREAD] Clock sync to PTS: " << frame->pts 
+                                  << " (buffer flushed)" << std::endl;
+                    }
+                }
+                if (FAILED(hr)) {
+                    std::cout << "[AUDIO THREAD] Clock sync to PTS: " << frame->pts 
+                              << " (flush failed)" << std::endl;
+                }
             } else if (m_audioClock < 0.001 && frameOffset == 0) {
                 // Very first frame - initialize clock
                 m_audioClock = frame->pts;
