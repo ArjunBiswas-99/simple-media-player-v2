@@ -11,119 +11,126 @@ Audio: 48000Hz, 2 channels
 [AUDIO INIT] Audio client initialized successfully
 [AUDIO INIT] ACTUAL format WASAPI is using: 48000Hz, 2 channels, 32 bits
 WASAPI Audio initialized: 48000Hz, 2 channels
-[AUDIO] Playing
-Loaded: The Heat.mp4
-[AUDIO THREAD] WASAPI buffer size: 48000 frames (1s)
 [AUDIO] Frame 0: PTS=0 (no correction)
 [AUDIO CHECK] PTS scaling is correct, no fix needed
   Expected: 0.0213333s, Actual: 0.0213333s
 [AUDIO] Frame 1: PTS=0.0213333 (no correction)
+[AUDIO] Playing
+Loaded: The Heat.mp4
+[AUDIO THREAD] WASAPI buffer size: 48000 frames (1s)
 [AUDIO] Frame 2: PTS=0.0426667 (no correction)
-[MAIN] Initial A/V sync: set audio clock to 0.083
-[VIDEO SYNC] videoPTS=0.083 audioClock=0.083 drift=0 useSync=1
-[VIDEO] Texture created: 1920x800
 [MAIN] First audio frame: PTS=0 size=8192
-[AUDIO THREAD] Frame PTS: 0, Clock: 0.093, Offset: 0/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=0.374956 audioClock=0.303 drift=0.0719556 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 111ms (avg 11.1ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=0.541789 audioClock=0.503 drift=0.0387889 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=0.750333 audioClock=0.713 drift=0.0373333 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=32 frames, clockAdvance=0.69s, iterations=100
-[AUDIO THREAD] Frame PTS: 0.682667, Clock: 0.793, Offset: 832/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=0.958867 audioClock=0.913 drift=0.0458667 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=23 frames, clockAdvance=0.503333s, iterations=200
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1.25083 audioClock=1.18058 drift=0.0702556 useSync=1
-[AUDIO THREAD] Frame PTS: 1.38667, Clock: 1.21391, Offset: 0/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1.45937 audioClock=1.39058 drift=0.0687889 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1.66791 audioClock=1.60058 drift=0.0673333 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.69s, iterations=300
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1.87646 audioClock=1.80058 drift=0.0758778 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 2.06933, Clock: 1.91058, Offset: 672/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=2.04329 audioClock=2.01058 drift=0.0327111 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=2.25183 audioClock=2.22058 drift=0.0312556 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.698s, iterations=400
-[VIDEO SYNC] videoPTS=2.50208 audioClock=2.43058 drift=0.0715 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 2.77333, Clock: 2.61058, Offset: 480/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=2.71062 audioClock=2.64058 drift=0.0700444 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=2.91917 audioClock=2.84058 drift=0.0785889 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3.1277 audioClock=3.05058 drift=0.0771222 useSync=1
-[AUDIO DIAG] Last 100 loops: processed=32 frames, clockAdvance=0.692s, iterations=500
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3.29453 audioClock=3.26058 drift=0.0339556 useSync=1
-[AUDIO THREAD] Frame PTS: 3.47733, Clock: 3.30458, Offset: 0/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3.50308 audioClock=3.47058 drift=0.0325 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3.71162 audioClock=3.68058 drift=0.0310444 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.694667s, iterations=600
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=3.96187 audioClock=3.88058 drift=0.0812889 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 4.16, Clock: 4.00058, Offset: 640/1024 samples
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=4.17041 audioClock=4.09058 drift=0.0798333 useSync=1
-[DEBUG VideoDecoder::seek] Called with seconds=9.1287
-[DEBUG VideoDecoder::seek] this pointer=000001C7FED65930
+[MAIN] Initial A/V sync: set audio clock to 0.083
+[VIDEO SYNC] videoPTS=0.083 audioClock=0.083 drift=0 useSync=[AUDIO THREAD] Frame PTS: 0, Clock: 0.083, Offset: 0/1024 samples
+1
+[VIDEO] Texture created: 1920x800
+[AUDIO TIMING] 10 callbacks took 101ms (avg 10.1ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=0.374956 audioClock=0.296333 drift=0.0786222 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=0.541789 audioClock=0.509667 drift=0.0321222 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=0.792033 audioClock=0.712333 drift=0.0797 useSync=1[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=0.958867 audioClock=0.925667 drift=0.0332 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1.20912 audioClock=1.12833 drift=0.0807889 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO DIAG] Last 100 loops: processed=50 frames, clockAdvance=1.06667s, iterations=100
+[AUDIO THREAD] Frame PTS: 1.06667, Clock: 1.14967, Offset: 0/1024 samples
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1.37596 audioClock=1.34167 drift=0.0342889 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1.5845 audioClock=1.555 drift=0.0295 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1.79303 audioClock=1.75767 drift=0.0353667 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=2.00158 audioClock=1.971 drift=0.0305778 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=2.21012 audioClock=2.17367 drift=0.0364556 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO DIAG] Last 100 loops: processed=50 frames, clockAdvance=1.06667s, iterations=200
+[AUDIO THREAD] Frame PTS: 2.13333, Clock: 2.21633, Offset: 0/1024 samples
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=2.41867 audioClock=2.387 drift=0.0316667 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=2.6272 audioClock=2.58967 drift=0.0375333 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=2.83574 audioClock=2.803 drift=0.0327444 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=3.04429 audioClock=3.00567 drift=0.0386222 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=3.25283 audioClock=3.219 drift=0.0338333 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO DIAG] Last 100 loops: processed=50 frames, clockAdvance=1.06667s, iterations=300
+[AUDIO THREAD] Frame PTS: 3.2, Clock: 3.283, Offset: 0/1024 samples
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=3.46137 audioClock=3.42167 drift=0.0397 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=3.66991 audioClock=3.635 drift=0.0349111 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=3.87846 audioClock=3.827 drift=0.0514556 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO DIAG] Last 100 loops: processed=50 frames, clockAdvance=1.06667s, iterations=400
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO THREAD] Frame PTS: 4.26667, Clock: 4.05596, Offset: 0/1024 samples
+[VIDEO SYNC] videoPTS=4.1287 audioClock=4.07729 drift=0.0514111 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=4.33724 audioClock=4.29062 drift=0.0466222 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=4.54579 audioClock=4.49329 drift=0.0525 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=4.75433 audioClock=4.70662 drift=0.0477111 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO DIAG] Last 100 loops: processed=38 frames, clockAdvance=0.810667s, iterations=500
+[VIDEO SYNC] videoPTS=4.96287 audioClock=4.90929 drift=0.0535778 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[DEBUG VideoDecoder::seek] Called with seconds=1539.98
+[DEBUG VideoDecoder::seek] this pointer=000002301B505DD0
 [DEBUG VideoDecoder::seek] Setting m_seeking=true
 [DEBUG VideoDecoder::seek] m_seeking is now: 1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
 [DEBUG VideoDecoder::seek] Locking FFmpeg mutex
 [DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=9128700
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=1539984375
 [DEBUG VideoDecoder::seek] av_seek_frame completed
 [DEBUG VideoDecoder::seek] Flushing video codec buffers
 [DEBUG VideoDecoder::seek] Flushing audio codec buffers
 [DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000001C7FED65930
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002301B505DD0
 [DEBUG VideoDecoder::clearQueues] m_seeking=1
 [DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
 [DEBUG VideoDecoder::clearQueues] Sleep completed
 [DEBUG VideoDecoder::clearQueues] About to lock video queue
 [DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C78316EB50
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C78316E880
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C783072E20
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C783072EE0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C783072F10
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69AB20
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B699EF0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69AB80
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A940
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A8B0
 [DEBUG VideoDecoder::clearQueues] Video queue cleared
 [DEBUG VideoDecoder::clearQueues] About to lock audio queue
 [DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
@@ -132,51 +139,82 @@ Loaded: The Heat.mp4
 [DEBUG VideoDecoder::seek] clearQueues() returned
 [DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
 [DEBUG VideoDecoder::seek] Seek completed successfully
-[AUDIO THREAD] Clock sync to PTS: 4.16
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=4.42067 audioClock=4.36 drift=0.0606667 useSync=1
-[AUDIO DIAG] Last 100 loops: processed=30 frames, clockAdvance=0.646667s, iterations=700
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=4.6292 audioClock=4.57 drift=0.0592 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 4.62933, Clock: 4.63, Offset: 32/1024 samples
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=4.83774 audioClock=4.78 drift=0.0577444 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=5.04629 audioClock=4.99 drift=0.0562889 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.697333s, iterations=800
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=5.25483 audioClock=5.2 drift=0.0548333 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::seek] Called with seconds=10.2548
-[DEBUG VideoDecoder::seek] this pointer=000001C7FED65930
+[AUDIO THREAD] Frame PTS: 1539.39, Clock: 1539.46, Offset: 0/1024 samples
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1539.58 audioClock=1539.52 drift=0.0611222 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1539.79 audioClock=1539.73 drift=0.0563333 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1540 audioClock=1539.93 drift=0.0622 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO DIAG] Last 100 loops: processed=43 frames, clockAdvance=0.917333s, iterations=600
+[VIDEO SYNC] videoPTS=1540.2 audioClock=1540.15 drift=0.0574111 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1540.41 audioClock=1540.35 drift=0.0632889 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO THREAD] Frame PTS: 1540.46, Clock: 1540.53, Offset: 0/1024 samples
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1540.62 audioClock=1540.56 drift=0.0585 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1540.83 audioClock=1540.77 drift=0.0643667 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1541.04 audioClock=1540.98 drift=0.0595778 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1541.25 audioClock=1541.18 drift=0.0654556 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO DIAG] Last 100 loops: processed=50 frames, clockAdvance=1.06667s, iterations=700
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1541.46 audioClock=1541.4 drift=0.0606667 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1541.66 audioClock=1541.6 drift=0.0665333 useSync=1[AUDIO THREAD] Frame PTS: 1541.53, Clock: 1541.6, Offset:
+0/1024 samples
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1541.87 audioClock=1541.81 drift=0.0617444 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1542.08 audioClock=1542.01 drift=0.0676222 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1542.29 audioClock=1542.23 drift=0.0628333 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO DIAG] Last 100 loops: processed=50 frames, clockAdvance=1.06667s, iterations=800
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[VIDEO SYNC] videoPTS=1542.5 audioClock=1542.43 drift=0.0687 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
+[DEBUG VideoDecoder::seek] Called with seconds=3483.9
+[DEBUG VideoDecoder::seek] this pointer=000002301B505DD0
 [DEBUG VideoDecoder::seek] Setting m_seeking=true
 [DEBUG VideoDecoder::seek] m_seeking is now: 1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 5.312, Clock: 5.33, Offset: 864/1024 samples
+[AUDIO THREAD] Frame PTS: 1542.59, Clock: 1542.66, Offset: 0/1024 samples
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
 [DEBUG VideoDecoder::seek] Locking FFmpeg mutex
 [DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=10254833
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=3483898925
 [DEBUG VideoDecoder::seek] av_seek_frame completed
 [DEBUG VideoDecoder::seek] Flushing video codec buffers
 [DEBUG VideoDecoder::seek] Flushing audio codec buffers
 [DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000001C7FED65930
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002301B505DD0
 [DEBUG VideoDecoder::clearQueues] m_seeking=1
 [DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=512
 [DEBUG VideoDecoder::clearQueues] Sleep completed
 [DEBUG VideoDecoder::clearQueues] About to lock video queue
 [DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C78316E470
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C783072E20
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C783072EE0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C783072F10
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C78316E880
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69AA30
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A760
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A8B0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A5B0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A580
 [DEBUG VideoDecoder::clearQueues] Video queue cleared
 [DEBUG VideoDecoder::clearQueues] About to lock audio queue
 [DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
@@ -185,273 +223,52 @@ Loaded: The Heat.mp4
 [DEBUG VideoDecoder::seek] clearQueues() returned
 [DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
 [DEBUG VideoDecoder::seek] Seek completed successfully
-[DEBUG VideoDecoder::seek] Called with seconds=15.2548
-[DEBUG VideoDecoder::seek] this pointer=000001C7FED65930
+[AUDIO THREAD] Clock sync to PTS: 3481.88 (flush failed)
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=0
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=0
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=0
+[AUDIO TIMING] 10 callbacks took 106ms (avg 10.6ms/callback), numFramesAvailable=0
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[VIDEO SYNC] videoPTS=3481.98 audioClock=3481.89 drift=0.0900778 useSync=1
+[DEBUG VideoDecoder::seek] Called with seconds=5926.42
+[DEBUG VideoDecoder::seek] this pointer=000002301B505DD0
 [DEBUG VideoDecoder::seek] Setting m_seeking=true
 [DEBUG VideoDecoder::seek] m_seeking is now: 1
-[AUDIO THREAD] Clock sync to PTS: 4.16
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
 [DEBUG VideoDecoder::seek] Locking FFmpeg mutex
 [DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=15254833
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=5926415039
 [DEBUG VideoDecoder::seek] av_seek_frame completed
 [DEBUG VideoDecoder::seek] Flushing video codec buffers
 [DEBUG VideoDecoder::seek] Flushing audio codec buffers
 [DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000001C7FED65930
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002301B505DD0
 [DEBUG VideoDecoder::clearQueues] m_seeking=1
 [DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
-[DEBUG VideoDecoder::clearQueues] Sleep completed
-[DEBUG VideoDecoder::clearQueues] About to lock video queue
-[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 0
-[DEBUG VideoDecoder::clearQueues] Video queue cleared
-[DEBUG VideoDecoder::clearQueues] About to lock audio queue
-[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 2
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000001C783044100
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000001C783044340
-[DEBUG VideoDecoder::clearQueues] Audio queue cleared
-[DEBUG VideoDecoder::clearQueues] clearQueues completed
-[DEBUG VideoDecoder::seek] clearQueues() returned
-[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
-[DEBUG VideoDecoder::seek] Seek completed successfully
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::seek] Called with seconds=20.2548
-[DEBUG VideoDecoder::seek] this pointer=000001C7FED65930
-[DEBUG VideoDecoder::seek] Setting m_seeking=true
-[DEBUG VideoDecoder::seek] m_seeking is now: 1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
-[DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=20254833
-[DEBUG VideoDecoder::seek] av_seek_frame completed
-[DEBUG VideoDecoder::seek] Flushing video codec buffers
-[DEBUG VideoDecoder::seek] Flushing audio codec buffers
-[DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000001C7FED65930
-[DEBUG VideoDecoder::clearQueues] m_seeking=1
-[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
-[DEBUG VideoDecoder::clearQueues] Sleep completed
-[DEBUG VideoDecoder::clearQueues] About to lock video queue
-[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 0
-[DEBUG VideoDecoder::clearQueues] Video queue cleared
-[DEBUG VideoDecoder::clearQueues] About to lock audio queue
-[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 1
-[DEBUG VideoDecoder::clearQueues] Deleting audio frame at 000001C783044120
-[DEBUG VideoDecoder::clearQueues] Audio queue cleared
-[DEBUG VideoDecoder::clearQueues] clearQueues completed
-[DEBUG VideoDecoder::seek] clearQueues() returned
-[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
-[DEBUG VideoDecoder::seek] Seek completed successfully
-[DEBUG VideoDecoder::seek] Called with seconds=25.2548
-[DEBUG VideoDecoder::seek] this pointer=000001C7FED65930
-[DEBUG VideoDecoder::seek] Setting m_seeking=true
-[DEBUG VideoDecoder::seek] m_seeking is now: 1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=18 frames, clockAdvance=0.384s, iterations=900
-[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
-[DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=25254833
-[DEBUG VideoDecoder::seek] av_seek_frame completed
-[DEBUG VideoDecoder::seek] Flushing video codec buffers
-[DEBUG VideoDecoder::seek] Flushing audio codec buffers
-[DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000001C7FED65930
-[DEBUG VideoDecoder::clearQueues] m_seeking=1
-[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
-[DEBUG VideoDecoder::clearQueues] Sleep completed
-[DEBUG VideoDecoder::clearQueues] About to lock video queue
-[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 0
-[DEBUG VideoDecoder::clearQueues] Video queue cleared
-[DEBUG VideoDecoder::clearQueues] About to lock audio queue
-[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
-[DEBUG VideoDecoder::clearQueues] Audio queue cleared
-[DEBUG VideoDecoder::clearQueues] clearQueues completed
-[DEBUG VideoDecoder::seek] clearQueues() returned
-[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
-[DEBUG VideoDecoder::seek] Seek completed successfully
-[DEBUG VideoDecoder::seek] Called with seconds=30.2548
-[DEBUG VideoDecoder::seek] this pointer=000001C7FED65930
-[DEBUG VideoDecoder::seek] Setting m_seeking=true
-[DEBUG VideoDecoder::seek] m_seeking is now: 1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
-[DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=30254833
-[DEBUG VideoDecoder::seek] av_seek_frame completed
-[DEBUG VideoDecoder::seek] Flushing video codec buffers
-[DEBUG VideoDecoder::seek] Flushing audio codec buffers
-[DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000001C7FED65930
-[DEBUG VideoDecoder::clearQueues] m_seeking=1
-[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
-[DEBUG VideoDecoder::clearQueues] Sleep completed
-[DEBUG VideoDecoder::clearQueues] About to lock video queue
-[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 0
-[DEBUG VideoDecoder::clearQueues] Video queue cleared
-[DEBUG VideoDecoder::clearQueues] About to lock audio queue
-[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
-[DEBUG VideoDecoder::clearQueues] Audio queue cleared
-[DEBUG VideoDecoder::clearQueues] clearQueues completed
-[DEBUG VideoDecoder::seek] clearQueues() returned
-[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
-[DEBUG VideoDecoder::seek] Seek completed successfully
-[AUDIO THREAD] Clock sync to PTS: 26.304
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=26.5261 audioClock=26.474 drift=0.0520778 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=26.7346 audioClock=26.684 drift=0.0506222 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=24 frames, clockAdvance=0.512s, iterations=1000
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 26.8373, Clock: 26.844, Offset: 320/1024 samples
-[VIDEO SYNC] videoPTS=26.9432 audioClock=26.894 drift=0.0491667 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=27.1517 audioClock=27.104 drift=0.0477 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=27.3602 audioClock=27.314 drift=0.0462444 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=32 frames, clockAdvance=0.699333s, iterations=1100
-[VIDEO SYNC] videoPTS=27.5688 audioClock=27.514 drift=0.0547889 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 27.5413, Clock: 27.5413, Offset: 0/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=27.7773 audioClock=27.724 drift=0.0533333 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=27.9859 audioClock=27.934 drift=0.0518667 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=28.1944 audioClock=28.144 drift=0.0504111 useSync=1
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.69s, iterations=1200
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 28.224, Clock: 28.244, Offset: 960/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=28.403 audioClock=28.354 drift=0.0489556 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO] setPlaybackRate called: 2 -> clamped to: 2
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=28.6115 audioClock=28.554 drift=0.0575 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=28.82 audioClock=28.764 drift=0.0560333 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.701333s, iterations=1300
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 28.928, Clock: 28.934, Offset: 288/1024 samples
-[VIDEO SYNC] videoPTS=29.0286 audioClock=28.974 drift=0.0545778 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=29.2371 audioClock=29.184 drift=0.0531222 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=29.4457 audioClock=29.394 drift=0.0516667 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=32 frames, clockAdvance=0.698667s, iterations=1400
-[VIDEO SYNC] videoPTS=29.6542 audioClock=29.594 drift=0.0602 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 29.632, Clock: 29.632, Offset: 0/1024 samples
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=29.8627 audioClock=29.804 drift=0.0587444 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=30.0713 audioClock=30.014 drift=0.0572889 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=30.2798 audioClock=30.224 drift=0.0558333 useSync=1
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.69s, iterations=1500
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 30.3147, Clock: 30.324, Offset: 448/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=30.4884 audioClock=30.434 drift=0.0543667 useSync=1
-[AUDIO] setPlaybackRate called: 1 -> clamped to: 1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=30.6969 audioClock=30.644 drift=0.0529111 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=30.9055 audioClock=30.844 drift=0.0614556 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=32 frames, clockAdvance=0.7s, iterations=1600
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 31.0187, Clock: 31.0187, Offset: 0/1024 samples
-[AUDIO] setPlaybackRate called: 2 -> clamped to: 2
-[VIDEO SYNC] videoPTS=31.114 audioClock=31.054 drift=0.06 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=31.3225 audioClock=31.264 drift=0.0585333 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=31.5311 audioClock=31.474 drift=0.0570778 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.69s, iterations=1700
-[VIDEO SYNC] videoPTS=31.7396 audioClock=31.684 drift=0.0556222 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 31.7013, Clock: 31.714, Offset: 608/1024 samples
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=31.9482 audioClock=31.884 drift=0.0641667 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=32.1567 audioClock=32.094 drift=0.0627 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO] setPlaybackRate called: 1 -> clamped to: 1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=32.3652 audioClock=32.304 drift=0.0612444 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.698667s, iterations=1800
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 32.4053, Clock: 32.414, Offset: 416/1024 samples
-[VIDEO SYNC] videoPTS=32.5738 audioClock=32.514 drift=0.0597889 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=32.7823 audioClock=32.724 drift=0.0583333 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=32.9909 audioClock=32.934 drift=0.0568667 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=32 frames, clockAdvance=0.701333s, iterations=1900
-[AUDIO THREAD] Frame PTS: 33.1093, Clock: 33.1093, Offset: 0/1024 samples
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=33.1994 audioClock=33.134 drift=0.0654111 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=33.408 audioClock=33.344 drift=0.0639556 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::seek] Called with seconds=1098.19
-[DEBUG VideoDecoder::seek] this pointer=000001C7FED65930
-[DEBUG VideoDecoder::seek] Setting m_seeking=true
-[DEBUG VideoDecoder::seek] m_seeking is now: 1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
-[DEBUG VideoDecoder::seek] FFmpeg mutex locked
-[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=1098185546
-[DEBUG VideoDecoder::seek] av_seek_frame completed
-[DEBUG VideoDecoder::seek] Flushing video codec buffers
-[DEBUG VideoDecoder::seek] Flushing audio codec buffers
-[DEBUG VideoDecoder::seek] About to call clearQueues()
-[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000001C7FED65930
-[DEBUG VideoDecoder::clearQueues] m_seeking=1
-[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
 [DEBUG VideoDecoder::clearQueues] Sleep completed
 [DEBUG VideoDecoder::clearQueues] About to lock video queue
 [DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C78316EB50
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C78316E880
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C78316E6E0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C78316E7A0
-[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000001C78316E470
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A8B0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A610
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69AA30
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A9A0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69AA90
 [DEBUG VideoDecoder::clearQueues] Video queue cleared
 [DEBUG VideoDecoder::clearQueues] About to lock audio queue
 [DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
@@ -460,166 +277,132 @@ Loaded: The Heat.mp4
 [DEBUG VideoDecoder::seek] clearQueues() returned
 [DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
 [DEBUG VideoDecoder::seek] Seek completed successfully
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1097.47 audioClock=1097.42 drift=0.0551222 useSync=1
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.685333s, iterations=2000
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 1097.39, Clock: 1097.48, Offset: 576/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1097.68 audioClock=1097.63 drift=0.0536667 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1097.89 audioClock=1097.84 drift=0.0522 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1098.1 audioClock=1098.04 drift=0.0607444 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=32 frames, clockAdvance=0.694667s, iterations=2100
-[AUDIO THREAD] Frame PTS: 1098.09, Clock: 1098.17, Offset: 0/1024 samples
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1098.31 audioClock=1098.25 drift=0.0592889 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1098.51 audioClock=1098.46 drift=0.0578333 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1098.72 audioClock=1098.67 drift=0.0563667 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.692s, iterations=2200
-[AUDIO THREAD] Frame PTS: 1098.77, Clock: 1098.87, Offset: 736/1024 samples
-[VIDEO SYNC] videoPTS=1098.93 audioClock=1098.88 drift=0.0549111 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1099.14 audioClock=1099.08 drift=0.0634556 useSync=[AUDIO TIMING] 10 callbacks took 100ms (avg 1
-10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1099.35 audioClock=1099.29 drift=0.062 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1099.56 audioClock=1099.5 drift=0.0605333 useSync=1
-[AUDIO DIAG] Last 100 loops: processed=32 frames, clockAdvance=0.698s, iterations=2300
-[AUDIO THREAD] Frame PTS: 1099.48, Clock: 1099.56, Offset: 64/1024 samples
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1099.76 audioClock=1099.71 drift=0.0590778 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1099.97 audioClock=1099.92 drift=0.0576222 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1100.18 audioClock=1100.13 drift=0.0561667 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.69s, iterations=2400
-[AUDIO THREAD] Frame PTS: 1100.18, Clock: 1100.26, Offset: 0/1024 samples
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1100.39 audioClock=1100.33 drift=0.0647 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1100.6 audioClock=1100.54 drift=0.0632444 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1100.81 audioClock=1100.75 drift=0.0617889 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.702667s, iterations=2500
-[VIDEO SYNC] videoPTS=1101.02 audioClock=1100.96 drift=0.0603333 useSync=1
-[AUDIO THREAD] Frame PTS: 1100.86, Clock: 1100.96, Offset: 704/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1101.22 audioClock=1101.17 drift=0.0588667 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1101.43 audioClock=1101.37 drift=0.0674111 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1101.64 audioClock=1101.58 drift=0.0659556 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=32 frames, clockAdvance=0.697333s, iterations=2600
-[AUDIO THREAD] Frame PTS: 1101.57, Clock: 1101.65, Offset: 32/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1101.85 audioClock=1101.79 drift=0.0645 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1102.06 audioClock=1102 drift=0.0630333 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1102.27 audioClock=1102.21 drift=0.0615778 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.69s, iterations=2700
-[AUDIO THREAD] Frame PTS: 1102.25, Clock: 1102.35, Offset: 864/1024 samples
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1102.48 audioClock=1102.42 drift=0.0601222 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1102.68 audioClock=1102.62 drift=0.0686667 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1102.89 audioClock=1102.83 drift=0.0672 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO DIAG] Last 100 loops: processed=32 frames, clockAdvance=0.7s, iterations=2800
-[VIDEO SYNC] videoPTS=1103.1 audioClock=1103.04 drift=0.0657444 useSync=1
-[AUDIO THREAD] Frame PTS: 1102.95, Clock: 1103.04, Offset: 192/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1103.31 audioClock=1103.25 drift=0.0642889 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1103.52 audioClock=1103.46 drift=0.0628333 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1103.73 audioClock=1103.66 drift=0.0713667 useSync=1
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.69s, iterations=2900
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 1103.66, Clock: 1103.74, Offset: 0/1024 samples
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1103.94 audioClock=1103.87 drift=0.0699111 useSync=1
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1104.14 audioClock=1104.08 drift=0.0684556 useSync=1
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1104.35 audioClock=1104.29 drift=0.067 useSync=1
-[AUDIO DIAG] Last 100 loops: processed=33 frames, clockAdvance=0.7s, iterations=3000
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO THREAD] Frame PTS: 1104.34, Clock: 1104.44, Offset: 832/1024 samples
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[VIDEO SYNC] videoPTS=1104.56 audioClock=1104.5 drift=0.0655333 useSync=1
+[VIDEO SYNC] videoPTS=5923.58 audioClock=5923.54 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=5923.58 audioClock=5923.54 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=5923.58 audioClock=5923.54 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=5923.58 audioClock=5923.54 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=5923.58 audioClock=5923.54 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=5923.58 audioClock=5923.54 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=5923.58 audioClock=5923.54 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=5923.58 audioClock=5923.54 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=5923.58 audioClock=5923.54 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=5923.58 audioClock=5923.54 drift=0.0417111 useSync=1
+[DEBUG VideoDecoder::seek] Called with seconds=4664.13
+[DEBUG VideoDecoder::seek] this pointer=000002301B505DD0
+[DEBUG VideoDecoder::seek] Setting m_seeking=true
+[DEBUG VideoDecoder::seek] m_seeking is now: 1
+[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
+[DEBUG VideoDecoder::seek] FFmpeg mutex locked
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=4664132812
+[DEBUG VideoDecoder::seek] av_seek_frame completed
+[DEBUG VideoDecoder::seek] Flushing video codec buffers
+[DEBUG VideoDecoder::seek] Flushing audio codec buffers
+[DEBUG VideoDecoder::seek] About to call clearQueues()
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002301B505DD0
+[DEBUG VideoDecoder::clearQueues] m_seeking=1
+[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
+[DEBUG VideoDecoder::clearQueues] Sleep completed
+[DEBUG VideoDecoder::clearQueues] About to lock video queue
+[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A7F0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A970
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A4C0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A820
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69AB80
+[DEBUG VideoDecoder::clearQueues] Video queue cleared
+[DEBUG VideoDecoder::clearQueues] About to lock audio queue
+[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
+[DEBUG VideoDecoder::clearQueues] Audio queue cleared
+[DEBUG VideoDecoder::clearQueues] clearQueues completed
+[DEBUG VideoDecoder::seek] clearQueues() returned
+[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
+[DEBUG VideoDecoder::seek] Seek completed successfully
+[VIDEO SYNC] videoPTS=4660.7 audioClock=4660.66 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=4660.7 audioClock=4660.66 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=4660.7 audioClock=4660.66 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=4660.7 audioClock=4660.66 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=4660.7 audioClock=4660.66 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=4660.7 audioClock=4660.66 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=4660.7 audioClock=4660.66 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=4660.7 audioClock=4660.66 drift=0.0417111 useSync=1
+[DEBUG VideoDecoder::seek] Called with seconds=403.93
+[DEBUG VideoDecoder::seek] this pointer=000002301B505DD0
+[DEBUG VideoDecoder::seek] Setting m_seeking=true
+[DEBUG VideoDecoder::seek] m_seeking is now: 1
+[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
+[DEBUG VideoDecoder::seek] FFmpeg mutex locked
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=403930297
+[DEBUG VideoDecoder::seek] av_seek_frame completed
+[DEBUG VideoDecoder::seek] Flushing video codec buffers
+[DEBUG VideoDecoder::seek] Flushing audio codec buffers
+[DEBUG VideoDecoder::seek] About to call clearQueues()
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002301B505DD0
+[DEBUG VideoDecoder::clearQueues] m_seeking=1
+[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
+[DEBUG VideoDecoder::clearQueues] Sleep completed
+[DEBUG VideoDecoder::clearQueues] About to lock video queue
+[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A640
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A610
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A730
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A7F0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A550
+[DEBUG VideoDecoder::clearQueues] Video queue cleared
+[DEBUG VideoDecoder::clearQueues] About to lock audio queue
+[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
+[DEBUG VideoDecoder::clearQueues] Audio queue cleared
+[DEBUG VideoDecoder::clearQueues] clearQueues completed
+[DEBUG VideoDecoder::seek] clearQueues() returned
+[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
+[DEBUG VideoDecoder::seek] Seek completed successfully
+[VIDEO SYNC] videoPTS=400.441 audioClock=400.4 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=400.441 audioClock=400.4 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=400.441 audioClock=400.4 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=400.441 audioClock=400.4 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=400.441 audioClock=400.4 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=400.441 audioClock=400.4 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=400.441 audioClock=400.4 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=400.441 audioClock=400.4 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=400.441 audioClock=400.4 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=400.441 audioClock=400.4 drift=0.0417111 useSync=1
+[DEBUG VideoDecoder::seek] Called with seconds=6791.08
+[DEBUG VideoDecoder::seek] this pointer=000002301B505DD0
+[DEBUG VideoDecoder::seek] Setting m_seeking=true
+[DEBUG VideoDecoder::seek] m_seeking is now: 1
+[DEBUG VideoDecoder::seek] Locking FFmpeg mutex
+[DEBUG VideoDecoder::seek] FFmpeg mutex locked
+[DEBUG VideoDecoder::seek] Calling av_seek_frame with timestamp=6791078613
+[DEBUG VideoDecoder::seek] av_seek_frame completed
+[DEBUG VideoDecoder::seek] Flushing video codec buffers
+[DEBUG VideoDecoder::seek] Flushing audio codec buffers
+[DEBUG VideoDecoder::seek] About to call clearQueues()
+[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=000002301B505DD0
+[DEBUG VideoDecoder::clearQueues] m_seeking=1
+[DEBUG VideoDecoder::clearQueues] About to sleep for 50ms
+[DEBUG VideoDecoder::clearQueues] Sleep completed
+[DEBUG VideoDecoder::clearQueues] About to lock video queue
+[DEBUG VideoDecoder::clearQueues] Video queue locked, size: 5
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69AA30
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A580
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69AA60
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69AAF0
+[DEBUG VideoDecoder::clearQueues] Deleting video frame at 000002301B69A880
+[DEBUG VideoDecoder::clearQueues] Video queue cleared
+[DEBUG VideoDecoder::clearQueues] About to lock audio queue
+[DEBUG VideoDecoder::clearQueues] Audio queue locked, size: 0
+[DEBUG VideoDecoder::clearQueues] Audio queue cleared
+[DEBUG VideoDecoder::clearQueues] clearQueues completed
+[DEBUG VideoDecoder::seek] clearQueues() returned
+[DEBUG VideoDecoder::seek] Unlocking FFmpeg mutex and setting m_seeking=false
+[DEBUG VideoDecoder::seek] Seek completed successfully
+[VIDEO SYNC] videoPTS=6788.87 audioClock=6788.82 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=6788.87 audioClock=6788.82 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=6788.87 audioClock=6788.82 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=6788.87 audioClock=6788.82 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=6788.87 audioClock=6788.82 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=6788.87 audioClock=6788.82 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=6788.87 audioClock=6788.82 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=6788.87 audioClock=6788.82 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=6788.87 audioClock=6788.82 drift=0.0417111 useSync=1
+[VIDEO SYNC] videoPTS=6788.87 audioClock=6788.82 drift=0.0417111 useSync=1
 [AUDIO] Paused
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 99ms (avg 9.9ms/callback), numFramesAvailable=480
-[AUDIO TIMING] 10 callbacks took 100ms (avg 10ms/callback), numFramesAvailabl
