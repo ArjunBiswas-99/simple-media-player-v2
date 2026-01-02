@@ -60,6 +60,10 @@ elseif(WIN32)
         ksuser.lib
     )
     
+    # Enable SEH (Structured Exception Handling) with C++ exception handling
+    # /EHa enables both SEH and C++ exceptions
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHa")
+    
     # Enable incremental linking
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /INCREMENTAL")
 endif()
