@@ -478,10 +478,20 @@ void AudioOutput::audioThreadFunc() {
             {
                 std::lock_guard<std::mutex> lock(m_partialFrameMutex);
                 if (m_partialFrame) {
-                    frame = m_partialFrame;
-                    frameOffset = m_partialFrameOffset;
-                    m_partialFrame = nullptr;
-                    m_partialFrameOffset = 0;
+                    // Check if partial frame is stale (seek happened)
+                    // If PTS differs from clock by >1s, it's from before a seek
+                    if (m_audioClock > 0.001 && fabs(m_partialFrame->pts - m_audioClock) > 1.0) {
+                        // Stale partial frame - discard it
+                        delete m_partialFrame;
+                        m_partialFrame = nullptr;
+                        m_partialFrameOffset = 0;
+                        std::cout << "[AUDIO THREAD] Discarded stale partial frame after seek" << std::endl;
+                    } else {
+                        frame = m_partialFrame;
+                        frameOffset = m_partialFrameOffset;
+                        m_partialFrame = nullptr;
+                        m_partialFrameOffset = 0;
+                    }
                 }
             }
             
