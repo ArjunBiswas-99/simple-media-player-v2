@@ -1,19 +1,7 @@
-layer-v2> cmake -B build -A x64       
--- Building for: Visual Studio 18 2026
--- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.26200.
--- The CXX compiler identification is MSVC 19.50.35721.0
--- Detecting CXX compiler ABI info
--- Detecting CXX compiler ABI info - done
--- Check for working CXX compiler: C:/Program Files (x86)/Microsoft Visual Studio/18/BuildTools/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/cl.exe - skipped
--- Detecting CXX compile features
--- Detecting CXX compile features - done
--- Consider using Ninja for faster builds: cmake -G Ninja
--- Building for Windows
--- Video Backend: Direct3D11
--- Audio Backend: WASAPI
+
 -- FFmpeg DLLs will be copied from: C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/external/ffmpeg/windows/bin
 -- Configuration complete. Build with: cmake --build build
--- Configuring done (2.5s)
+-- Configuring done (2.2s)
 -- Generating done (0.1s)
 -- Build files have been written to: C:/Users/arjun/OneDrive/Desktop/Test/simple-media-player-v2/build
 PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> cmake --build build --config Release
@@ -35,28 +23,9 @@ MSBuild version 18.0.5+e22287bf1 for .NET Framework
   VideoDecoder.cpp
   AudioOutput.cpp
   platform_windows.cpp
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(257,21): error C2589: '(': illegal token o
-n right side of '::' [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(257,21): error C2059: syntax error: ')' [C 
-:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(268,27): error C2589: '(': illegal token o 
-n right side of '::' [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(268,27): error C2059: syntax error: ')' [C 
-:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(438,40): error C2589: '(': illegal token o 
-n right side of '::' [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
-C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\AudioOutput.cpp(438,40): error C2059: syntax error: ')' [C 
-:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
   Generating Code...
-PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> copy external\ffmpeg\windows\bin\*.dll build\Release\
->> 
-PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> .\build\Release\MediaPlayer.exe
->> 
-.\build\Release\MediaPlayer.exe : The term '.\build\Release\MediaPlayer.exe' is not recognized as the name of a cmdlet, 
-function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the     
-path is correct and try again.
-At line:1 char:1
-+ .\build\Release\MediaPlayer.exe
-+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : ObjectNotFound: (.\build\Release\MediaPlayer.exe:String) [], CommandNotFoundException        
-    + FullyQualifiedErrorId : CommandNotFoundException
+MSVCRT.lib(exe_winmain.obj) : error LNK2019: unresolved external symbol WinMain referenced in function "int __cdecl __scrt
+_common_main_seh(void)" (?__scrt_common_main_seh@@YAHXZ) [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\buil 
+d\MediaPlayer.vcxproj]
+C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\Release\MediaPlayer.exe : fatal error LNK1120: 1 unresol 
+ved externals [C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\build\MediaPlayer.vcxproj]
