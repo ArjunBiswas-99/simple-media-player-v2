@@ -7,7 +7,7 @@ import os
 import qtawesome as qta
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QSlider, QLabel, QFileDialog, QMessageBox
+    QPushButton, QSlider, QLabel, QFileDialog, QMessageBox, QGraphicsOpacityEffect
 )
 from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation, QSize, QEasingCurve, QSequentialAnimationGroup, QParallelAnimationGroup
 from PyQt6.QtGui import QCursor, QAction
@@ -101,6 +101,8 @@ class MediaPlayer(QMainWindow):
         """)
         self.play_pause_overlay.setFixedSize(100, 100)
         self.play_pause_overlay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.play_pause_overlay_effect = QGraphicsOpacityEffect()
+        self.play_pause_overlay.setGraphicsEffect(self.play_pause_overlay_effect)
         self.play_pause_overlay.hide()
         
         # Volume feedback overlay (top-right)
@@ -133,6 +135,8 @@ class MediaPlayer(QMainWindow):
         volume_overlay_layout.addWidget(self.volume_overlay_text)
         
         self.volume_overlay.setFixedSize(80, 250)
+        self.volume_overlay_effect = QGraphicsOpacityEffect()
+        self.volume_overlay.setGraphicsEffect(self.volume_overlay_effect)
         self.volume_overlay.hide()
         
         # Skip feedback overlay (center)
@@ -148,6 +152,8 @@ class MediaPlayer(QMainWindow):
             }}
         """)
         self.skip_overlay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.skip_overlay_effect = QGraphicsOpacityEffect()
+        self.skip_overlay.setGraphicsEffect(self.skip_overlay_effect)
         self.skip_overlay.hide()
         
         # Timer for detecting click vs hold (for 2x speed)
@@ -342,59 +348,31 @@ class MediaPlayer(QMainWindow):
         return btn
     
     def _create_icon_button(self, icon_name, button_size, icon_size, tooltip):
-        """Create a button with Font Awesome icon and scale animations"""
+        """Create a button with Font Awesome icon"""
         btn = QPushButton()
         btn.setFixedSize(button_size, button_size)
-        btn.setStyleSheet(get_button_style(button_size) + " transform-origin: center;")
+        btn.setStyleSheet(get_button_style(button_size))
         btn.setToolTip(tooltip)
         
         # Store icon name and sizes for hover effects
         btn.icon_name = icon_name
         btn.icon_size = icon_size
-        btn.base_size = button_size
         
         # Create icon with primary red color (normal state)
         btn.setIcon(qta.icon(icon_name, color=THEME_PRIMARY))
         btn.setIconSize(QSize(icon_size, icon_size))
         
-        # Add hover/press event handlers for icon color change and scale
+        # Add hover/press event handlers for icon color change only
         def on_enter(event):
             btn.setIcon(qta.icon(btn.icon_name, color='white'))
-            # Scale up on hover
-            new_size = int(btn.base_size * 1.1)
-            btn.setFixedSize(new_size, new_size)
-            btn.setIconSize(QSize(int(btn.icon_size * 1.1), int(btn.icon_size * 1.1)))
             QPushButton.enterEvent(btn, event)
         
         def on_leave(event):
             btn.setIcon(qta.icon(btn.icon_name, color=THEME_PRIMARY))
-            # Scale back to normal
-            btn.setFixedSize(btn.base_size, btn.base_size)
-            btn.setIconSize(QSize(btn.icon_size, btn.icon_size))
             QPushButton.leaveEvent(btn, event)
-        
-        def on_press(event):
-            # Scale down on press
-            new_size = int(btn.base_size * 0.95)
-            btn.setFixedSize(new_size, new_size)
-            btn.setIconSize(QSize(int(btn.icon_size * 0.95), int(btn.icon_size * 0.95)))
-            QPushButton.mousePressEvent(btn, event)
-        
-        def on_release(event):
-            # Scale back up on release (to hover size if still hovering)
-            if btn.underMouse():
-                new_size = int(btn.base_size * 1.1)
-                btn.setFixedSize(new_size, new_size)
-                btn.setIconSize(QSize(int(btn.icon_size * 1.1), int(btn.icon_size * 1.1)))
-            else:
-                btn.setFixedSize(btn.base_size, btn.base_size)
-                btn.setIconSize(QSize(btn.icon_size, btn.icon_size))
-            QPushButton.mouseReleaseEvent(btn, event)
         
         btn.enterEvent = on_enter
         btn.leaveEvent = on_leave
-        btn.mousePressEvent = on_press
-        btn.mouseReleaseEvent = on_release
         
         return btn
         
@@ -836,18 +814,18 @@ class MediaPlayer(QMainWindow):
         y = (video_rect.height() - self.play_pause_overlay.height()) // 2
         self.play_pause_overlay.move(x, y)
         
-        # Fade in, stay, fade out
-        self.play_pause_overlay.setWindowOpacity(0)
+        # Fade in, stay, fade out using QGraphicsOpacityEffect
+        self.play_pause_overlay_effect.setOpacity(0)
         self.play_pause_overlay.show()
         
         # Fade in animation (100ms)
-        fade_in = QPropertyAnimation(self.play_pause_overlay, b"windowOpacity")
+        fade_in = QPropertyAnimation(self.play_pause_overlay_effect, b"opacity")
         fade_in.setDuration(100)
         fade_in.setStartValue(0.0)
         fade_in.setEndValue(1.0)
         
         # Fade out animation (300ms)
-        fade_out = QPropertyAnimation(self.play_pause_overlay, b"windowOpacity")
+        fade_out = QPropertyAnimation(self.play_pause_overlay_effect, b"opacity")
         fade_out.setDuration(300)
         fade_out.setStartValue(1.0)
         fade_out.setEndValue(0.0)
@@ -881,11 +859,11 @@ class MediaPlayer(QMainWindow):
         y = 20
         self.volume_overlay.move(x, y)
         
-        # Fade in
-        self.volume_overlay.setWindowOpacity(0)
+        # Fade in using QGraphicsOpacityEffect
+        self.volume_overlay_effect.setOpacity(0)
         self.volume_overlay.show()
         
-        fade_in = QPropertyAnimation(self.volume_overlay, b"windowOpacity")
+        fade_in = QPropertyAnimation(self.volume_overlay_effect, b"opacity")
         fade_in.setDuration(150)
         fade_in.setStartValue(0.0)
         fade_in.setEndValue(1.0)
@@ -896,7 +874,7 @@ class MediaPlayer(QMainWindow):
     
     def _hide_volume_overlay(self):
         """Fade out volume overlay"""
-        fade_out = QPropertyAnimation(self.volume_overlay, b"windowOpacity")
+        fade_out = QPropertyAnimation(self.volume_overlay_effect, b"opacity")
         fade_out.setDuration(300)
         fade_out.setStartValue(1.0)
         fade_out.setEndValue(0.0)
@@ -914,18 +892,18 @@ class MediaPlayer(QMainWindow):
         y = (video_rect.height() - self.skip_overlay.height()) // 2
         self.skip_overlay.move(x, y)
         
-        # Bounce + fade animation
-        self.skip_overlay.setWindowOpacity(0)
+        # Bounce + fade animation using QGraphicsOpacityEffect
+        self.skip_overlay_effect.setOpacity(0)
         self.skip_overlay.show()
         
         # Fade in with slight upward movement
-        fade_in = QPropertyAnimation(self.skip_overlay, b"windowOpacity")
+        fade_in = QPropertyAnimation(self.skip_overlay_effect, b"opacity")
         fade_in.setDuration(150)
         fade_in.setStartValue(0.0)
         fade_in.setEndValue(1.0)
         
         # Fade out
-        fade_out = QPropertyAnimation(self.skip_overlay, b"windowOpacity")
+        fade_out = QPropertyAnimation(self.skip_overlay_effect, b"opacity")
         fade_out.setDuration(200)
         fade_out.setStartValue(1.0)
         fade_out.setEndValue(0.0)
