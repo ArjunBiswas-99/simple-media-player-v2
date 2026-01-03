@@ -70,19 +70,18 @@ class MediaPlayer(QMainWindow):
         self.speed_indicator = SpeedIndicator(self.video_widget)
         self.speed_indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        # Minimal controls container with advanced gradient
+        # Minimal controls container with smooth gradient
         self.controls_widget = QWidget()
         self.controls_widget.setFixedHeight(CONTROL_BAR_HEIGHT)
         self.controls_widget.setStyleSheet("""
             QWidget {
                 background: qlineargradient(
                     x1:0, y1:1, x2:0, y2:0,
-                    stop:0 rgba(15, 15, 15, 250),
-                    stop:0.4 rgba(20, 20, 20, 220),
-                    stop:0.7 rgba(25, 25, 25, 150),
+                    stop:0 rgba(18, 18, 18, 245),
+                    stop:0.5 rgba(22, 22, 22, 200),
+                    stop:0.8 rgba(25, 25, 25, 120),
                     stop:1 rgba(20, 20, 20, 0)
                 );
-                border-top: 1px solid rgba(229, 9, 20, 30);
             }
         """)
         layout.addWidget(self.controls_widget)
@@ -93,13 +92,36 @@ class MediaPlayer(QMainWindow):
         """Setup minimal VLC-style controls"""
         layout = QVBoxLayout(self.controls_widget)
         layout.setContentsMargins(CONTROL_PADDING, CONTROL_PADDING, CONTROL_PADDING, CONTROL_PADDING_BOTTOM)
-        layout.setSpacing(6)
+        layout.setSpacing(0)
         
-        # Timeline slider
+        # Timeline slider with click-to-seek support
         self.timeline = QSlider(Qt.Orientation.Horizontal)
         self.timeline.setRange(0, 0)
         self.timeline.setStyleSheet(get_timeline_style())
+        
+        # Enable click-to-seek by overriding mouse press behavior
+        def timeline_mouse_press(event):
+            if event.button() == Qt.MouseButton.LeftButton:
+                # Calculate clicked position as percentage of slider width
+                click_pos = event.position().x()
+                slider_width = self.timeline.width()
+                percentage = click_pos / slider_width
+                
+                # Set slider value based on percentage
+                new_value = int(self.timeline.minimum() + percentage * (self.timeline.maximum() - self.timeline.minimum()))
+                self.timeline.setValue(new_value)
+                
+                # Seek to the position
+                self.player.setPosition(new_value)
+                self.is_seeking = True
+            
+            # Call original handler for other mouse buttons
+            QSlider.mousePressEvent(self.timeline, event)
+        
+        self.timeline.mousePressEvent = timeline_mouse_press
+        
         layout.addWidget(self.timeline)
+        layout.addSpacing(TIMELINE_BOTTOM_MARGIN)
         
         # Bottom row: time labels and controls
         bottom_layout = QHBoxLayout()
@@ -392,8 +414,6 @@ class MediaPlayer(QMainWindow):
     def _on_timeline_pressed(self):
         """Handle timeline press"""
         self.is_seeking = True
-        # Immediately seek to clicked position
-        self.player.setPosition(self.timeline.value())
         
     def _on_timeline_moved(self, position):
         """Handle timeline drag"""
