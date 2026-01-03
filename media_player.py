@@ -6,7 +6,7 @@ Orchestrates all components following SOLID principles
 import os
 import qtawesome as qta
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QStackedWidget,
     QPushButton, QSlider, QLabel, QFileDialog, QMessageBox, QGraphicsOpacityEffect
 )
 from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation, QSize, QEasingCurve, QSequentialAnimationGroup, QParallelAnimationGroup, QPoint, QRect
@@ -18,6 +18,8 @@ from constants import *
 from styles import *
 from widgets import SpeedIndicator, PlaylistPopover, SettingsPopover, InfoPopover, TimelineTooltip, AnimatedButton
 from thumbnail_generator import ThumbnailGenerator
+from src.player_manager import PlayerManager
+from src.custom_video_widget import CustomVideoWidget
 
 
 class MediaPlayer(QMainWindow):
@@ -55,7 +57,8 @@ class MediaPlayer(QMainWindow):
         
     def _setup_media_player(self):
         """Initialize media player and audio output"""
-        self.player = QMediaPlayer()
+        # Use PlayerManager instead of direct QMediaPlayer
+        self.player = PlayerManager()
         self.audio_output = QAudioOutput()
         self.player.setAudioOutput(self.audio_output)
         self.audio_output.setVolume(0.5)
@@ -68,12 +71,27 @@ class MediaPlayer(QMainWindow):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
-        # Video widget
+        # Video output - stacked widget to switch between Qt and FFmpeg renderers
+        self.video_stack = QStackedWidget()
+        self.video_stack.setStyleSheet(f"background-color: {THEME_BLACK};")
+        layout.addWidget(self.video_stack)
+        
+        # Qt video widget (for standard formats)
         self.video_widget = QVideoWidget()
         self.video_widget.setStyleSheet(f"background-color: {THEME_BLACK};")
         self.video_widget.setAspectRatioMode(Qt.AspectRatioMode.KeepAspectRatio)
+        self.video_stack.addWidget(self.video_widget)
+        
+        # Custom video widget (for FFmpeg player - .ts files)
+        self.custom_video_widget = CustomVideoWidget()
+        self.video_stack.addWidget(self.custom_video_widget)
+        
+        # Set up both video outputs in player manager
         self.player.setVideoOutput(self.video_widget)
-        layout.addWidget(self.video_widget)
+        self.player.setCustomVideoOutput(self.custom_video_widget)
+        
+        # Start with Qt video widget
+        self.video_stack.setCurrentWidget(self.video_widget)
         
         # 2x speed indicator (top-level window to appear over video)
         self.speed_indicator = SpeedIndicator(self)
@@ -663,7 +681,7 @@ class MediaPlayer(QMainWindow):
         """Open file dialog and load video"""
         filename, _ = QFileDialog.getOpenFileName(
             self, "Open Video File", "",
-            "Video Files (*.mp4 *.mkv *.avi *.mov *.wmv *.flv *.webm *.m4v *.mpg *.mpeg);;All Files (*.*)"
+            "Video Files (*.mp4 *.mkv *.avi *.mov *.wmv *.flv *.webm *.m4v *.mpg *.mpeg *.ts *.m2ts *.mts);;All Files (*.*)"
         )
         if filename:
             self.load_video(filename)
@@ -675,6 +693,14 @@ class MediaPlayer(QMainWindow):
         
         self.current_file = file_path
         self.player.setSource(QUrl.fromLocalFile(file_path))
+        
+        # Switch video widget based on player type
+        if self.player.isUsingFFmpegPlayer():
+            self.video_stack.setCurrentWidget(self.custom_video_widget)
+            print(f"🎬 Using FFmpeg player for: {os.path.basename(file_path)}")
+        else:
+            self.video_stack.setCurrentWidget(self.video_widget)
+        
         self.player.play()
         
         # Enable video menus
@@ -686,9 +712,9 @@ class MediaPlayer(QMainWindow):
         self.filename_label.setText(filename)
         self.filename_label.adjustSize()
         
-        # Position in center using global coordinates
-        video_global_pos = self.video_widget.mapToGlobal(self.video_widget.rect().topLeft())
-        x = video_global_pos.x() + (self.video_widget.width() - self.filename_label.width()) // 2
+        # Position in center using global coordinates (use video_stack instead of video_widget)
+        video_global_pos = self.video_stack.mapToGlobal(self.video_stack.rect().topLeft())
+        x = video_global_pos.x() + (self.video_stack.width() - self.filename_label.width()) // 2
         y = video_global_pos.y() + 20  # 20px from top
         self.filename_label.move(x, y)
         
@@ -1095,8 +1121,8 @@ class MediaPlayer(QMainWindow):
             
     def _position_speed_indicator(self):
         """Position speed indicator in center of video (screen coordinates)"""
-        video_rect = self.video_widget.geometry()
-        video_global_pos = self.video_widget.mapToGlobal(video_rect.topLeft())
+        video_rect = self.video_stack.geometry()
+        video_global_pos = self.video_stack.mapToGlobal(video_rect.topLeft())
         
         indicator_width = self.speed_indicator.sizeHint().width()
         indicator_height = self.speed_indicator.sizeHint().height()
@@ -1143,7 +1169,7 @@ class MediaPlayer(QMainWindow):
         """)
         
         # Position in center of video widget in global coordinates
-        video_global_pos = self.video_widget.mapToGlobal(self.video_widget.rect().center())
+        video_global_pos = self.video_stack.mapToGlobal(self.video_stack.rect().center())
         x = video_global_pos.x() - self.play_pause_overlay.width() // 2
         y = video_global_pos.y() - self.play_pause_overlay.height() // 2
         self.play_pause_overlay.move(x, y)
@@ -1187,7 +1213,7 @@ class MediaPlayer(QMainWindow):
         self.volume_overlay_fill.move(0, 150 - bar_height)
         
         # Position in top-right corner in global coordinates
-        video_global_rect = self.video_widget.mapToGlobal(self.video_widget.rect().topRight())
+        video_global_rect = self.video_stack.mapToGlobal(self.video_stack.rect().topRight())
         x = video_global_rect.x() - self.volume_overlay.width() - 20
         y = video_global_rect.y() + 20
         self.volume_overlay.move(x, y)
@@ -1221,7 +1247,7 @@ class MediaPlayer(QMainWindow):
         self.skip_overlay.adjustSize()
         
         # Position in center of video widget in global coordinates
-        video_global_pos = self.video_widget.mapToGlobal(self.video_widget.rect().center())
+        video_global_pos = self.video_stack.mapToGlobal(self.video_stack.rect().center())
         x = video_global_pos.x() - self.skip_overlay.width() // 2
         y = video_global_pos.y() - self.skip_overlay.height() // 2
         self.skip_overlay.move(x, y)
@@ -1279,7 +1305,7 @@ class MediaPlayer(QMainWindow):
         self.setting_overlay.adjustSize()
         
         # Position in top-right corner in global coordinates
-        video_global_rect = self.video_widget.mapToGlobal(self.video_widget.rect().topRight())
+        video_global_rect = self.video_stack.mapToGlobal(self.video_stack.rect().topRight())
         x = video_global_rect.x() - self.setting_overlay.width() - 30
         y = video_global_rect.y() + 30
         self.setting_overlay.move(x, y)
@@ -1327,33 +1353,33 @@ class MediaPlayer(QMainWindow):
         if ratio is None:
             # Default - keep original aspect ratio, remove constraints
             self.video_widget.setAspectRatioMode(Qt.AspectRatioMode.KeepAspectRatio)
-            self.video_widget.setMinimumSize(0, 0)
-            self.video_widget.setMaximumSize(16777215, 16777215)
+            self.video_stack.setMinimumSize(0, 0)
+            self.video_stack.setMaximumSize(16777215, 16777215)
         else:
             # Force specific aspect ratio by constraining dimensions
             ratio_w, ratio_h = ratio
             target_ratio = ratio_w / ratio_h
             
             # Get current size
-            current_width = self.video_widget.width()
-            current_height = self.video_widget.height()
+            current_width = self.video_stack.width()
+            current_height = self.video_stack.height()
             
             # Calculate new dimensions based on target ratio
             # Try to keep width, adjust height
             new_height = int(current_width / target_ratio)
             if new_height <= current_height:
                 # Width-constrained: set max height
-                self.video_widget.setMinimumHeight(new_height)
-                self.video_widget.setMaximumHeight(new_height)
-                self.video_widget.setMinimumWidth(0)
-                self.video_widget.setMaximumWidth(16777215)
+                self.video_stack.setMinimumHeight(new_height)
+                self.video_stack.setMaximumHeight(new_height)
+                self.video_stack.setMinimumWidth(0)
+                self.video_stack.setMaximumWidth(16777215)
             else:
                 # Height-constrained: set max width
                 new_width = int(current_height * target_ratio)
-                self.video_widget.setMinimumWidth(new_width)
-                self.video_widget.setMaximumWidth(new_width)
-                self.video_widget.setMinimumHeight(0)
-                self.video_widget.setMaximumHeight(16777215)
+                self.video_stack.setMinimumWidth(new_width)
+                self.video_stack.setMaximumWidth(new_width)
+                self.video_stack.setMinimumHeight(0)
+                self.video_stack.setMaximumHeight(16777215)
             
             # Use IgnoreAspectRatio to fill the constrained area
             self.video_widget.setAspectRatioMode(Qt.AspectRatioMode.IgnoreAspectRatio)
@@ -1395,32 +1421,32 @@ class MediaPlayer(QMainWindow):
         if ratio is None:
             # Default - no crop, keep original aspect, remove constraints
             self.video_widget.setAspectRatioMode(Qt.AspectRatioMode.KeepAspectRatio)
-            self.video_widget.setMinimumSize(0, 0)
-            self.video_widget.setMaximumSize(16777215, 16777215)
+            self.video_stack.setMinimumSize(0, 0)
+            self.video_stack.setMaximumSize(16777215, 16777215)
         else:
             # Crop by forcing specific aspect ratio (same as aspect ratio feature)
             ratio_w, ratio_h = ratio
             target_ratio = ratio_w / ratio_h
             
             # Get current size
-            current_width = self.video_widget.width()
-            current_height = self.video_widget.height()
+            current_width = self.video_stack.width()
+            current_height = self.video_stack.height()
             
             # Calculate new dimensions based on target ratio
             new_height = int(current_width / target_ratio)
             if new_height <= current_height:
                 # Width-constrained: set max height
-                self.video_widget.setMinimumHeight(new_height)
-                self.video_widget.setMaximumHeight(new_height)
-                self.video_widget.setMinimumWidth(0)
-                self.video_widget.setMaximumWidth(16777215)
+                self.video_stack.setMinimumHeight(new_height)
+                self.video_stack.setMaximumHeight(new_height)
+                self.video_stack.setMinimumWidth(0)
+                self.video_stack.setMaximumWidth(16777215)
             else:
                 # Height-constrained: set max width
                 new_width = int(current_height * target_ratio)
-                self.video_widget.setMinimumWidth(new_width)
-                self.video_widget.setMaximumWidth(new_width)
-                self.video_widget.setMinimumHeight(0)
-                self.video_widget.setMaximumHeight(16777215)
+                self.video_stack.setMinimumWidth(new_width)
+                self.video_stack.setMaximumWidth(new_width)
+                self.video_stack.setMinimumHeight(0)
+                self.video_stack.setMaximumHeight(16777215)
             
             # Use IgnoreAspectRatio to fill and stretch
             self.video_widget.setAspectRatioMode(Qt.AspectRatioMode.IgnoreAspectRatio)
