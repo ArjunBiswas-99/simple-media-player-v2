@@ -71,21 +71,33 @@ class MpvPlayer(BasePlayer):
             widget.setAttribute(Qt.WidgetAttribute.WA_NativeWindow, True)
             widget.setAttribute(Qt.WidgetAttribute.WA_DontCreateNativeAncestors, False)
             
-            # Create mpv instance
-            kwargs = {
-                'wid': str(int(widget.winId())),
-                'keep_open': 'yes',
-                'idle': 'yes',
-                'input_default_bindings': False,
-                'input_vo_keyboard': False,
-                'osc': False,
-            }
+            # Prepare mpv kwargs
+            mpv_kwargs = {}
             
-            # Add libmpv path if found
+            # Add libmpv path if we found bundled version
             if self._libmpv_path:
-                kwargs['libmpv'] = self._libmpv_path
+                mpv_kwargs['libmpv'] = self._libmpv_path
             
-            self._player = mpv.MPV(**kwargs)
+            # Create base mpv instance first (to load library)
+            try:
+                if mpv_kwargs:
+                    self._player = mpv.MPV(**mpv_kwargs)
+                else:
+                    self._player = mpv.MPV()
+            except OSError as e:
+                # Try without explicit path, let python-mpv find it
+                if 'Cannot find libmpv' in str(e):
+                    self._player = mpv.MPV()
+                else:
+                    raise
+            
+            # Now configure for widget embedding
+            self._player.wid = str(int(widget.winId()))
+            self._player.keep_open = 'yes'
+            self._player.idle = 'yes'
+            self._player.input_default_bindings = False
+            self._player.input_vo_keyboard = False
+            self._player.osc = False
             
             # Register event handlers
             @self._player.event_callback('end-file')
