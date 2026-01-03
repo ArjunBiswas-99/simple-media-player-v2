@@ -506,10 +506,12 @@ void AudioOutput::audioThreadFunc() {
             UINT32 totalFrameSamples = frame->size / (m_channels * sizeof(float));
             UINT32 availableSamples = totalFrameSamples - frameOffset;
             
-            // Detect seek: if this is start of a new frame and PTS discontinuity detected
+            // Detect seek: backward jump OR large forward jump (>0.5s)
+            // Normal playback has small forward progression (~0.02s per frame)
+            double timeDiff = frame->pts - m_audioClock;
             bool isSeekDetected = (frameOffset == 0) && 
                                   (m_audioClock > 0.001) && 
-                                  (fabs(frame->pts - m_audioClock) > 0.1);
+                                  ((timeDiff < 0) || (timeDiff > 0.5));
             
             if (isSeekDetected) {
                 // Seek detected - request flush but DON'T update clock yet
