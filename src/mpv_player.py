@@ -189,8 +189,11 @@ class MpvPlayer(BasePlayer):
     
     def set_source(self, url):
         """Set the media source URL."""
+        print(f"MpvPlayer.set_source called with: {url}")
+        
         if not self._player:
             self._last_error = "mpv player not initialized"
+            print(f"ERROR: {self._last_error}")
             self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
             return
         
@@ -202,9 +205,12 @@ class MpvPlayer(BasePlayer):
             url = url.toLocalFile()
         self._source = url
         
+        print(f"MpvPlayer loading file: {url}")
+        
         # Load file
         try:
             self._player.loadfile(url, 'replace')
+            print(f"MpvPlayer file loaded successfully")
             self._media_status = QMediaPlayer.MediaStatus.LoadedMedia
             self.mediaStatusChanged.emit(self._media_status)
             
@@ -215,13 +221,17 @@ class MpvPlayer(BasePlayer):
             
         except Exception as e:
             self._last_error = f"Failed to load file: {str(e)}"
+            print(f"ERROR: {self._last_error}")
             self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
             self._media_status = QMediaPlayer.MediaStatus.InvalidMedia
             self.mediaStatusChanged.emit(self._media_status)
     
     def play(self):
         """Start playback."""
+        print(f"MpvPlayer.play() called")
+        
         if not self._player:
+            print("ERROR: No player instance")
             return
         
         try:
@@ -231,8 +241,10 @@ class MpvPlayer(BasePlayer):
             self.playbackStateChanged.emit(self._playback_state)
             self._media_status = QMediaPlayer.MediaStatus.BufferedMedia
             self.mediaStatusChanged.emit(self._media_status)
+            print("MpvPlayer playing")
         except Exception as e:
             self._last_error = f"Play error: {str(e)}"
+            print(f"ERROR: {self._last_error}")
             self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
     
     def pause(self):
