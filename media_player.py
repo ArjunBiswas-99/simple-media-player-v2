@@ -71,6 +71,47 @@ class MediaPlayer(QMainWindow):
         self.speed_indicator = SpeedIndicator(self.video_widget)
         self.speed_indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
+        # Filename overlay label
+        self.filename_label = QLabel(self.video_widget)
+        self.filename_label.setStyleSheet(f"""
+            QLabel {{
+                background-color: rgba(0, 0, 0, 180);
+                color: white;
+                padding: 12px 24px;
+                font-size: {FONT_SIZE_LARGE}px;
+                font-weight: {FONT_WEIGHT_SEMIBOLD};
+                border-radius: 6px;
+            }}
+        """)
+        self.filename_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.filename_label.hide()
+        
+        # Filename fade animation
+        self.filename_anim = QPropertyAnimation(self.filename_label, b"windowOpacity")
+        self.filename_anim.setDuration(500)
+        
+        # Add mouse click handler for play/pause
+        def video_mouse_press(event):
+            if event.button() == Qt.MouseButton.LeftButton:
+                self.toggle_play_pause()
+            QVideoWidget.mousePressEvent(self.video_widget, event)
+        
+        self.video_widget.mousePressEvent = video_mouse_press
+        
+        # Add mouse wheel handler for volume control
+        def video_wheel_event(event):
+            delta = event.angleDelta().y()
+            if delta > 0:
+                # Scroll up - increase volume
+                new_volume = min(100, self.volume_slider.value() + 5)
+            else:
+                # Scroll down - decrease volume
+                new_volume = max(0, self.volume_slider.value() - 5)
+            self.volume_slider.setValue(new_volume)
+            event.accept()
+        
+        self.video_widget.wheelEvent = video_wheel_event
+        
         # Minimal controls container with smooth gradient
         self.controls_widget = QWidget()
         self.controls_widget.setFixedHeight(CONTROL_BAR_HEIGHT)
@@ -151,12 +192,14 @@ class MediaPlayer(QMainWindow):
         self.stop_btn = self._create_icon_button('fa5s.stop', BUTTON_SIZE_SMALL, ICON_SIZE_SMALL, "Stop (S)")
         
         # Volume controls
-        volume_icon = QPushButton()
-        volume_icon.setIcon(qta.icon('fa5s.volume-up', color='white'))
-        volume_icon.setIconSize(QSize(16, 16))
-        volume_icon.setFixedSize(24, 24)
-        volume_icon.setStyleSheet("background: transparent; border: none;")
-        volume_icon.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
+        self.volume_icon = QPushButton()
+        self.volume_icon.setIcon(qta.icon('fa5s.volume-up', color='white'))
+        self.volume_icon.setIconSize(QSize(16, 16))
+        self.volume_icon.setFixedSize(24, 24)
+        self.volume_icon.setStyleSheet("background: transparent; border: none;")
+        self.volume_icon.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.volume_icon.setToolTip("Mute/Unmute (M)")
+        self.volume_icon.clicked.connect(self.toggle_mute)
         
         self.volume_slider = QSlider(Qt.Orientation.Horizontal)
         self.volume_slider.setRange(0, 100)
@@ -180,21 +223,21 @@ class MediaPlayer(QMainWindow):
         self.settings_btn = self._create_icon_button('fa5s.cog', BUTTON_SIZE_SMALL, ICON_SIZE_TINY, "Settings")
         self.fullscreen_btn = self._create_icon_button('fa5s.expand', BUTTON_SIZE_SMALL, ICON_SIZE_TINY, "Fullscreen (F11)")
         
-        # Layout: time | play/pause | controls | spacer | volume | speed | tools
-        bottom_layout.addWidget(self.current_time_label)
-        bottom_layout.addSpacing(8)
+        # Layout: play/pause | controls | current time | spacer | volume | speed | tools | duration | fullscreen
         bottom_layout.addWidget(self.play_pause_btn)
         bottom_layout.addWidget(self.skip_back_btn)
         bottom_layout.addWidget(self.skip_forward_btn)
         bottom_layout.addWidget(self.stop_btn)
+        bottom_layout.addSpacing(8)
+        bottom_layout.addWidget(self.current_time_label)
         bottom_layout.addStretch()
-        bottom_layout.addWidget(volume_icon)
+        bottom_layout.addWidget(self.volume_icon)
         bottom_layout.addWidget(self.volume_slider)
         bottom_layout.addSpacing(8)
         bottom_layout.addWidget(self.speed_label)
         bottom_layout.addWidget(self.playlist_btn)
         bottom_layout.addWidget(self.settings_btn)
-        bottom_layout.addSpacing(4)
+        bottom_layout.addSpacing(8)
         bottom_layout.addWidget(self.duration_label)
         bottom_layout.addSpacing(4)
         bottom_layout.addWidget(self.fullscreen_btn)
@@ -239,7 +282,7 @@ class MediaPlayer(QMainWindow):
         return btn
         
     def _setup_menu_bar(self):
-        """Create VLC-style menu bar"""
+        """Create professional menu bar"""
         menubar = self.menuBar()
         menubar.setStyleSheet(get_menubar_style())
         
@@ -358,6 +401,23 @@ class MediaPlayer(QMainWindow):
         self.player.setSource(QUrl.fromLocalFile(file_path))
         self.player.play()
         
+        # Show filename overlay
+        import os
+        filename = os.path.basename(file_path)
+        self.filename_label.setText(filename)
+        self.filename_label.adjustSize()
+        
+        # Center the label
+        label_x = (self.video_widget.width() - self.filename_label.width()) // 2
+        label_y = self.video_widget.height() - CONTROL_BAR_HEIGHT - self.filename_label.height() - 20
+        self.filename_label.move(label_x, label_y)
+        
+        self.filename_label.setWindowOpacity(1.0)
+        self.filename_label.show()
+        
+        # Fade out after 2.5 seconds
+        QTimer.singleShot(2500, lambda: self._fade_filename_label())
+        
     # Public Methods - Playback Control
     
     def toggle_play_pause(self):
@@ -386,10 +446,6 @@ class MediaPlayer(QMainWindow):
         self.player.setPlaybackRate(rate)
         self.speed_label.setText(f"{rate}×")
         
-    def toggle_mute(self):
-        """Toggle mute"""
-        self.audio_output.setMuted(not self.audio_output.isMuted())
-        
     def adjust_volume(self, delta):
         """Adjust volume by delta"""
         current = self.volume_slider.value()
@@ -407,6 +463,36 @@ class MediaPlayer(QMainWindow):
             self.showFullScreen()
             self.menuBar().hide()
             self.fullscreen_btn.setIcon(qta.icon('fa5s.compress', color=THEME_PRIMARY))
+    
+    def toggle_mute(self):
+        """Toggle mute/unmute"""
+        if self.audio_output.volume() > 0:
+            self.previous_volume = self.volume_slider.value()
+            self.volume_slider.setValue(0)
+            self.volume_icon.setIcon(qta.icon('fa5s.volume-mute', color='white'))
+        else:
+            restore_vol = getattr(self, 'previous_volume', 50)
+            self.volume_slider.setValue(restore_vol)
+            self._update_volume_icon(restore_vol)
+    
+    def _update_volume_icon(self, volume):
+        """Update volume icon based on volume level"""
+        if volume == 0:
+            icon_name = 'fa5s.volume-mute'
+        elif volume < 33:
+            icon_name = 'fa5s.volume-off'
+        elif volume < 66:
+            icon_name = 'fa5s.volume-down'
+        else:
+            icon_name = 'fa5s.volume-up'
+        self.volume_icon.setIcon(qta.icon(icon_name, color='white'))
+    
+    def _fade_filename_label(self):
+        """Fade out the filename label"""
+        self.filename_anim.setStartValue(1.0)
+        self.filename_anim.setEndValue(0.0)
+        self.filename_anim.finished.connect(self.filename_label.hide)
+        self.filename_anim.start()
             
     def show_about(self):
         """Show about dialog"""
@@ -468,8 +554,9 @@ class MediaPlayer(QMainWindow):
         self.is_seeking = False
         
     def _set_volume(self, value):
-        """Set volume (0-100)"""
+        """Set volume (0-100) and update icon"""
         self.audio_output.setVolume(value / 100.0)
+        self._update_volume_icon(value)
         
     # Private Methods - Player Signals
     

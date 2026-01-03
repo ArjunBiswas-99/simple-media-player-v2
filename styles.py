@@ -157,6 +157,7 @@ def get_menubar_style():
         QMenu {{
             background-color: {THEME_DARK_GRAY};
             color: white;
+            font-size: {FONT_SIZE_SMALL}px;
             border: 1px solid {THEME_PRIMARY};
         }}
         QMenu::item:selected {{
