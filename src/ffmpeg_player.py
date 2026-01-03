@@ -55,6 +55,7 @@ class FFmpegPlayer(BasePlayer):
         # Audio playback
         self._audio_io_device = None  # QIODevice for audio output
         self._audio_buffer = bytearray()
+        self._audio_resampler = None  # Reuse single resampler instance
         
         # Error handling
         self._last_error = ""
@@ -136,6 +137,13 @@ class FFmpegPlayer(BasePlayer):
             if self._audio_stream:
                 self._audio_time_base = float(self._audio_stream.time_base)
                 self.hasAudioChanged.emit(True)
+                
+                # Create audio resampler once
+                self._audio_resampler = av.AudioResampler(
+                    format='s16',
+                    layout='stereo',
+                    rate=48000
+                )
             
             # Update media status
             self._media_status = QMediaPlayer.MediaStatus.LoadedMedia
@@ -283,12 +291,40 @@ class FFmpegPlayer(BasePlayer):
         try:
             # Convert milliseconds to microseconds
             seek_target = int(position_ms * 1000)
-            # Use BACKWARD flag for more accurate seeking
+            
+            # Use BACKWARD flag for keyframe seeking
             self._container.seek(seek_target, backward=True, any_frame=False)
+            
+            # For long seeks, skip frames to target position quickly
+            if self._video_stream:
+                target_pts = seek_target / 1000000.0  # Convert to seconds
+                frames_skipped = 0
+                
+                # Decode and skip frames until we reach target position
+                for packet in self._container.demux(self._video_stream):
+                    for frame in packet.decode():
+                        frame_time = float(frame.pts * self._video_stream.time_base)
+                        
+                        # If we're close to target, stop skipping
+                        if frame_time >= target_pts - 0.5:  # Within 0.5 seconds
+                            break
+                        frames_skipped += 1
+                        
+                        # Limit frame skipping to avoid taking too long
+                        if frames_skipped > 300:  # ~10 seconds at 30fps
+                            break
+                    
+                    # Break outer loop too
+                    if frames_skipped > 0:
+                        break
             
             # Update position
             self._position = position_ms
             self._pause_time = position_ms
+            
+            # Reset start time for accurate playback timing
+            self._start_time = time.time() - (position_ms / 1000.0 / self._playback_rate)
+            
             self.positionChanged.emit(position_ms)
             
             # Restart decode thread if was playing
@@ -421,6 +457,7 @@ class FFmpegPlayer(BasePlayer):
         
         self._video_stream = None
         self._audio_stream = None
+        self._audio_resampler = None
     
     # ==================== Internal Methods ====================
     
@@ -462,17 +499,12 @@ class FFmpegPlayer(BasePlayer):
                                 continue  # Skip frame if queue is full
                         
                         # Handle audio frames
-                        elif packet.stream.type == 'audio':
-                            # Resample audio to 48kHz stereo s16
-                            resampler = av.AudioResampler(
-                                format='s16',
-                                layout='stereo',
-                                rate=48000
-                            )
-                            resampled_frame = resampler.resample(frame)
+                        elif packet.stream.type == 'audio' and self._audio_resampler:
+                            # Use pre-created resampler to avoid thread creation
+                            resampled_frames = self._audio_resampler.resample(frame)
                             
-                            # Convert to numpy array and then to bytes
-                            for resampled in resampled_frame:
+                            # Convert resampled frames to bytes
+                            for resampled in resampled_frames:
                                 audio_data = resampled.to_ndarray().tobytes()
                                 
                                 # Put in audio queue
