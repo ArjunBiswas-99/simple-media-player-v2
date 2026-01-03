@@ -754,8 +754,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 useAudioSync = (audioClock > 0.1);
             }
             
-            // Fetch frame if we don't have one
-            if (!state.pendingFrame) {
+            // Fetch frame if we don't have one (but not while waiting for audio sync)
+            bool waitingForAudioSync = state.justSeeked && state.syncTargetSet && useAudioSync && state.audioOutput && !state.audioOutput->isAudioReady();
+            if (!state.pendingFrame && !waitingForAudioSync) {
                 state.pendingFrame = state.decoder->getNextVideoFrame();
             }
             
