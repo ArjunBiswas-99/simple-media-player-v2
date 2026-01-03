@@ -90,13 +90,35 @@ class MediaPlayer(QMainWindow):
         self.filename_anim = QPropertyAnimation(self.filename_label, b"windowOpacity")
         self.filename_anim.setDuration(500)
         
-        # Add mouse click handler for play/pause
+        # Timer for detecting click vs hold (for 2x speed)
+        self.click_timer = QTimer(self)
+        self.click_timer.setSingleShot(True)
+        self.click_timer.timeout.connect(self._start_2x_speed)
+        self.video_press_pos = None
+        
+        # Add mouse click handler with hold detection
         def video_mouse_press(event):
             if event.button() == Qt.MouseButton.LeftButton:
-                self.toggle_play_pause()
+                self.video_press_pos = event.position()
+                # Start timer for 2x speed - if released before timeout, it's a click
+                self.click_timer.start(200)  # 200ms threshold
             QVideoWidget.mousePressEvent(self.video_widget, event)
         
+        def video_mouse_release(event):
+            if event.button() == Qt.MouseButton.LeftButton:
+                if self.click_timer.isActive():
+                    # Released before timer - it's a click, toggle play/pause
+                    self.click_timer.stop()
+                    self.toggle_play_pause()
+                else:
+                    # Timer already fired - it was a hold, stop 2x speed
+                    if self.is_2x_speed:
+                        self._stop_2x_speed()
+                self.video_press_pos = None
+            QVideoWidget.mouseReleaseEvent(self.video_widget, event)
+        
         self.video_widget.mousePressEvent = video_mouse_press
+        self.video_widget.mouseReleaseEvent = video_mouse_release
         
         # Add mouse wheel handler for volume control
         def video_wheel_event(event):
@@ -162,7 +184,19 @@ class MediaPlayer(QMainWindow):
         
         self.timeline.mousePressEvent = timeline_mouse_press
         
-        layout.addWidget(self.timeline)
+        # Timeline with duration at the end
+        timeline_row = QHBoxLayout()
+        timeline_row.setSpacing(8)
+        timeline_row.addWidget(self.timeline, stretch=1)
+        
+        # Duration label at the end of seek bar
+        self.duration_label = QLabel("0:00")
+        self.duration_label.setStyleSheet(
+            f"color: rgba(255, 255, 255, 150); font-size: {FONT_SIZE_SMALL}px;"
+        )
+        timeline_row.addWidget(self.duration_label)
+        
+        layout.addLayout(timeline_row)
         layout.addSpacing(TIMELINE_BOTTOM_MARGIN)
         
         # Bottom row: time labels and controls
@@ -170,14 +204,10 @@ class MediaPlayer(QMainWindow):
         bottom_layout.setSpacing(BUTTON_SPACING)
         bottom_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         
-        # Time labels
+        # Current time label
         self.current_time_label = QLabel("0:00")
         self.current_time_label.setStyleSheet(
             f"color: white; font-size: {FONT_SIZE_SMALL}px; font-weight: 500;"
-        )
-        self.duration_label = QLabel("0:00")
-        self.duration_label.setStyleSheet(
-            f"color: rgba(255, 255, 255, 150); font-size: {FONT_SIZE_SMALL}px;"
         )
         
         # Play/pause button (FIRST - most important)
@@ -223,7 +253,7 @@ class MediaPlayer(QMainWindow):
         self.settings_btn = self._create_icon_button('fa5s.cog', BUTTON_SIZE_SMALL, ICON_SIZE_TINY, "Settings")
         self.fullscreen_btn = self._create_icon_button('fa5s.expand', BUTTON_SIZE_SMALL, ICON_SIZE_TINY, "Fullscreen (F11)")
         
-        # Layout: play/pause | controls | current time | spacer | volume | speed | tools | duration | fullscreen
+        # Layout: play/pause | controls | current time | spacer | volume | speed | tools | fullscreen
         bottom_layout.addWidget(self.play_pause_btn)
         bottom_layout.addWidget(self.skip_back_btn)
         bottom_layout.addWidget(self.skip_forward_btn)
@@ -238,7 +268,6 @@ class MediaPlayer(QMainWindow):
         bottom_layout.addWidget(self.playlist_btn)
         bottom_layout.addWidget(self.settings_btn)
         bottom_layout.addSpacing(8)
-        bottom_layout.addWidget(self.duration_label)
         bottom_layout.addSpacing(4)
         bottom_layout.addWidget(self.fullscreen_btn)
         
@@ -621,18 +650,6 @@ class MediaPlayer(QMainWindow):
         
     # Event Handlers - Mouse
     
-    def mousePressEvent(self, event):
-        """Handle mouse press for YouTube-style 2x speed"""
-        if event.button() == Qt.MouseButton.LeftButton:
-            if self.video_widget.underMouse():
-                self._start_2x_speed()
-                
-    def mouseReleaseEvent(self, event):
-        """Handle mouse release to stop 2x speed"""
-        if event.button() == Qt.MouseButton.LeftButton:
-            if self.is_2x_speed:
-                self._stop_2x_speed()
-                
     def mouseMoveEvent(self, event):
         """Show controls on mouse move"""
         self.show_controls()
