@@ -733,6 +733,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (done)
             break;
 
+        // Process audio frames FIRST (feed audio output) - must happen before video sync check
+        if (state.audioOutput && state.decoder && state.decoder->hasAudio()) {
+            AudioFrame* audioFrame = state.decoder->getNextAudioFrame();
+            if (audioFrame && audioFrame->data && audioFrame->size > 0) {
+                // Audio frame processing
+                state.audioOutput->pushAudioFrame(audioFrame);
+            }
+        }
+
         // Process video frames with A/V synchronization (same as macOS)
         if (state.fileLoaded && state.decoder && state.decoder->hasVideo() && state.isPlaying && videoErrorCount < MAX_VIDEO_ERRORS) {
             // Get audio clock for synchronization
@@ -863,15 +872,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     delete state.pendingFrame;
                     state.pendingFrame = nullptr;
                 }
-            }
-        }
-        
-        // Process audio frames (feed audio output)
-        if (state.audioOutput && state.decoder->hasAudio()) {
-            AudioFrame* audioFrame = state.decoder->getNextAudioFrame();
-            if (audioFrame && audioFrame->data && audioFrame->size > 0) {
-                // Audio frame processing
-                state.audioOutput->pushAudioFrame(audioFrame);
             }
         }
         
