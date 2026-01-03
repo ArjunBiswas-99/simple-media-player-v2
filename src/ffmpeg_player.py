@@ -299,37 +299,31 @@ class FFmpegPlayer(BasePlayer):
         
         # Seek the container
         try:
-            actual_seek_position = position_ms  # Where we actually seeked to
-            
             # Check if we can use indexed seeking
             if position_ms <= self._indexed_duration and self._keyframe_index:
-                # INDEXED SEEK - Accurate and fast
+                # INDEXED SEEK - Use index to find exact keyframe
                 keyframe = self._find_nearest_keyframe(position_ms)
                 if keyframe:
                     # Seek to exact keyframe PTS
                     seek_target = int(keyframe['pts'])
                     self._container.seek(seek_target, stream=self._video_stream, backward=False, any_frame=False)
-                    actual_seek_position = keyframe['pts_ms']  # We're actually at the keyframe
                 else:
                     # Fallback to blind seek
                     seek_target = int(position_ms * 1000)
                     self._container.seek(seek_target, backward=True, any_frame=False)
             else:
-                # UNINDEXED SEEK - Blind seek (less accurate)
+                # UNINDEXED SEEK - Blind seek
                 seek_target = int(position_ms * 1000)
                 self._container.seek(seek_target, backward=True, any_frame=False)
             
-            # Store target position for frame skipping in decode loop
-            self._target_position_ms = position_ms
+            # Update position to target (frames will decode naturally from keyframe)
+            self._position = position_ms
+            self._pause_time = position_ms
             
-            # Update position to actual seek position (don't lie!)
-            self._position = actual_seek_position
-            self._pause_time = actual_seek_position
+            # Reset start time for accurate playback timing
+            self._start_time = time.time() - (position_ms / 1000.0 / self._playback_rate)
             
-            # Reset start time based on actual position
-            self._start_time = time.time() - (actual_seek_position / 1000.0 / self._playback_rate)
-            
-            self.positionChanged.emit(actual_seek_position)
+            self.positionChanged.emit(position_ms)
             
             # Restart decode thread if was playing
             if was_playing:
@@ -480,12 +474,6 @@ class FFmpegPlayer(BasePlayer):
             if not self._container:
                 return
             
-            # Check if we need to skip frames to reach target position
-            skip_until_target = False
-            if self._target_position_ms is not None and self._position < self._target_position_ms:
-                skip_until_target = True
-                target_time_s = self._target_position_ms / 1000.0
-            
             # Demux both video and audio streams
             streams_to_demux = []
             if self._video_stream:
@@ -507,16 +495,6 @@ class FFmpegPlayer(BasePlayer):
                         
                         # Handle video frames
                         if packet.stream.type == 'video':
-                            # Check if we should skip this frame (during seek catch-up)
-                            if skip_until_target and frame.pts is not None:
-                                frame_time_s = float(frame.pts * frame.time_base)
-                                if frame_time_s < target_time_s - 0.1:  # 100ms tolerance
-                                    continue  # Skip this frame
-                                else:
-                                    # Reached target, stop skipping
-                                    skip_until_target = False
-                                    self._target_position_ms = None
-                            
                             # Convert to RGB
                             frame_rgb = frame.to_ndarray(format='rgb24')
                             
@@ -528,10 +506,6 @@ class FFmpegPlayer(BasePlayer):
                         
                         # Handle audio frames
                         elif packet.stream.type == 'audio' and self._audio_resampler:
-                            # Skip audio during video catch-up
-                            if skip_until_target:
-                                continue
-                            
                             # Use pre-created resampler to avoid thread creation
                             resampled_frames = self._audio_resampler.resample(frame)
                             
