@@ -1,17 +1,1 @@
- 7.1.2 LGPL version 2.1 or later
-🔄 Switching player: QtPlayer → FFmpegPlayer for 16 Paint Me a Murder.ts
-🎬 Using FFmpeg player for: 16 Paint Me a Murder.ts
-AvSetMmThreadCharacteristics failed to set thread characteristics "Indicates a process has too many threads to perform the requested action. For example, assignment of a primary token may only be performed when a process has zero or one threads."
-AvSetMmThreadPriority failed to set thread priority "The handle is invalid."
-AvSetMmThreadCharacteristics failed to set thread characteristics "Indicates a process has too many threads to perform the requested action. For example, assignment of a primary token may only be performed when a process has zero or one threads."
-AvSetMmThreadPriority failed to set thread priority "The handle is invalid."
-AvSetMmThreadCharacteristics failed to set thread characteristics "Indicates a process has too many threads to perform the requested action. For example, assignment of a primary token may only be performed when a process has zero or one threads."
-AvSetMmThreadPriority failed to set thread priority "The handle is invalid."
-AvSetMmThreadCharacteristics failed to set thread characteristics "Indicates a process has too many threads to perform the requested action. For example, assignment of a primary token may only be performed when a process has zero or one threads."
-AvSetMmThreadPriority failed to set thread priority "The handle is invalid."
-AvSetMmThreadCharacteristics failed to set thread characteristics "Indicates a process has too many threads to perform the requested action. For example, assignment of a primary token may only be performed when a process has zero or one threads."
-AvSetMmThreadPriority failed to set thread priority "The handle is invalid."
-AvSetMmThreadCharacteristics failed to set thread characteristics "Indicates a process has too many threads to perform the requested action. For example, assignment of a primary token may only be performed when a process has zero or one threads."
-AvSetMmThreadPriority failed to set thread priority "The handle is invalid."
-AvSetMmThreadCharacteristics failed to set thread characteristics "Indicates a process has too many threads to perform the requested action. For example, assignment of a primary token may only be performed when a process has zero or one threads."
-AvSetMmThreadPriority failed to set thread priority "The handle is invalid."
+aaa
