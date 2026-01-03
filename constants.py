@@ -1,0 +1,34 @@
+"""
+Constants for Netflix-Style Media Player
+Colors, sizes, and style definitions
+"""
+
+# Netflix Color Scheme
+NETFLIX_RED = "#e50914"
+NETFLIX_BLACK = "#141414"
+NETFLIX_DARK_GRAY = "#2f2f2f"
+NETFLIX_LIGHT_GRAY = "#808080"
+
+# Control Bar Dimensions (Minimal VLC-style)
+CONTROL_BAR_HEIGHT = 65
+CONTROL_PADDING = 8
+TIMELINE_HEIGHT = 3
+TIMELINE_HEIGHT_HOVER = 5
+
+# Button Sizes
+BUTTON_SIZE_SMALL = 35
+BUTTON_SIZE_LARGE = 50
+BUTTON_SPACING = 6
+
+# Font Sizes
+FONT_SIZE_SMALL = 11
+FONT_SIZE_MEDIUM = 13
+FONT_SIZE_LARGE = 16
+
+# Animation Durations
+FADE_DURATION = 200
+CONTROL_HIDE_DELAY = 3000
+
+# Popover Dimensions
+POPOVER_MIN_WIDTH = 320
+POPOVER_MAX_HEIGHT = 380

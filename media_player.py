@@ -1,0 +1,530 @@
+"""
+Main Media Player Window
+Orchestrates all components following SOLID principles
+"""
+
+import os
+from PyQt6.QtWidgets import (
+    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
+    QPushButton, QSlider, QLabel, QFileDialog, QMessageBox
+)
+from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation
+from PyQt6.QtGui import QCursor, QAction
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtMultimediaWidgets import QVideoWidget
+
+from constants import *
+from styles import *
+from widgets import SpeedIndicator, PlaylistPopover, SettingsPopover
+
+
+class MediaPlayer(QMainWindow):
+    """Netflix-style professional media player with VLC menus and YouTube features"""
+    
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Netflix Media Player")
+        self.setGeometry(100, 100, 1280, 720)
+        self.setMinimumSize(800, 600)
+        
+        # State variables
+        self.is_seeking = False
+        self.is_2x_speed = False
+        self.normal_rate = 1.0
+        self.current_file = None
+        
+        # Setup components in correct order
+        self._setup_media_player()
+        self._setup_video_area()
+        self._setup_menu_bar()
+        self._setup_popovers()
+        self._connect_signals()
+        self._setup_timers()
+        
+        self.setStyleSheet(get_main_window_style())
+        self.show_controls()
+        
+    def _setup_media_player(self):
+        """Initialize media player and audio output"""
+        self.player = QMediaPlayer()
+        self.audio_output = QAudioOutput()
+        self.player.setAudioOutput(self.audio_output)
+        self.audio_output.setVolume(0.5)
+        
+    def _setup_video_area(self):
+        """Setup video display area with minimal controls"""
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        layout = QVBoxLayout(central_widget)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        
+        # Video widget
+        self.video_widget = QVideoWidget()
+        self.video_widget.setStyleSheet(f"background-color: {NETFLIX_BLACK};")
+        self.video_widget.setAspectRatioMode(Qt.AspectRatioMode.KeepAspectRatio)
+        self.player.setVideoOutput(self.video_widget)
+        layout.addWidget(self.video_widget)
+        
+        # 2x speed indicator
+        self.speed_indicator = SpeedIndicator(self.video_widget)
+        self.speed_indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # Minimal controls container
+        self.controls_widget = QWidget()
+        self.controls_widget.setFixedHeight(CONTROL_BAR_HEIGHT)
+        self.controls_widget.setStyleSheet("""
+            QWidget {
+                background: qlineargradient(
+                    x1:0, y1:1, x2:0, y2:0,
+                    stop:0 rgba(20, 20, 20, 240),
+                    stop:0.3 rgba(20, 20, 20, 180),
+                    stop:1 rgba(20, 20, 20, 0)
+                );
+            }
+        """)
+        layout.addWidget(self.controls_widget)
+        
+        self._setup_controls()
+        
+    def _setup_controls(self):
+        """Setup minimal VLC-style controls"""
+        layout = QVBoxLayout(self.controls_widget)
+        layout.setContentsMargins(CONTROL_PADDING, CONTROL_PADDING, CONTROL_PADDING, CONTROL_PADDING)
+        layout.setSpacing(4)
+        
+        # Timeline slider
+        self.timeline = QSlider(Qt.Orientation.Horizontal)
+        self.timeline.setRange(0, 0)
+        self.timeline.setStyleSheet(get_timeline_style())
+        layout.addWidget(self.timeline)
+        
+        # Bottom row: time labels and controls
+        bottom_layout = QHBoxLayout()
+        bottom_layout.setSpacing(BUTTON_SPACING)
+        
+        # Time labels
+        self.current_time_label = QLabel("0:00")
+        self.current_time_label.setStyleSheet(
+            f"color: white; font-size: {FONT_SIZE_SMALL}px; font-weight: 500;"
+        )
+        self.duration_label = QLabel("0:00")
+        self.duration_label.setStyleSheet(
+            f"color: rgba(255, 255, 255, 150); font-size: {FONT_SIZE_SMALL}px;"
+        )
+        
+        # Play/pause button (FIRST - most important)
+        self.play_pause_btn = self._create_button(
+            "▶", BUTTON_SIZE_LARGE, 
+            get_button_style(BUTTON_SIZE_LARGE).replace("16px", "20px"),
+            "Play/Pause (Space)"
+        )
+        
+        # Playback controls
+        self.skip_back_btn = self._create_button("⏪", BUTTON_SIZE_SMALL, get_button_style(), "Rewind 10s")
+        self.skip_forward_btn = self._create_button("⏩", BUTTON_SIZE_SMALL, get_button_style(), "Forward 10s")
+        self.stop_btn = self._create_button("⏹", BUTTON_SIZE_SMALL, get_button_style(), "Stop (S)")
+        
+        # Volume controls
+        volume_label = QLabel("🔊")
+        volume_label.setStyleSheet(f"color: white; font-size: {FONT_SIZE_MEDIUM}px;")
+        
+        self.volume_slider = QSlider(Qt.Orientation.Horizontal)
+        self.volume_slider.setRange(0, 100)
+        self.volume_slider.setValue(50)
+        self.volume_slider.setMaximumWidth(100)
+        self.volume_slider.setStyleSheet(get_volume_slider_style())
+        
+        # Speed indicator label
+        self.speed_label = QLabel("1×")
+        self.speed_label.setStyleSheet(f"""
+            color: white;
+            font-size: {FONT_SIZE_SMALL}px;
+            font-weight: 600;
+            padding: 3px 8px;
+            background-color: rgba(255, 255, 255, 10);
+            border-radius: 3px;
+        """)
+        
+        # Tool buttons
+        self.playlist_btn = self._create_button("☰", BUTTON_SIZE_SMALL, get_button_style(), "Playlist")
+        self.settings_btn = self._create_button("⚙", BUTTON_SIZE_SMALL, get_button_style(), "Settings")
+        self.fullscreen_btn = self._create_button("⛶", BUTTON_SIZE_SMALL, get_button_style(), "Fullscreen (F11)")
+        
+        # Layout: time | play/pause | controls | spacer | volume | speed | tools
+        bottom_layout.addWidget(self.current_time_label)
+        bottom_layout.addSpacing(8)
+        bottom_layout.addWidget(self.play_pause_btn)
+        bottom_layout.addWidget(self.skip_back_btn)
+        bottom_layout.addWidget(self.skip_forward_btn)
+        bottom_layout.addWidget(self.stop_btn)
+        bottom_layout.addStretch()
+        bottom_layout.addWidget(volume_label)
+        bottom_layout.addWidget(self.volume_slider)
+        bottom_layout.addSpacing(8)
+        bottom_layout.addWidget(self.speed_label)
+        bottom_layout.addWidget(self.playlist_btn)
+        bottom_layout.addWidget(self.settings_btn)
+        bottom_layout.addSpacing(4)
+        bottom_layout.addWidget(self.duration_label)
+        bottom_layout.addSpacing(4)
+        bottom_layout.addWidget(self.fullscreen_btn)
+        
+        layout.addLayout(bottom_layout)
+        
+    def _create_button(self, text, size, style, tooltip):
+        """Helper to create styled button"""
+        btn = QPushButton(text)
+        btn.setFixedSize(size, size)
+        btn.setStyleSheet(style)
+        btn.setToolTip(tooltip)
+        return btn
+        
+    def _setup_menu_bar(self):
+        """Create VLC-style menu bar"""
+        menubar = self.menuBar()
+        menubar.setStyleSheet(get_menubar_style())
+        
+        # File Menu
+        file_menu = menubar.addMenu("&File")
+        self._add_action(file_menu, "&Open File...", "Ctrl+O", self.open_file)
+        file_menu.addSeparator()
+        self._add_action(file_menu, "E&xit", "Ctrl+Q", self.close)
+        
+        # Playback Menu
+        playback_menu = menubar.addMenu("&Playback")
+        self._add_action(playback_menu, "&Play/Pause", "Space", self.toggle_play_pause)
+        self._add_action(playback_menu, "&Stop", "S", self.player.stop)
+        playback_menu.addSeparator()
+        
+        # Speed submenu
+        speed_menu = playback_menu.addMenu("&Speed")
+        for label, rate in [("0.25×", 0.25), ("0.5×", 0.5), ("0.75×", 0.75),
+                           ("Normal (1×)", 1.0), ("1.25×", 1.25), ("1.5×", 1.5), ("2×", 2.0)]:
+            self._add_action(speed_menu, label, None, 
+                           lambda checked, r=rate: self.set_playback_rate(r))
+        
+        playback_menu.addSeparator()
+        self._add_action(playback_menu, "Jump Forward", "Right", 
+                        lambda: self.seek_relative(5000))
+        self._add_action(playback_menu, "Jump Backward", "Left", 
+                        lambda: self.seek_relative(-5000))
+        
+        # Audio Menu
+        audio_menu = menubar.addMenu("&Audio")
+        self._add_action(audio_menu, "&Mute", "M", self.toggle_mute)
+        audio_menu.addSeparator()
+        self._add_action(audio_menu, "Volume &Up", "Up", lambda: self.adjust_volume(5))
+        self._add_action(audio_menu, "Volume &Down", "Down", lambda: self.adjust_volume(-5))
+        
+        # Video Menu
+        video_menu = menubar.addMenu("&Video")
+        self._add_action(video_menu, "&Fullscreen", "F11", self.toggle_fullscreen)
+        video_menu.addSeparator()
+        
+        # Aspect ratio submenu
+        aspect_menu = video_menu.addMenu("&Aspect Ratio")
+        for label, mode in [("Default", Qt.AspectRatioMode.KeepAspectRatio),
+                           ("16:9", Qt.AspectRatioMode.KeepAspectRatio),
+                           ("4:3", Qt.AspectRatioMode.KeepAspectRatio),
+                           ("Stretch", Qt.AspectRatioMode.IgnoreAspectRatio)]:
+            self._add_action(aspect_menu, label, None,
+                           lambda checked, m=mode: self.video_widget.setAspectRatioMode(m))
+        
+        # Help Menu
+        help_menu = menubar.addMenu("&Help")
+        self._add_action(help_menu, "&About", None, self.show_about)
+        
+    def _add_action(self, menu, text, shortcut, callback):
+        """Helper to add menu action"""
+        action = QAction(text, self)
+        if shortcut:
+            action.setShortcut(shortcut)
+        action.triggered.connect(callback)
+        menu.addAction(action)
+        
+    def _setup_popovers(self):
+        """Create popover widgets"""
+        self.playlist_popover = PlaylistPopover(self)
+        self.playlist_popover.media_player_ref = self
+        
+        self.settings_popover = SettingsPopover(self)
+        self.settings_popover.media_player_ref = self
+        
+    def _connect_signals(self):
+        """Connect all signals"""
+        # Player signals
+        self.player.positionChanged.connect(self._on_position_changed)
+        self.player.durationChanged.connect(self._on_duration_changed)
+        self.player.playbackStateChanged.connect(self._on_state_changed)
+        
+        # Button signals
+        self.play_pause_btn.clicked.connect(self.toggle_play_pause)
+        self.stop_btn.clicked.connect(self.player.stop)
+        self.skip_back_btn.clicked.connect(lambda: self.seek_relative(-10000))
+        self.skip_forward_btn.clicked.connect(lambda: self.seek_relative(10000))
+        self.playlist_btn.clicked.connect(self._show_playlist)
+        self.settings_btn.clicked.connect(self._show_settings)
+        self.fullscreen_btn.clicked.connect(self.toggle_fullscreen)
+        
+        # Slider signals (FIX: Click to seek)
+        self.timeline.sliderPressed.connect(self._on_timeline_pressed)
+        self.timeline.sliderMoved.connect(self._on_timeline_moved)
+        self.timeline.sliderReleased.connect(self._on_timeline_released)
+        self.volume_slider.valueChanged.connect(self._set_volume)
+        
+    def _setup_timers(self):
+        """Setup control hide timer"""
+        self.hide_timer = QTimer(self)
+        self.hide_timer.timeout.connect(self._hide_controls)
+        self.hide_timer.setSingleShot(True)
+        
+        self.update_timer = QTimer(self)
+        self.update_timer.timeout.connect(self._update_ui)
+        self.update_timer.start(100)
+        
+    # Public Methods - File Operations
+    
+    def open_file(self):
+        """Open file dialog and load video"""
+        filename, _ = QFileDialog.getOpenFileName(
+            self, "Open Video File", "",
+            "Video Files (*.mp4 *.mkv *.avi *.mov *.wmv *.flv *.webm *.m4v *.mpg *.mpeg);;All Files (*.*)"
+        )
+        if filename:
+            self.load_video(filename)
+            
+    def load_video(self, file_path):
+        """Load and play a video file"""
+        self.current_file = file_path
+        self.player.setSource(QUrl.fromLocalFile(file_path))
+        self.player.play()
+        
+    # Public Methods - Playback Control
+    
+    def toggle_play_pause(self):
+        """Toggle play/pause"""
+        if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+            self.player.pause()
+        else:
+            self.player.play()
+            
+    def seek_relative(self, ms):
+        """Seek relative to current position"""
+        new_position = self.player.position() + ms
+        new_position = max(0, min(new_position, self.player.duration()))
+        self.player.setPosition(new_position)
+        self.show_controls()
+        
+    def set_playback_rate(self, rate):
+        """Set playback rate"""
+        self.normal_rate = rate
+        self.player.setPlaybackRate(rate)
+        self.speed_label.setText(f"{rate}×")
+        
+    def toggle_mute(self):
+        """Toggle mute"""
+        self.audio_output.setMuted(not self.audio_output.isMuted())
+        
+    def adjust_volume(self, delta):
+        """Adjust volume by delta"""
+        current = self.volume_slider.value()
+        new_value = max(0, min(100, current + delta))
+        self.volume_slider.setValue(new_value)
+        self.show_controls()
+        
+    def toggle_fullscreen(self):
+        """Toggle fullscreen"""
+        if self.isFullScreen():
+            self.showNormal()
+            self.menuBar().show()
+        else:
+            self.showFullScreen()
+            self.menuBar().hide()
+            
+    def show_about(self):
+        """Show about dialog"""
+        QMessageBox.about(
+            self, "About Netflix Media Player",
+            "<h2>Netflix Media Player</h2>"
+            "<p>Professional media player built with PyQt6</p>"
+            "<p>Version 2.1</p>"
+            "<p>Features perfect A/V synchronization</p>"
+        )
+        
+    # Public Methods - UI Control
+    
+    def show_controls(self):
+        """Show controls"""
+        self.controls_widget.show()
+        self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
+        self.hide_timer.start(CONTROL_HIDE_DELAY)
+        
+    # Private Methods - UI Updates
+    
+    def _hide_controls(self):
+        """Hide controls when playing (fullscreen only)"""
+        if not self.isFullScreen():
+            return  # Keep controls visible in windowed mode
+        if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
+            self.controls_widget.hide()
+            self.setCursor(QCursor(Qt.CursorShape.BlankCursor))
+            
+    def _show_playlist(self):
+        """Show playlist popover"""
+        if self.current_file:
+            self.playlist_popover.load_videos(self.current_file)
+            self.playlist_popover.show_at_button(self.playlist_btn)
+            
+    def _show_settings(self):
+        """Show settings popover"""
+        self.settings_popover.show_at_button(self.settings_btn)
+        
+    def _update_ui(self):
+        """Periodic UI updates"""
+        pass  # Position updates handled by signals
+        
+    # Private Methods - Timeline Control (FIX: Click to seek)
+    
+    def _on_timeline_pressed(self):
+        """Handle timeline press"""
+        self.is_seeking = True
+        # Immediately seek to clicked position
+        self.player.setPosition(self.timeline.value())
+        
+    def _on_timeline_moved(self, position):
+        """Handle timeline drag"""
+        if self.is_seeking:
+            self.current_time_label.setText(self._format_time(position))
+            
+    def _on_timeline_released(self):
+        """Handle timeline release"""
+        self.player.setPosition(self.timeline.value())
+        self.is_seeking = False
+        
+    def _set_volume(self, value):
+        """Set volume (0-100)"""
+        self.audio_output.setVolume(value / 100.0)
+        
+    # Private Methods - Player Signals
+    
+    def _on_position_changed(self, position):
+        """Update timeline when position changes"""
+        if not self.is_seeking:
+            self.timeline.setValue(position)
+            self.current_time_label.setText(self._format_time(position))
+            
+    def _on_duration_changed(self, duration):
+        """Update timeline range when duration changes"""
+        self.timeline.setRange(0, duration)
+        self.duration_label.setText(self._format_time(duration))
+        
+    def _on_state_changed(self, state):
+        """Update play/pause button when state changes"""
+        if state == QMediaPlayer.PlaybackState.PlayingState:
+            self.play_pause_btn.setText("⏸")
+        else:
+            self.play_pause_btn.setText("▶")
+            
+    def _format_time(self, ms):
+        """Format milliseconds to H:MM:SS or MM:SS"""
+        seconds = ms // 1000
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        secs = seconds % 60
+        
+        if hours > 0:
+            return f"{hours}:{minutes:02d}:{secs:02d}"
+        return f"{minutes}:{secs:02d}"
+        
+    # Event Handlers - Keyboard
+    
+    def keyPressEvent(self, event):
+        """Handle keyboard shortcuts"""
+        key = event.key()
+        
+        if key == Qt.Key.Key_Space:
+            self.toggle_play_pause()
+        elif key == Qt.Key.Key_Left:
+            self.seek_relative(-5000)
+        elif key == Qt.Key.Key_Right:
+            self.seek_relative(5000)
+        elif key in (Qt.Key.Key_F, Qt.Key.Key_F11):
+            self.toggle_fullscreen()
+        elif key == Qt.Key.Key_O:
+            self.open_file()
+        elif key == Qt.Key.Key_Escape and self.isFullScreen():
+            self.showNormal()
+            self.menuBar().show()
+        elif key == Qt.Key.Key_Up:
+            self.adjust_volume(5)
+        elif key == Qt.Key.Key_Down:
+            self.adjust_volume(-5)
+        elif key == Qt.Key.Key_M:
+            self.toggle_mute()
+        elif key == Qt.Key.Key_S:
+            self.player.stop()
+            
+        self.show_controls()
+        
+    # Event Handlers - Mouse
+    
+    def mousePressEvent(self, event):
+        """Handle mouse press for YouTube-style 2x speed"""
+        if event.button() == Qt.MouseButton.LeftButton:
+            if self.video_widget.underMouse():
+                self._start_2x_speed()
+                
+    def mouseReleaseEvent(self, event):
+        """Handle mouse release to stop 2x speed"""
+        if event.button() == Qt.MouseButton.LeftButton:
+            if self.is_2x_speed:
+                self._stop_2x_speed()
+                
+    def mouseMoveEvent(self, event):
+        """Show controls on mouse move"""
+        self.show_controls()
+        
+    def mouseDoubleClickEvent(self, event):
+        """Toggle fullscreen on double click"""
+        if self.video_widget.underMouse():
+            self.toggle_fullscreen()
+            
+    def resizeEvent(self, event):
+        """Handle window resize"""
+        super().resizeEvent(event)
+        if self.speed_indicator.isVisible():
+            self._position_speed_indicator()
+            
+    # Private Methods - YouTube-style 2x Speed
+    
+    def _start_2x_speed(self):
+        """Start 2x playback speed"""
+        if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState and not self.is_2x_speed:
+            self.is_2x_speed = True
+            self.player.setPlaybackRate(2.0)
+            self._position_speed_indicator()
+            self.speed_indicator.show()
+            
+    def _stop_2x_speed(self):
+        """Stop 2x playback speed"""
+        if self.is_2x_speed:
+            self.is_2x_speed = False
+            self.player.setPlaybackRate(self.normal_rate)
+            
+            # Fade out
+            anim = QPropertyAnimation(self.speed_indicator, b"opacity")
+            anim.setDuration(FADE_DURATION)
+            anim.setStartValue(1.0)
+            anim.setEndValue(0.0)
+            anim.finished.connect(self.speed_indicator.hide)
+            anim.start()
+            
+    def _position_speed_indicator(self):
+        """Position speed indicator in center of video"""
+        video_rect = self.video_widget.geometry()
+        indicator_width = self.speed_indicator.sizeHint().width()
+        indicator_height = self.speed_indicator.sizeHint().height()
+        x = (video_rect.width() - indicator_width) // 2
+        y = (video_rect.height() - indicator_height) // 2
+        self.speed_indicator.move(x, y)
