@@ -401,8 +401,13 @@ void AudioOutput::audioThreadFunc() {
         
         // Get buffer
         BYTE* data;
+        std::cout << "THREAD: Calling GetBuffer(" << numFramesAvailable << ")" << std::endl;
         hr = m_renderClient->GetBuffer(numFramesAvailable, &data);
-        if (FAILED(hr)) continue;
+        if (FAILED(hr)) {
+            std::cout << "THREAD: GetBuffer FAILED: 0x" << std::hex << hr << std::dec << std::endl;
+            continue;
+        }
+        std::cout << "THREAD: GetBuffer succeeded" << std::endl;
         
         // Fill buffer with audio data
         UINT32 framesFilled = 0;
@@ -555,9 +560,12 @@ void AudioOutput::audioThreadFunc() {
         }
         
         // Release buffer
+        std::cout << "THREAD: Calling ReleaseBuffer(" << numFramesAvailable << ")" << std::endl;
         hr = m_renderClient->ReleaseBuffer(numFramesAvailable, 0);
         if (FAILED(hr)) {
-            std::cerr << "Failed to release buffer: " << std::hex << hr << std::endl;
+            std::cerr << "THREAD: ReleaseBuffer FAILED: 0x" << std::hex << hr << std::dec << std::endl;
+        } else {
+            std::cout << "THREAD: ReleaseBuffer succeeded" << std::endl;
         }
     }
 }
@@ -577,25 +585,32 @@ void AudioOutput::checkAndFlushIfNeeded() {
     }
     
     // Stop audio client
+    std::cout << "FLUSH: Calling Stop()" << std::endl;
     HRESULT hr = m_audioClient->Stop();
+    std::cout << "FLUSH: Stop() returned: 0x" << std::hex << hr << std::dec << std::endl;
     if (FAILED(hr)) {
         m_flushRequested.store(false);
         return;
     }
     
+    std::cout << "FLUSH: Calling Reset()" << std::endl;
     hr = m_audioClient->Reset();
+    std::cout << "FLUSH: Reset() returned: 0x" << std::hex << hr << std::dec << std::endl;
     if (FAILED(hr)) {
         m_audioClient->Start();  // Try to restart anyway
         m_flushRequested.store(false);
         return;
     }
     
+    std::cout << "FLUSH: Calling Start()" << std::endl;
     hr = m_audioClient->Start();
+    std::cout << "FLUSH: Start() returned: 0x" << std::hex << hr << std::dec << std::endl;
     if (FAILED(hr)) {
         m_flushRequested.store(false);
         return;
     }
     
+    std::cout << "FLUSH: Complete" << std::endl;
     // Clear the flush request flag - audio callback will resume normal operation
     m_flushRequested.store(false);
 #endif
