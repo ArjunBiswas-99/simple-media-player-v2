@@ -5,11 +5,14 @@ Built with PyQt6 and QtMultimedia
 """
 
 import sys
+import os
+from pathlib import Path
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QSlider, QLabel, QFileDialog, QMenuBar, QMenu, QStyle
+    QPushButton, QSlider, QLabel, QFileDialog, QMenuBar, QMenu, QStyle,
+    QListWidget, QListWidgetItem, QScrollArea, QRadioButton, QButtonGroup, QFrame
 )
-from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation, QEasingCurve, pyqtProperty, QPoint
+from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation, QEasingCurve, pyqtProperty, QPoint, QSize
 from PyQt6.QtGui import QPalette, QColor, QCursor, QFont, QAction, QPainter, QPen
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
@@ -43,6 +46,305 @@ class SpeedIndicator(QLabel):
     opacity = pyqtProperty(float, get_opacity, set_opacity)
 
 
+class PlaylistPopover(QWidget):
+    """Netflix-style playlist popover showing videos in folder"""
+    def __init__(self, parent=None):
+        super().__init__(parent, Qt.WindowType.Popup)
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.media_player_ref = None
+        self.current_folder = None
+        self.video_files = []
+        
+        self.setup_ui()
+        
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Container with rounded corners
+        container = QWidget()
+        container.setStyleSheet("""
+            QWidget {
+                background-color: rgba(20, 20, 20, 250);
+                border-radius: 8px;
+                border: 1px solid #e50914;
+            }
+        """)
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(15, 15, 15, 15)
+        container_layout.setSpacing(10)
+        
+        # Header
+        header_layout = QHBoxLayout()
+        title = QLabel("Videos in This Folder")
+        title.setStyleSheet("""
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+        """)
+        close_btn = QPushButton("×")
+        close_btn.setFixedSize(30, 30)
+        close_btn.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: white;
+                font-size: 24px;
+                border: none;
+                border-radius: 15px;
+            }
+            QPushButton:hover {
+                background-color: #e50914;
+            }
+        """)
+        close_btn.clicked.connect(self.hide)
+        header_layout.addWidget(title)
+        header_layout.addStretch()
+        header_layout.addWidget(close_btn)
+        container_layout.addLayout(header_layout)
+        
+        # Separator
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setStyleSheet("background-color: rgba(255, 255, 255, 30);")
+        separator.setFixedHeight(1)
+        container_layout.addWidget(separator)
+        
+        # Video list
+        self.video_list = QListWidget()
+        self.video_list.setStyleSheet("""
+            QListWidget {
+                background-color: transparent;
+                border: none;
+                outline: none;
+                color: white;
+                font-size: 14px;
+            }
+            QListWidget::item {
+                padding: 12px 8px;
+                border-radius: 4px;
+                margin: 2px 0px;
+            }
+            QListWidget::item:hover {
+                background-color: rgba(255, 255, 255, 10);
+            }
+            QListWidget::item:selected {
+                background-color: rgba(229, 9, 20, 30);
+            }
+            QScrollBar:vertical {
+                background-color: transparent;
+                width: 8px;
+                margin: 0px;
+            }
+            QScrollBar::handle:vertical {
+                background-color: rgba(255, 255, 255, 50);
+                border-radius: 4px;
+                min-height: 20px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background-color: rgba(255, 255, 255, 80);
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0px;
+            }
+        """)
+        self.video_list.setMaximumHeight(400)
+        self.video_list.setMinimumWidth(380)
+        self.video_list.itemClicked.connect(self.on_video_selected)
+        container_layout.addWidget(self.video_list)
+        
+        layout.addWidget(container)
+        
+    def load_videos_from_folder(self, current_file_path):
+        """Scan folder for video files"""
+        self.video_list.clear()
+        self.video_files = []
+        
+        if not current_file_path:
+            return
+            
+        folder_path = Path(current_file_path).parent
+        self.current_folder = folder_path
+        current_filename = Path(current_file_path).name
+        
+        # Video extensions
+        video_exts = {'.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.m4v', '.mpg', '.mpeg', '.m2ts', '.ts'}
+        
+        # Get all video files in folder
+        try:
+            for file_path in sorted(folder_path.iterdir()):
+                if file_path.is_file() and file_path.suffix.lower() in video_exts:
+                    self.video_files.append(str(file_path))
+                    
+                    item = QListWidgetItem()
+                    is_current = file_path.name == current_filename
+                    
+                    # Format display text
+                    icon = "▶" if is_current else "□"
+                    text = f"{icon}  {file_path.name}"
+                    item.setText(text)
+                    item.setData(Qt.ItemDataRole.UserRole, str(file_path))
+                    
+                    if is_current:
+                        item.setForeground(QColor("#e50914"))
+                        font = item.font()
+                        font.setBold(True)
+                        item.setFont(font)
+                    
+                    self.video_list.addItem(item)
+        except Exception as e:
+            print(f"Error loading videos: {e}")
+            
+    def on_video_selected(self, item):
+        """Handle video selection"""
+        file_path = item.data(Qt.ItemDataRole.UserRole)
+        if file_path and self.media_player_ref:
+            self.media_player_ref.load_video(file_path)
+            self.hide()
+            
+    def show_at_button(self, button):
+        """Position popover above the button"""
+        self.adjustSize()
+        button_pos = button.mapToGlobal(QPoint(0, 0))
+        x = button_pos.x() - self.width() + button.width()
+        y = button_pos.y() - self.height() - 10
+        self.move(x, y)
+        self.show()
+        self.raise_()
+
+
+class SettingsPopover(QWidget):
+    """Netflix-style settings popover"""
+    def __init__(self, parent=None):
+        super().__init__(parent, Qt.WindowType.Popup)
+        self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.media_player_ref = None
+        
+        self.setup_ui()
+        
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        
+        # Container
+        container = QWidget()
+        container.setStyleSheet("""
+            QWidget {
+                background-color: rgba(20, 20, 20, 250);
+                border-radius: 8px;
+                border: 1px solid #e50914;
+            }
+        """)
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(15, 15, 15, 15)
+        container_layout.setSpacing(15)
+        
+        # Header
+        header_layout = QHBoxLayout()
+        title = QLabel("Settings")
+        title.setStyleSheet("""
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+        """)
+        close_btn = QPushButton("×")
+        close_btn.setFixedSize(30, 30)
+        close_btn.setStyleSheet("""
+            QPushButton {
+                background-color: transparent;
+                color: white;
+                font-size: 24px;
+                border: none;
+                border-radius: 15px;
+            }
+            QPushButton:hover {
+                background-color: #e50914;
+            }
+        """)
+        close_btn.clicked.connect(self.hide)
+        header_layout.addWidget(title)
+        header_layout.addStretch()
+        header_layout.addWidget(close_btn)
+        container_layout.addLayout(header_layout)
+        
+        # Separator
+        separator = QFrame()
+        separator.setFrameShape(QFrame.Shape.HLine)
+        separator.setStyleSheet("background-color: rgba(255, 255, 255, 30);")
+        separator.setFixedHeight(1)
+        container_layout.addWidget(separator)
+        
+        # Playback Speed Section
+        speed_label = QLabel("Playback Speed")
+        speed_label.setStyleSheet("""
+            color: rgba(255, 255, 255, 180);
+            font-size: 13px;
+            font-weight: 600;
+            padding-top: 5px;
+        """)
+        container_layout.addWidget(speed_label)
+        
+        # Speed buttons
+        self.speed_group = QButtonGroup(self)
+        speeds = [
+            ("0.25×", 0.25),
+            ("0.5×", 0.5),
+            ("0.75×", 0.75),
+            ("Normal", 1.0),
+            ("1.25×", 1.25),
+            ("1.5×", 1.5),
+            ("2×", 2.0)
+        ]
+        
+        for label, rate in speeds:
+            rb = QRadioButton(label)
+            rb.setStyleSheet("""
+                QRadioButton {
+                    color: white;
+                    font-size: 14px;
+                    padding: 5px;
+                }
+                QRadioButton::indicator {
+                    width: 16px;
+                    height: 16px;
+                }
+                QRadioButton::indicator:unchecked {
+                    border: 2px solid rgba(255, 255, 255, 50);
+                    border-radius: 8px;
+                    background-color: transparent;
+                }
+                QRadioButton::indicator:checked {
+                    border: 2px solid #e50914;
+                    border-radius: 8px;
+                    background-color: #e50914;
+                }
+            """)
+            if rate == 1.0:
+                rb.setChecked(True)
+            rb.toggled.connect(lambda checked, r=rate: self.on_speed_changed(r) if checked else None)
+            self.speed_group.addButton(rb)
+            container_layout.addWidget(rb)
+        
+        container.setMinimumWidth(280)
+        layout.addWidget(container)
+        
+    def on_speed_changed(self, rate):
+        """Handle speed change"""
+        if self.media_player_ref:
+            self.media_player_ref.set_playback_rate(rate)
+            
+    def show_at_button(self, button):
+        """Position popover above the button"""
+        self.adjustSize()
+        button_pos = button.mapToGlobal(QPoint(0, 0))
+        x = button_pos.x() - self.width() + button.width()
+        y = button_pos.y() - self.height() - 10
+        self.move(x, y)
+        self.show()
+        self.raise_()
+
+
 class MediaPlayer(QMainWindow):
     """Netflix-style professional media player"""
     
@@ -67,6 +369,13 @@ class MediaPlayer(QMainWindow):
         self.setup_video_area()
         self.setup_media_player()
         self.setup_menu_bar()
+        
+        # Create popovers
+        self.playlist_popover = PlaylistPopover(self)
+        self.playlist_popover.media_player_ref = self
+        self.settings_popover = SettingsPopover(self)
+        self.settings_popover.media_player_ref = self
+        
         self.connect_signals()
         
         # Timers
@@ -407,6 +716,16 @@ class MediaPlayer(QMainWindow):
         """)
         self.speed_label.setToolTip("Playback Speed")
         
+        self.playlist_btn = QPushButton("☰")
+        self.playlist_btn.setFixedSize(50, 50)
+        self.playlist_btn.setStyleSheet(button_style)
+        self.playlist_btn.setToolTip("Playlist")
+        
+        self.settings_btn = QPushButton("⚙")
+        self.settings_btn.setFixedSize(50, 50)
+        self.settings_btn.setStyleSheet(button_style)
+        self.settings_btn.setToolTip("Settings")
+        
         self.fullscreen_btn = QPushButton("⛶")
         self.fullscreen_btn.setFixedSize(50, 50)
         self.fullscreen_btn.setStyleSheet(button_style)
@@ -421,6 +740,8 @@ class MediaPlayer(QMainWindow):
         controls_layout.addWidget(volume_label)
         controls_layout.addWidget(self.volume_slider)
         controls_layout.addWidget(self.speed_label)
+        controls_layout.addWidget(self.playlist_btn)
+        controls_layout.addWidget(self.settings_btn)
         controls_layout.addWidget(self.fullscreen_btn)
         
         layout.addLayout(controls_layout)
@@ -678,6 +999,24 @@ class MediaPlayer(QMainWindow):
         if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
             self.controls_widget.hide()
             self.setCursor(QCursor(Qt.CursorShape.BlankCursor))
+    
+    def show_playlist(self):
+        """Show playlist popover"""
+        if self.current_file:
+            self.playlist_popover.load_videos_from_folder(self.current_file)
+            self.playlist_popover.show_at_button(self.playlist_btn)
+    
+    def show_settings(self):
+        """Show settings popover"""
+        self.settings_popover.show_at_button(self.settings_btn)
+    
+    def load_video(self, file_path):
+        """Load and play a video file"""
+        self.current_file = file_path
+        import os
+        self.file_name_label.setText(os.path.basename(file_path))
+        self.player.setSource(QUrl.fromLocalFile(file_path))
+        self.player.play()
 
 
 def main():
@@ -716,7 +1055,6 @@ def main():
 if __name__ == '__main__':
     main()
 
-    """Netflix-style media player with embedded video"""
     
     def __init__(self):
         super().__init__()
