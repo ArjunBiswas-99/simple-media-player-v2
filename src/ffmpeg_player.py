@@ -180,7 +180,9 @@ class FFmpegPlayer(BasePlayer):
         if self._video_stream and self._video_stream.average_rate:
             frame_rate = float(self._video_stream.average_rate)
         
-        self._render_timer.start(int(1000 / frame_rate))
+        # Adjust frame interval based on playback rate (for 2x speed support)
+        interval_ms = int(1000 / (frame_rate * self._playback_rate))
+        self._render_timer.start(interval_ms)
         
         # Update state
         self._playback_state = QMediaPlayer.PlaybackState.PlayingState
@@ -307,7 +309,10 @@ class FFmpegPlayer(BasePlayer):
                 frame_rate = 30
                 if self._video_stream and self._video_stream.average_rate:
                     frame_rate = float(self._video_stream.average_rate)
-                self._render_timer.start(int(1000 / frame_rate))
+                
+                # Adjust for playback rate
+                interval_ms = int(1000 / (frame_rate * self._playback_rate))
+                self._render_timer.start(interval_ms)
         
         except Exception as e:
             self._last_error = f"Seek failed: {str(e)}"
@@ -331,6 +336,14 @@ class FFmpegPlayer(BasePlayer):
         if self._is_playing:
             current_pos = self.position()
             self._start_time = time.time() - (current_pos / 1000.0)
+            
+            # Adjust render timer interval for new rate
+            frame_rate = 30
+            if self._video_stream and self._video_stream.average_rate:
+                frame_rate = float(self._video_stream.average_rate)
+            
+            interval_ms = int(1000 / (frame_rate * self._playback_rate))
+            self._render_timer.setInterval(interval_ms)
     
     def playback_rate(self):
         """Get current playback rate."""
@@ -450,15 +463,23 @@ class FFmpegPlayer(BasePlayer):
                         
                         # Handle audio frames
                         elif packet.stream.type == 'audio':
-                            # Resample to 48kHz stereo if needed
-                            frame = frame.to_ndarray(format='s16', layout='stereo')
-                            audio_data = frame.tobytes()
+                            # Resample audio to 48kHz stereo s16
+                            resampler = av.AudioResampler(
+                                format='s16',
+                                layout='stereo',
+                                rate=48000
+                            )
+                            resampled_frame = resampler.resample(frame)
                             
-                            # Put in audio queue
-                            try:
-                                self._audio_queue.put(audio_data, timeout=0.1)
-                            except queue.Full:
-                                continue  # Skip if queue is full
+                            # Convert to numpy array and then to bytes
+                            for resampled in resampled_frame:
+                                audio_data = resampled.to_ndarray().tobytes()
+                                
+                                # Put in audio queue
+                                try:
+                                    self._audio_queue.put(audio_data, timeout=0.1)
+                                except queue.Full:
+                                    continue  # Skip if queue is full
                 
                 except Exception as decode_error:
                     # Handle decode errors gracefully
