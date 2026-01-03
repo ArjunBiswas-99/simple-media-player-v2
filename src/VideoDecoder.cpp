@@ -108,11 +108,6 @@ bool VideoDecoder::open(const std::string& filename) {
         m_duration = (double)m_formatCtx->duration / AV_TIME_BASE;
     }
     
-    std::cout << "Opened: " << filename << std::endl;
-    std::cout << "Duration: " << m_duration << " seconds" << std::endl;
-    std::cout << "Video: " << m_videoWidth << "x" << m_videoHeight << std::endl;
-    std::cout << "Audio: " << m_sampleRate << "Hz, " << m_channels << " channels" << std::endl;
-    
     return true;
 }
 
@@ -221,7 +216,8 @@ void VideoDecoder::stop() {
 }
 
 void VideoDecoder::seek(double seconds) {
-    std::cout << "[USER SEEK] Target position: " << seconds << "s" << std::endl;
+    double oldPosition = m_currentTime;
+    std::cout << "SEEK - " << oldPosition << " - " << seconds << std::endl;
     
     if (!m_formatCtx) {
         return;
@@ -436,13 +432,6 @@ AudioFrame* VideoDecoder::decodeAudioPacket(AVPacket* packet) {
                 if (actualDuration > expectedDuration * 10.0) {
                     needsCorrection = true;
                     double correctionFactor = expectedDuration / actualDuration;
-                    std::cout << "[AUDIO FIX] Detected incorrect PTS scaling!" << std::endl;
-                    std::cout << "  Expected frame duration: " << expectedDuration << "s" << std::endl;
-                    std::cout << "  Actual PTS jump: " << actualDuration << "s" << std::endl;
-                    std::cout << "  Applying correction: dividing by " << (actualDuration/expectedDuration) << std::endl;
-                } else {
-                    std::cout << "[AUDIO CHECK] PTS scaling is correct, no fix needed" << std::endl;
-                    std::cout << "  Expected: " << expectedDuration << "s, Actual: " << actualDuration << "s" << std::endl;
                 }
                 correctionChecked = true;
             }
@@ -454,21 +443,9 @@ AudioFrame* VideoDecoder::decodeAudioPacket(AVPacket* packet) {
             // Calculate PTS based on frame position and duration instead
             audioFrame->pts = lastPTS + expectedDuration;
             lastPTS = audioFrame->pts;
-            
-            if (logCount < 3) {
-                std::cout << "[AUDIO FIX] Frame " << logCount << ": rawPTS=" << rawPTS 
-                          << " -> correctedPTS=" << audioFrame->pts << std::endl;
-                logCount++;
-            }
         } else {
             audioFrame->pts = rawPTS;
             lastPTS = rawPTS;
-            
-            if (logCount < 3) {
-                std::cout << "[AUDIO] Frame " << logCount << ": PTS=" << audioFrame->pts 
-                          << " (no correction)" << std::endl;
-                logCount++;
-            }
         }
     }
     

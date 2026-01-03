@@ -646,10 +646,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     std::cerr.clear();
     std::cin.clear();
     
-    std::cout << "=== Simple Media Player V2 - Debug Console ===" << std::endl;
-    std::cout << "Windows build with Direct3D11 and WASAPI" << std::endl;
-    std::cout << "===============================================" << std::endl;
-    std::cout.flush();
+    // Console initialized
     
     // Parse command line to get initial file (if provided)
     std::string initialFile;
@@ -660,7 +657,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             cmdLine = cmdLine.substr(1, cmdLine.length() - 2);
         }
         initialFile = cmdLine;
-        std::cout << "Command line file: " << initialFile << std::endl;
+        // Command line file provided
     }
     
     // Alternative: parse using GetCommandLineW for better Unicode support
@@ -673,7 +670,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             if (size > 0) {
                 initialFile.resize(size - 1);
                 WideCharToMultiByte(CP_UTF8, 0, szArglist[1], -1, &initialFile[0], size, nullptr, nullptr);
-                std::cout << "Command line file (Unicode): " << initialFile << std::endl;
+                // Command line file provided (Unicode)
             }
             LocalFree(szArglist);
         }
@@ -714,13 +711,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     
     // Load initial file if provided via command line
     if (!initialFile.empty()) {
-        std::cout << "[MAIN] Loading file from command line: " << initialFile << std::endl;
-        std::cout.flush();
+        // Loading file from command line
         LoadMediaFile(state, initialFile, hwnd);
     }
 
-    std::cout << "[MAIN] Entering main loop" << std::endl;
-    std::cout.flush();
+    // Entering main loop
 
     // Main loop
     bool done = false;
@@ -770,8 +765,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     state.audioOutput->setAudioClock(videoPTS);
                     audioClock = videoPTS;
                     initialSyncDone = true;
-                    std::cout << "[MAIN] Initial A/V sync: set audio clock to " << videoPTS << std::endl;
-                    std::cout.flush();
                 }
                 bool shouldDisplay = false;
                 
@@ -782,13 +775,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     const double DROP_THRESHOLD = 0.100;
                     const double NOSYNC_THRESHOLD = 0.5;
                     
+                    // Log sync position periodically: SEEK POSITION - AUDIO CLOCK - VIDEO POSITION
                     static int syncLogCounter = 0;
-                    if (syncLogCounter++ % 30 == 0) {
-                        std::cout << "[VIDEO SYNC] videoPTS=" << videoPTS 
-                                  << " audioClock=" << audioClock 
-                                  << " drift=" << drift 
-                                  << " useSync=" << useAudioSync << std::endl;
-                        std::cout.flush();
+                    if (syncLogCounter++ % 60 == 0) {
+                        std::cout << videoPTS << " - " << audioClock << " - " << videoPTS << std::endl;
                     }
                     
                     if (fabs(drift) > NOSYNC_THRESHOLD) {
@@ -830,8 +820,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                         if (state.videoTexture) {
                             state.videoTextureWidth = state.pendingFrame->width;
                             state.videoTextureHeight = state.pendingFrame->height;
-                            std::cout << "[VIDEO] Texture created: " << state.videoTextureWidth << "x" << state.videoTextureHeight << std::endl;
-                            std::cout.flush();
                         }
                     }
                     
@@ -861,13 +849,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (state.audioOutput && state.decoder->hasAudio()) {
             AudioFrame* audioFrame = state.decoder->getNextAudioFrame();
             if (audioFrame && audioFrame->data && audioFrame->size > 0) {
-                static bool firstAudioFrame = true;
-                if (firstAudioFrame) {
-                    std::cout << "[MAIN] First audio frame: PTS=" << audioFrame->pts 
-                              << " size=" << audioFrame->size << std::endl;
-                    std::cout.flush();
-                    firstAudioFrame = false;
-                }
+                // Audio frame processing
                 state.audioOutput->pushAudioFrame(audioFrame);
             }
         }
@@ -967,34 +949,26 @@ void CleanupRenderTarget() {
 
 // Helper function to load a media file
 void LoadMediaFile(AppState& state, const std::string& filepath, PlatformWindow window) {
-    std::cout << "[LoadMediaFile] Starting to load: " << filepath << std::endl;
-    std::cout.flush();
+    // Loading media file
     
     // Initialize decoder if needed
     if (!state.decoder) {
-        std::cout << "[LoadMediaFile] Creating VideoDecoder" << std::endl;
-        std::cout.flush();
+        // Creating VideoDecoder
         state.decoder = new VideoDecoder();
     }
     if (!state.audioOutput) {
-        std::cout << "[LoadMediaFile] Creating AudioOutput" << std::endl;
-        std::cout.flush();
+        // Creating AudioOutput
         state.audioOutput = new AudioOutput();
     }
     
     // Open file
-    std::cout << "[LoadMediaFile] Calling decoder->open()" << std::endl;
-    std::cout.flush();
+    // Opening decoder
     
     if (state.decoder->open(filepath)) {
-        std::cout << "[LoadMediaFile] File opened successfully!" << std::endl;
-        std::cout.flush();
         
         state.fileLoaded = true;
         state.duration = (float)state.decoder->getDuration();
         state.currentTime = 0.0f;
-        std::cout << "[LoadMediaFile] Duration: " << state.duration << " seconds" << std::endl;
-        std::cout.flush();
         
         // Extract filename for title
         size_t lastSlash = filepath.find_last_of("/\\");
@@ -1004,8 +978,6 @@ void LoadMediaFile(AppState& state, const std::string& filepath, PlatformWindow 
         state.currentFile = state.currentTitle;
         
         // Scan directory for playlist
-        std::cout << "[LoadMediaFile] Scanning directory for playlist..." << std::endl;
-        std::cout.flush();
         ScanDirectoryForMediaFiles(state, filepath);
         
         // CRITICAL: Clear any stale pending frame
@@ -1016,20 +988,10 @@ void LoadMediaFile(AppState& state, const std::string& filepath, PlatformWindow 
         
         // Initialize audio if available
         if (state.decoder->hasAudio()) {
-            std::cout << "[LoadMediaFile] Has audio - initializing AudioOutput" << std::endl;
-            std::cout << "[LoadMediaFile] Sample rate: " << state.decoder->getSampleRate() << " Hz" << std::endl;
-            std::cout << "[LoadMediaFile] Channels: " << state.decoder->getChannels() << std::endl;
-            std::cout.flush();
-            
             bool audioInit = state.audioOutput->initialize(
                 state.decoder->getSampleRate(),
                 state.decoder->getChannels()
             );
-            std::cout << "[LoadMediaFile] Audio initialized: " << (audioInit ? "SUCCESS" : "FAILED") << std::endl;
-            std::cout.flush();
-        } else {
-            std::cout << "[LoadMediaFile] No audio stream found" << std::endl;
-            std::cout.flush();
         }
         
         // Auto-start playback
@@ -1049,19 +1011,10 @@ void LoadMediaFile(AppState& state, const std::string& filepath, PlatformWindow 
             state.pendingFrame = nullptr;
         }
         
-        std::cout << "[LoadMediaFile] Starting playback..." << std::endl;
-        std::cout.flush();
-        
         state.decoder->play();
         if (state.audioOutput) {
             state.audioOutput->play();
         }
-        
-        std::cout << "[LoadMediaFile] Load complete!" << std::endl;
-        std::cout.flush();
-    } else {
-        std::cerr << "[LoadMediaFile] FAILED to open file!" << std::endl;
-        std::cerr.flush();
     }
 }
 
@@ -2164,30 +2117,22 @@ void RenderNetflixUI(AppState& state, HWND window) {
         
         // Left Arrow: Skip backward 5s
         if (ImGui::IsKeyPressed(ImGuiKey_LeftArrow) && state.fileLoaded && state.decoder) {
-            std::cout << "[DEBUG] Left arrow pressed - fileLoaded=" << state.fileLoaded 
-                      << " decoder=" << (void*)state.decoder << std::endl;
             state.currentTime = fmaxf(state.currentTime - 5.0f, 0.0f);
-            std::cout << "[DEBUG] Seeking to: " << state.currentTime << std::endl;
             if (state.pendingFrame) {
-                std::cout << "[DEBUG] Deleting pending frame" << std::endl;
                 delete state.pendingFrame;
                 state.pendingFrame = nullptr;
             }
-            std::cout << "[DEBUG] Calling decoder->seek()" << std::endl;
             state.decoder->seek(state.currentTime);
-            std::cout << "[DEBUG] Seek completed" << std::endl;
             
             // Set flag to prevent old frames from resetting currentTime
             state.justSeeked = true;
             state.videoStartTime = 0.0;
             
             if (state.audioOutput) {
-                std::cout << "[DEBUG] Clearing audio queue" << std::endl;
                 state.audioOutput->clearQueue();
                 state.audioOutput->setAudioClock(state.currentTime);
             }
             state.lastVideoFramePTS = state.currentTime;
-            std::cout << "[DEBUG] Left arrow handler completed" << std::endl;
             // Show skip animation for 0.8s
             state.showSkipAnimation = true;
             state.skipAnimationTimer = 0.8f;
@@ -2199,30 +2144,22 @@ void RenderNetflixUI(AppState& state, HWND window) {
         
         // Right Arrow: Skip forward 5s
         if (ImGui::IsKeyPressed(ImGuiKey_RightArrow) && state.fileLoaded && state.decoder) {
-            std::cout << "[DEBUG] Right arrow pressed - fileLoaded=" << state.fileLoaded 
-                      << " decoder=" << (void*)state.decoder << std::endl;
             state.currentTime = fminf(state.currentTime + 5.0f, state.duration);
-            std::cout << "[DEBUG] Seeking to: " << state.currentTime << std::endl;
             if (state.pendingFrame) {
-                std::cout << "[DEBUG] Deleting pending frame" << std::endl;
                 delete state.pendingFrame;
                 state.pendingFrame = nullptr;
             }
-            std::cout << "[DEBUG] Calling decoder->seek()" << std::endl;
             state.decoder->seek(state.currentTime);
-            std::cout << "[DEBUG] Seek completed" << std::endl;
             
             // Set flag to prevent old frames from resetting currentTime
             state.justSeeked = true;
             state.videoStartTime = 0.0;
             
             if (state.audioOutput) {
-                std::cout << "[DEBUG] Clearing audio queue" << std::endl;
                 state.audioOutput->clearQueue();
                 state.audioOutput->setAudioClock(state.currentTime);
             }
             state.lastVideoFramePTS = state.currentTime;
-            std::cout << "[DEBUG] Right arrow handler completed" << std::endl;
             // Show skip animation for 0.8s
             state.showSkipAnimation = true;
             state.skipAnimationTimer = 0.8f;

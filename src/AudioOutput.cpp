@@ -86,8 +86,6 @@ bool AudioOutput::initialize(int sampleRate, int channels) {
         AudioQueueEnqueueBuffer(m_audioQueue, m_buffers[i], 0, nullptr);
     }
     
-    std::cout << "Audio initialized: " << sampleRate << "Hz, " << channels << " channels" << std::endl;
-    
 #elif defined(_WIN32)
     // Windows WASAPI implementation
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
@@ -128,9 +126,6 @@ bool AudioOutput::initialize(int sampleRate, int channels) {
     waveFormat.nAvgBytesPerSec = waveFormat.nSamplesPerSec * waveFormat.nBlockAlign;
     waveFormat.cbSize = 0;
     
-    std::cout << "[AUDIO INIT] Requested format: " << sampleRate << "Hz, " << channels << " channels" << std::endl;
-    std::cout << "[AUDIO INIT] nAvgBytesPerSec: " << waveFormat.nAvgBytesPerSec << std::endl;
-    
     // Initialize audio client
     REFERENCE_TIME bufferDuration = 10000000; // 1 second in 100-nanosecond units
     hr = m_audioClient->Initialize(AUDCLNT_SHAREMODE_SHARED,
@@ -150,16 +145,10 @@ bool AudioOutput::initialize(int sampleRate, int channels) {
         return false;
     }
     
-    std::cout << "[AUDIO INIT] Audio client initialized successfully" << std::endl;
-    
     // Verify actual format WASAPI negotiated
     WAVEFORMATEX* actualFormat = nullptr;
     hr = m_audioClient->GetMixFormat(&actualFormat);
     if (SUCCEEDED(hr) && actualFormat) {
-        std::cout << "[AUDIO INIT] ACTUAL format WASAPI is using: " 
-                  << actualFormat->nSamplesPerSec << "Hz, "
-                  << actualFormat->nChannels << " channels, "
-                  << actualFormat->wBitsPerSample << " bits" << std::endl;
         CoTaskMemFree(actualFormat);
     }
     
@@ -182,8 +171,6 @@ bool AudioOutput::initialize(int sampleRate, int channels) {
         std::cerr << "Failed to get render client: " << std::hex << hr << std::endl;
         return false;
     }
-    
-    std::cout << "WASAPI Audio initialized: " << sampleRate << "Hz, " << channels << " channels" << std::endl;
 #endif
     
     return true;
@@ -269,7 +256,6 @@ void AudioOutput::play() {
         if (SUCCEEDED(hr) || hr == AUDCLNT_E_NOT_STOPPED) {
             // AUDCLNT_E_NOT_STOPPED means already playing, which is fine
             m_playing = true;
-            std::cout << "[AUDIO] Playing" << std::endl;
         } else {
             std::cerr << "[AUDIO] Failed to start audio client: 0x" << std::hex << hr << std::dec << std::endl;
         }
@@ -288,7 +274,6 @@ void AudioOutput::pause() {
         m_playing = false;
         // Request flush to clear buffered audio immediately
         m_flushRequested.store(true);
-        std::cout << "[AUDIO] Paused - flush requested" << std::endl;
     }
 #endif
 }
@@ -306,19 +291,10 @@ void AudioOutput::setVolume(float volume) {
 void AudioOutput::setPlaybackRate(float rate) {
     float oldRate = m_playbackRate;
     m_playbackRate = std::max(0.5f, std::min(2.0f, rate));
-    std::cout << "[AUDIO] setPlaybackRate called: " << rate << " -> clamped to: " << m_playbackRate << std::endl;
     
 #ifdef __APPLE__
     if (m_audioQueue) {
-        std::cout << "[AUDIO] Setting CoreAudio kAudioQueueParam_PlayRate to: " << m_playbackRate << std::endl;
         OSStatus status = AudioQueueSetParameter(m_audioQueue, kAudioQueueParam_PlayRate, m_playbackRate);
-        if (status == noErr) {
-            std::cout << "[AUDIO] CoreAudio playback rate set successfully" << std::endl;
-        } else {
-            std::cout << "[AUDIO] ERROR: Failed to set CoreAudio playback rate, status=" << status << std::endl;
-        }
-    } else {
-        std::cout << "[AUDIO] WARNING: m_audioQueue is null, cannot set playback rate" << std::endl;
     }
 #endif
 }
@@ -371,20 +347,9 @@ void AudioOutput::audioCallback(void* userData, AudioQueueRef queue, AudioQueueB
             if (clockAdvance > 0 && output->m_lastClockUpdate > 0) {
                 // Advance clock by the scaled amount
                 output->m_audioClock = output->m_audioClock + (clockAdvance * output->m_playbackRate);
-                if (shouldLog) {
-                    std::cout << "[AUDIO CALLBACK] playbackRate=" << output->m_playbackRate 
-                              << " framePTS=" << frame->pts
-                              << " clockAdvance=" << clockAdvance
-                              << " scaledAdvance=" << (clockAdvance * output->m_playbackRate)
-                              << " oldClock=" << oldClock
-                              << " newClock=" << output->m_audioClock << std::endl;
-                }
             } else {
                 // First frame or discontinuity - set directly
                 output->m_audioClock = frame->pts * output->m_playbackRate;
-                if (shouldLog) {
-                    std::cout << "[AUDIO CALLBACK] First frame or discontinuity, setting clock to: " << output->m_audioClock << std::endl;
-                }
             }
             output->m_lastClockUpdate = frame->pts;
         } else {
@@ -411,12 +376,8 @@ void AudioOutput::audioThreadFunc() {
     UINT32 bufferFrameCount;
     HRESULT hr = m_audioClient->GetBufferSize(&bufferFrameCount);
     if (FAILED(hr)) {
-        std::cerr << "Failed to get buffer size: " << std::hex << hr << std::endl;
         return;
     }
-    
-    std::cout << "[AUDIO THREAD] WASAPI buffer size: " << bufferFrameCount 
-              << " frames (" << (double)bufferFrameCount / m_sampleRate << "s)" << std::endl;
     
     while (!m_stopAudioThread) {
         // Wait for buffer event
@@ -518,10 +479,8 @@ void AudioOutput::audioThreadFunc() {
                 // Clock will be updated when we start copying new audio after flush
                 double oldClock = m_audioClock;
                 m_flushRequested.store(true);
-                std::cout << "[SEEK] Detected: oldClock=" << oldClock 
-                          << " newPTS=" << frame->pts 
-                          << " diff=" << fabs(frame->pts - oldClock) 
-                          << " | Flush REQUESTED (clock NOT updated yet)" << std::endl;
+                // Clean log format: SEEK POSITION - AUDIO CLOCK POSITION - VIDEO POSITION (no video info here)
+                // We'll log this with more complete info when resume happens
                 
                 // Delete stale frame (decoder will provide fresh frames from new position)
                 delete frame;
@@ -564,9 +523,7 @@ void AudioOutput::audioThreadFunc() {
                 double oldClock = m_audioClock;
                 m_audioClock = frame->pts;
                 m_lastClockUpdate = frame->pts;
-                std::cout << "[RESUME] First frame after flush: PTS=" << frame->pts 
-                          << " oldClock=" << oldClock 
-                          << " | Clock synchronized to new position" << std::endl;
+                std::cout << frame->pts << " - " << m_audioClock << " - N/A" << std::endl;
                 logNextFrame = false;
             }
             
@@ -619,19 +576,15 @@ void AudioOutput::checkAndFlushIfNeeded() {
         return;
     }
     
-    std::cout << "[FLUSH] Executing Stop/Reset/Start..." << std::endl;
-    
     // Stop audio client
     HRESULT hr = m_audioClient->Stop();
     if (FAILED(hr)) {
-        std::cerr << "[FLUSH] Failed to stop audio client: " << std::hex << hr << std::endl;
         m_flushRequested.store(false);
         return;
     }
     
     hr = m_audioClient->Reset();
     if (FAILED(hr)) {
-        std::cerr << "[FLUSH] Failed to reset audio client: " << std::hex << hr << std::endl;
         m_audioClient->Start();  // Try to restart anyway
         m_flushRequested.store(false);
         return;
@@ -639,12 +592,9 @@ void AudioOutput::checkAndFlushIfNeeded() {
     
     hr = m_audioClient->Start();
     if (FAILED(hr)) {
-        std::cerr << "[FLUSH] Failed to restart audio client: " << std::hex << hr << std::endl;
         m_flushRequested.store(false);
         return;
     }
-    
-    std::cout << "[FLUSH] Complete - buffer cleared" << std::endl;
     
     // Clear the flush request flag - audio callback will resume normal operation
     m_flushRequested.store(false);
