@@ -286,9 +286,9 @@ void AudioOutput::pause() {
 #elif defined(_WIN32)
     if (m_playing) {
         m_playing = false;
-        // Don't stop audio client - let thread continue running
-        // This prevents deadlocks on pause/play cycles
-        std::cout << "[AUDIO] Paused" << std::endl;
+        // Request flush to clear buffered audio immediately
+        m_flushRequested.store(true);
+        std::cout << "[AUDIO] Paused - flush requested" << std::endl;
     }
 #endif
 }
@@ -509,7 +509,7 @@ void AudioOutput::audioThreadFunc() {
             // Detect seek: if this is start of a new frame and PTS discontinuity detected
             bool isSeekDetected = (frameOffset == 0) && 
                                   (m_audioClock > 0.001) && 
-                                  (fabs(frame->pts - m_audioClock) > 1.0);
+                                  (fabs(frame->pts - m_audioClock) > 0.1);
             
             if (isSeekDetected) {
                 // Seek detected - request flush but DON'T update clock yet

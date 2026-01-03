@@ -506,8 +506,6 @@ AudioFrame* VideoDecoder::getNextAudioFrame() {
 }
 
 void VideoDecoder::clearQueues() {
-    std::cout << "[DEBUG VideoDecoder::clearQueues] Starting to clear queues, this=" << (void*)this << std::endl;
-    
     // Wait for decode thread to detect m_seeking flag and stop adding frames
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     
