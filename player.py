@@ -63,10 +63,10 @@ class MediaPlayer(QMainWindow):
         self.normal_rate = 1.0
         self.current_file = None
         
-        # Setup UI components
-        self.setup_menu_bar()
+        # Setup UI components - media player MUST be created before menu bar
         self.setup_video_area()
         self.setup_media_player()
+        self.setup_menu_bar()
         self.connect_signals()
         
         # Timers
