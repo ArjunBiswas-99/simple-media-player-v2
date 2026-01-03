@@ -1,5 +1,5 @@
 """
-Style helpers for Netflix-Style Media Player
+Style helpers for Simple Media Player
 Reusable stylesheet generators
 """
 
@@ -19,7 +19,7 @@ def get_button_style(size=BUTTON_SIZE_SMALL):
             font-weight: bold;
         }}
         QPushButton:hover {{
-            background-color: {NETFLIX_RED};
+            background-color: {THEME_PRIMARY};
         }}
         QPushButton:pressed {{
             background-color: #b8070f;
@@ -39,7 +39,7 @@ def get_timeline_style():
             height: {TIMELINE_HEIGHT_HOVER}px;
         }}
         QSlider::handle:horizontal {{
-            background: {NETFLIX_RED};
+            background: {THEME_PRIMARY};
             width: 12px;
             height: 12px;
             margin: -5px 0;
@@ -47,7 +47,7 @@ def get_timeline_style():
             border: 2px solid white;
         }}
         QSlider::sub-page:horizontal {{
-            background: {NETFLIX_RED};
+            background: {THEME_PRIMARY};
             border-radius: 2px;
         }}
     """
@@ -130,12 +130,12 @@ def get_main_window_style():
     """Generate main window stylesheet"""
     return f"""
         QMainWindow {{
-            background-color: {NETFLIX_BLACK};
+            background-color: {THEME_BLACK};
         }}
         QToolTip {{
-            background-color: {NETFLIX_DARK_GRAY};
+            background-color: {THEME_DARK_GRAY};
             color: white;
-            border: 1px solid {NETFLIX_RED};
+            border: 1px solid {THEME_PRIMARY};
             padding: 5px;
             font-size: {FONT_SIZE_SMALL}px;
         }}
@@ -146,20 +146,20 @@ def get_menubar_style():
     """Generate menu bar stylesheet"""
     return f"""
         QMenuBar {{
-            background-color: {NETFLIX_BLACK};
+            background-color: {THEME_BLACK};
             color: white;
             font-size: {FONT_SIZE_SMALL}px;
             padding: 4px;
         }}
         QMenuBar::item:selected {{
-            background-color: {NETFLIX_RED};
+            background-color: {THEME_PRIMARY};
         }}
         QMenu {{
-            background-color: {NETFLIX_DARK_GRAY};
+            background-color: {THEME_DARK_GRAY};
             color: white;
-            border: 1px solid {NETFLIX_RED};
+            border: 1px solid {THEME_PRIMARY};
         }}
         QMenu::item:selected {{
-            background-color: {NETFLIX_RED};
+            background-color: {THEME_PRIMARY};
         }}
     """

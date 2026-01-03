@@ -1,14 +1,14 @@
 """
-Speed Indicator Widget - YouTube-style 2x overlay
+Speed Indicator Widget - 2x speed overlay
 """
 
 from PyQt6.QtWidgets import QLabel
 from PyQt6.QtCore import pyqtProperty
-from constants import NETFLIX_RED
+from constants import THEME_PRIMARY
 
 
 class SpeedIndicator(QLabel):
-    """2x speed indicator overlay for YouTube-style hold-to-speed"""
+    """2x speed indicator overlay for hold-to-speed feature"""
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -16,7 +16,7 @@ class SpeedIndicator(QLabel):
         self.setStyleSheet(f"""
             QLabel {{
                 color: white;
-                background-color: rgba(229, 9, 20, 220);
+                background-color: {THEME_PRIMARY};
                 border-radius: 8px;
                 padding: 12px 20px;
                 font-size: 28px;

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Netflix-Style Professional Media Player
+Simple Media Player by Arjun Biswas
 Main entry point
 """
 
@@ -10,7 +10,7 @@ from PyQt6.QtGui import QPalette, QColor, QFont
 from PyQt6.QtCore import Qt
 
 from media_player import MediaPlayer
-from constants import NETFLIX_RED, NETFLIX_BLACK
+from constants import THEME_PRIMARY, THEME_BLACK, FONT_FAMILY, FONT_SIZE_MEDIUM
 
 
 def main():
@@ -18,24 +18,26 @@ def main():
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
     
-    # Dark Netflix palette
+    # Dark color palette
     palette = QPalette()
-    palette.setColor(QPalette.ColorRole.Window, QColor(20, 20, 20))
-    palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.Base, QColor(25, 25, 25))
-    palette.setColor(QPalette.ColorRole.AlternateBase, QColor(30, 30, 30))
-    palette.setColor(QPalette.ColorRole.ToolTipBase, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.ToolTipText, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.Text, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.Button, QColor(40, 40, 40))
-    palette.setColor(QPalette.ColorRole.ButtonText, Qt.GlobalColor.white)
-    palette.setColor(QPalette.ColorRole.BrightText, QColor(229, 9, 20))
-    palette.setColor(QPalette.ColorRole.Highlight, QColor(229, 9, 20))
-    palette.setColor(QPalette.ColorRole.HighlightedText, Qt.GlobalColor.white)
+    palette.setColor(QPalette.ColorRole.Window, QColor(THEME_BLACK))
+    palette.setColor(QPalette.ColorRole.WindowText, QColor("white"))
+    palette.setColor(QPalette.ColorRole.Base, QColor(THEME_BLACK))
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor(THEME_BLACK))
+    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor("white"))
+    palette.setColor(QPalette.ColorRole.ToolTipText, QColor("white"))
+    palette.setColor(QPalette.ColorRole.Text, QColor("white"))
+    palette.setColor(QPalette.ColorRole.Button, QColor(THEME_BLACK))
+    palette.setColor(QPalette.ColorRole.ButtonText, QColor("white"))
+    palette.setColor(QPalette.ColorRole.BrightText, QColor(THEME_PRIMARY))
+    palette.setColor(QPalette.ColorRole.Highlight, QColor(THEME_PRIMARY))
+    palette.setColor(QPalette.ColorRole.HighlightedText, QColor("white"))
     app.setPalette(palette)
     
-    # Clean system font
-    font = QFont("Segoe UI", 10)
+    # Professional font stack with fallbacks
+    font = QFont()
+    font.setFamily(FONT_FAMILY)
+    font.setPointSize(FONT_SIZE_MEDIUM)
     app.setFont(font)
     
     player = MediaPlayer()

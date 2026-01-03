@@ -1,5 +1,5 @@
 """
-Custom widgets for Netflix-Style Media Player
+Custom widgets for Simple Media Player
 """
 
 from .speed_indicator import SpeedIndicator

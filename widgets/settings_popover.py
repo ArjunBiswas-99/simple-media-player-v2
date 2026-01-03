@@ -10,7 +10,7 @@ from styles import get_popover_container_style
 
 
 class SettingsPopover(QWidget):
-    """Netflix-style settings popover for playback options"""
+    """Professional settings popover for playback options"""
     
     def __init__(self, parent=None):
         super().__init__(parent, Qt.WindowType.Popup)
@@ -91,9 +91,9 @@ class SettingsPopover(QWidget):
                     background-color: transparent;
                 }}
                 QRadioButton::indicator:checked {{
-                    border: 2px solid {NETFLIX_RED};
+                    border: 2px solid {THEME_PRIMARY};
                     border-radius: 7px;
-                    background-color: {NETFLIX_RED};
+                    background-color: {THEME_PRIMARY};
                 }}
                 QRadioButton:hover {{
                     background-color: rgba(255, 255, 255, 8);

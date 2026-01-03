@@ -1,5 +1,5 @@
 """
-Playlist Popover Widget - Netflix-style folder video list
+Playlist Popover Widget - Professional folder video list
 """
 
 from pathlib import Path
@@ -11,7 +11,7 @@ from styles import get_popover_container_style, get_popover_list_style
 
 
 class PlaylistPopover(QWidget):
-    """Netflix-style playlist popover showing videos in current folder"""
+    """Professional playlist popover showing videos in current folder"""
     
     def __init__(self, parent=None):
         super().__init__(parent, Qt.WindowType.Popup)
@@ -113,7 +113,7 @@ class PlaylistPopover(QWidget):
                     item.setData(Qt.ItemDataRole.UserRole, str(file_path))
                     
                     if is_current:
-                        item.setForeground(QColor(NETFLIX_RED))
+                        item.setForeground(QColor(THEME_PRIMARY))
                         font = item.font()
                         font.setBold(True)
                         item.setFont(font)

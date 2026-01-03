@@ -4,11 +4,12 @@ Orchestrates all components following SOLID principles
 """
 
 import os
+import qtawesome as qta
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QSlider, QLabel, QFileDialog, QMessageBox
 )
-from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation
+from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation, QSize
 from PyQt6.QtGui import QCursor, QAction
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
@@ -19,11 +20,11 @@ from widgets import SpeedIndicator, PlaylistPopover, SettingsPopover
 
 
 class MediaPlayer(QMainWindow):
-    """Netflix-style professional media player with VLC menus and YouTube features"""
+    """Professional media player with VLC menus and YouTube features by Arjun Biswas"""
     
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Netflix Media Player")
+        self.setWindowTitle("Simple Media Player")
         self.setGeometry(100, 100, 1280, 720)
         self.setMinimumSize(800, 600)
         
@@ -61,7 +62,7 @@ class MediaPlayer(QMainWindow):
         
         # Video widget
         self.video_widget = QVideoWidget()
-        self.video_widget.setStyleSheet(f"background-color: {NETFLIX_BLACK};")
+        self.video_widget.setStyleSheet(f"background-color: {THEME_BLACK};")
         self.video_widget.setAspectRatioMode(Qt.AspectRatioMode.KeepAspectRatio)
         self.player.setVideoOutput(self.video_widget)
         layout.addWidget(self.video_widget)
@@ -139,20 +140,23 @@ class MediaPlayer(QMainWindow):
         )
         
         # Play/pause button (FIRST - most important)
-        self.play_pause_btn = self._create_button(
-            "▶", BUTTON_SIZE_LARGE, 
-            get_button_style(BUTTON_SIZE_LARGE).replace("16px", "20px"),
+        self.play_pause_btn = self._create_icon_button(
+            'fa5s.play', BUTTON_SIZE_LARGE, ICON_SIZE_LARGE,
             "Play/Pause (Space)"
         )
         
         # Playback controls
-        self.skip_back_btn = self._create_button("⏪", BUTTON_SIZE_SMALL, get_button_style(), "Rewind 10s")
-        self.skip_forward_btn = self._create_button("⏩", BUTTON_SIZE_SMALL, get_button_style(), "Forward 10s")
-        self.stop_btn = self._create_button("⏹", BUTTON_SIZE_SMALL, get_button_style(), "Stop (S)")
+        self.skip_back_btn = self._create_icon_button('fa5s.backward', BUTTON_SIZE_SMALL, ICON_SIZE_SMALL, "Rewind 10s")
+        self.skip_forward_btn = self._create_icon_button('fa5s.forward', BUTTON_SIZE_SMALL, ICON_SIZE_SMALL, "Forward 10s")
+        self.stop_btn = self._create_icon_button('fa5s.stop', BUTTON_SIZE_SMALL, ICON_SIZE_SMALL, "Stop (S)")
         
         # Volume controls
-        volume_label = QLabel("🔊")
-        volume_label.setStyleSheet(f"color: white; font-size: {FONT_SIZE_MEDIUM}px;")
+        volume_icon = QPushButton()
+        volume_icon.setIcon(qta.icon('fa5s.volume-up', color='white'))
+        volume_icon.setIconSize(QSize(16, 16))
+        volume_icon.setFixedSize(24, 24)
+        volume_icon.setStyleSheet("background: transparent; border: none;")
+        volume_icon.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
         
         self.volume_slider = QSlider(Qt.Orientation.Horizontal)
         self.volume_slider.setRange(0, 100)
@@ -172,9 +176,9 @@ class MediaPlayer(QMainWindow):
         """)
         
         # Tool buttons
-        self.playlist_btn = self._create_button("☰", BUTTON_SIZE_SMALL, get_button_style(), "Playlist")
-        self.settings_btn = self._create_button("⚙", BUTTON_SIZE_SMALL, get_button_style(), "Settings")
-        self.fullscreen_btn = self._create_button("⛶", BUTTON_SIZE_SMALL, get_button_style(), "Fullscreen (F11)")
+        self.playlist_btn = self._create_icon_button('fa5s.folder-open', BUTTON_SIZE_SMALL, ICON_SIZE_TINY, "Playlist")
+        self.settings_btn = self._create_icon_button('fa5s.cog', BUTTON_SIZE_SMALL, ICON_SIZE_TINY, "Settings")
+        self.fullscreen_btn = self._create_icon_button('fa5s.expand', BUTTON_SIZE_SMALL, ICON_SIZE_TINY, "Fullscreen (F11)")
         
         # Layout: time | play/pause | controls | spacer | volume | speed | tools
         bottom_layout.addWidget(self.current_time_label)
@@ -184,7 +188,7 @@ class MediaPlayer(QMainWindow):
         bottom_layout.addWidget(self.skip_forward_btn)
         bottom_layout.addWidget(self.stop_btn)
         bottom_layout.addStretch()
-        bottom_layout.addWidget(volume_label)
+        bottom_layout.addWidget(volume_icon)
         bottom_layout.addWidget(self.volume_slider)
         bottom_layout.addSpacing(8)
         bottom_layout.addWidget(self.speed_label)
@@ -203,6 +207,35 @@ class MediaPlayer(QMainWindow):
         btn.setFixedSize(size, size)
         btn.setStyleSheet(style)
         btn.setToolTip(tooltip)
+        return btn
+    
+    def _create_icon_button(self, icon_name, button_size, icon_size, tooltip):
+        """Create a button with Font Awesome icon"""
+        btn = QPushButton()
+        btn.setFixedSize(button_size, button_size)
+        btn.setStyleSheet(get_button_style(button_size))
+        btn.setToolTip(tooltip)
+        
+        # Store icon name and sizes for hover effects
+        btn.icon_name = icon_name
+        btn.icon_size = icon_size
+        
+        # Create icon with primary red color (normal state)
+        btn.setIcon(qta.icon(icon_name, color=THEME_PRIMARY))
+        btn.setIconSize(QSize(icon_size, icon_size))
+        
+        # Add hover/press event handlers for icon color change
+        def on_enter(event):
+            btn.setIcon(qta.icon(btn.icon_name, color='white'))
+            QPushButton.enterEvent(btn, event)
+        
+        def on_leave(event):
+            btn.setIcon(qta.icon(btn.icon_name, color=THEME_PRIMARY))
+            QPushButton.leaveEvent(btn, event)
+        
+        btn.enterEvent = on_enter
+        btn.leaveEvent = on_leave
+        
         return btn
         
     def _setup_menu_bar(self):
@@ -331,8 +364,14 @@ class MediaPlayer(QMainWindow):
         """Toggle play/pause"""
         if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
             self.player.pause()
+            # Paused state - show play icon in red
+            self.play_pause_btn.setIcon(qta.icon('fa5s.play', color=THEME_PRIMARY))
+            self.play_pause_btn.icon_name = 'fa5s.play'
         else:
             self.player.play()
+            # Playing state - show pause icon in white (active state)
+            self.play_pause_btn.setIcon(qta.icon('fa5s.pause', color='white'))
+            self.play_pause_btn.icon_name = 'fa5s.pause'
             
     def seek_relative(self, ms):
         """Seek relative to current position"""
@@ -363,16 +402,19 @@ class MediaPlayer(QMainWindow):
         if self.isFullScreen():
             self.showNormal()
             self.menuBar().show()
+            self.fullscreen_btn.setIcon(qta.icon('fa5s.expand', color=THEME_PRIMARY))
         else:
             self.showFullScreen()
             self.menuBar().hide()
+            self.fullscreen_btn.setIcon(qta.icon('fa5s.compress', color=THEME_PRIMARY))
             
     def show_about(self):
         """Show about dialog"""
         QMessageBox.about(
-            self, "About Netflix Media Player",
-            "<h2>Netflix Media Player</h2>"
+            self, "About Simple Media Player",
+            "<h2>Simple Media Player</h2>"
             "<p>Professional media player built with PyQt6</p>"
+            "<p>By Arjun Biswas</p>"
             "<p>Version 2.1</p>"
             "<p>Features perfect A/V synchronization</p>"
         )
