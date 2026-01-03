@@ -46,10 +46,15 @@ class FFmpegPlayer(BasePlayer):
         self._render_timer.timeout.connect(self._render_frame)
         self._render_timer.setTimerType(Qt.TimerType.PreciseTimer)  # PreciseTimer for smooth playback
         
-        # Decoding thread
+        # Decoding threads
         self._decode_thread = None
-        self._decode_queue = queue.Queue(maxsize=30)  # Frame queue
+        self._decode_queue = queue.Queue(maxsize=30)  # Video frame queue
+        self._audio_queue = queue.Queue(maxsize=100)  # Audio frame queue
         self._stop_decode = threading.Event()
+        
+        # Audio playback
+        self._audio_io_device = None  # QIODevice for audio output
+        self._audio_buffer = bytearray()
         
         # Error handling
         self._last_error = ""
@@ -74,6 +79,10 @@ class FFmpegPlayer(BasePlayer):
         if not self._audio_output:
             return
         
+        # Stop existing audio sink
+        if self._audio_sink:
+            self._audio_sink.stop()
+        
         # Create audio format (default: 48kHz, stereo, 16-bit)
         audio_format = QAudioFormat()
         audio_format.setSampleRate(48000)
@@ -83,6 +92,10 @@ class FFmpegPlayer(BasePlayer):
         # Create audio sink
         device = self._audio_output.device()
         self._audio_sink = QAudioSink(device, audio_format)
+        
+        # Start audio sink with a buffer
+        from PyQt6.QtCore import QBuffer, QIODevice
+        self._audio_io_device = self._audio_sink.start()
     
     def set_source(self, url):
         """Set the media source URL."""
@@ -156,6 +169,11 @@ class FFmpegPlayer(BasePlayer):
             self._decode_thread = threading.Thread(target=self._decode_loop, daemon=True)
             self._decode_thread.start()
         
+        # Start audio sink if available
+        if self._audio_sink and self._audio_io_device:
+            if self._audio_sink.state() != self._audio_sink.State.ActiveState:
+                self._audio_io_device = self._audio_sink.start()
+        
         # Start rendering
         self._is_playing = True
         frame_rate = 30  # Default FPS
@@ -189,15 +207,25 @@ class FFmpegPlayer(BasePlayer):
         self._is_paused = False
         self._render_timer.stop()
         
+        # Stop audio sink
+        if self._audio_sink:
+            self._audio_sink.stop()
+        
         # Stop decode thread
         if self._decode_thread and self._decode_thread.is_alive():
             self._stop_decode.set()
             self._decode_thread.join(timeout=1.0)
         
-        # Clear frame queue
+        # Clear frame queues
         while not self._decode_queue.empty():
             try:
                 self._decode_queue.get_nowait()
+            except:
+                break
+        
+        while not self._audio_queue.empty():
+            try:
+                self._audio_queue.get_nowait()
             except:
                 break
         
@@ -232,10 +260,20 @@ class FFmpegPlayer(BasePlayer):
             self._is_playing = False
             self._render_timer.stop()
         
-        # Clear frame queue before seeking
+        # Stop audio temporarily
+        if self._audio_sink:
+            self._audio_sink.stop()
+        
+        # Clear frame queues before seeking
         while not self._decode_queue.empty():
             try:
                 self._decode_queue.get_nowait()
+            except:
+                break
+        
+        while not self._audio_queue.empty():
+            try:
+                self._audio_queue.get_nowait()
             except:
                 break
         
@@ -243,7 +281,8 @@ class FFmpegPlayer(BasePlayer):
         try:
             # Convert milliseconds to microseconds
             seek_target = int(position_ms * 1000)
-            self._container.seek(seek_target)
+            # Use BACKWARD flag for more accurate seeking
+            self._container.seek(seek_target, backward=True, any_frame=False)
             
             # Update position
             self._position = position_ms
@@ -255,6 +294,10 @@ class FFmpegPlayer(BasePlayer):
                 self._stop_decode.clear()
                 self._decode_thread = threading.Thread(target=self._decode_loop, daemon=True)
                 self._decode_thread.start()
+                
+                # Restart audio sink
+                if self._audio_sink and self._audio_io_device:
+                    self._audio_io_device = self._audio_sink.start()
                 
                 # Resume playback
                 self._start_time = time.time() - (position_ms / 1000.0)
@@ -369,13 +412,23 @@ class FFmpegPlayer(BasePlayer):
     # ==================== Internal Methods ====================
     
     def _decode_loop(self):
-        """Background thread for decoding frames."""
+        """Background thread for decoding both video and audio."""
         try:
             # Check if container is still valid
-            if not self._container or not self._video_stream:
+            if not self._container:
                 return
             
-            for packet in self._container.demux(self._video_stream):
+            # Demux both video and audio streams
+            streams_to_demux = []
+            if self._video_stream:
+                streams_to_demux.append(self._video_stream)
+            if self._audio_stream:
+                streams_to_demux.append(self._audio_stream)
+            
+            if not streams_to_demux:
+                return
+            
+            for packet in self._container.demux(*streams_to_demux):
                 if self._stop_decode.is_set():
                     break
                 
@@ -384,29 +437,43 @@ class FFmpegPlayer(BasePlayer):
                         if self._stop_decode.is_set():
                             break
                         
-                        # Convert to RGB
-                        frame_rgb = frame.to_ndarray(format='rgb24')
+                        # Handle video frames
+                        if packet.stream.type == 'video':
+                            # Convert to RGB
+                            frame_rgb = frame.to_ndarray(format='rgb24')
+                            
+                            # Put in video queue
+                            try:
+                                self._decode_queue.put((frame_rgb, frame.width, frame.height), timeout=0.1)
+                            except queue.Full:
+                                continue  # Skip frame if queue is full
                         
-                        # Put in queue (block if full)
-                        try:
-                            self._decode_queue.put((frame_rgb, frame.width, frame.height), timeout=1.0)
-                        except queue.Full:
-                            # Skip frame if queue is full
-                            continue
+                        # Handle audio frames
+                        elif packet.stream.type == 'audio':
+                            # Resample to 48kHz stereo if needed
+                            frame = frame.to_ndarray(format='s16', layout='stereo')
+                            audio_data = frame.tobytes()
+                            
+                            # Put in audio queue
+                            try:
+                                self._audio_queue.put(audio_data, timeout=0.1)
+                            except queue.Full:
+                                continue  # Skip if queue is full
+                
                 except Exception as decode_error:
                     # Handle decode errors gracefully
-                    print(f"Frame decode error: {decode_error}")
+                    print(f"Decode error: {decode_error}")
                     continue
         
         except Exception as e:
             print(f"FFmpegPlayer decode loop error: {e}")
     
     def _render_frame(self):
-        """Render the next frame (called by timer)."""
+        """Render the next frame and output audio (called by timer)."""
         if not self._is_playing:
             return
         
-        # Get frame from queue
+        # Get and render video frame
         try:
             frame_data, width, height = self._decode_queue.get_nowait()
             
@@ -432,3 +499,15 @@ class FFmpegPlayer(BasePlayer):
         except queue.Empty:
             # No frame available, continue
             pass
+        
+        # Output audio data
+        if self._audio_io_device and self._audio_sink:
+            try:
+                # Get audio data from queue
+                while not self._audio_queue.empty():
+                    audio_data = self._audio_queue.get_nowait()
+                    # Write to audio sink
+                    if self._audio_io_device.isOpen():
+                        self._audio_io_device.write(audio_data)
+            except:
+                pass
