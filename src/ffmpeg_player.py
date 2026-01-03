@@ -221,33 +221,50 @@ class FFmpegPlayer(BasePlayer):
         
         # Stop current playback temporarily
         was_playing = self._is_playing
+        
+        # Stop decode thread completely before seeking
+        if self._decode_thread and self._decode_thread.is_alive():
+            self._stop_decode.set()
+            self._decode_thread.join(timeout=1.0)
+        
+        # Stop rendering
         if was_playing:
             self._is_playing = False
             self._render_timer.stop()
         
+        # Clear frame queue before seeking
+        while not self._decode_queue.empty():
+            try:
+                self._decode_queue.get_nowait()
+            except:
+                break
+        
         # Seek the container
         try:
-            # Convert milliseconds to stream time base
-            seek_target = int(position_ms * 1000)  # microseconds
+            # Convert milliseconds to microseconds
+            seek_target = int(position_ms * 1000)
             self._container.seek(seek_target)
-            
-            # Clear decode queue
-            while not self._decode_queue.empty():
-                try:
-                    self._decode_queue.get_nowait()
-                except:
-                    break
             
             # Update position
             self._position = position_ms
             self._pause_time = position_ms
             self.positionChanged.emit(position_ms)
             
-            # Resume if was playing
+            # Restart decode thread if was playing
             if was_playing:
+                self._stop_decode.clear()
+                self._decode_thread = threading.Thread(target=self._decode_loop, daemon=True)
+                self._decode_thread.start()
+                
+                # Resume playback
                 self._start_time = time.time() - (position_ms / 1000.0)
                 self._is_playing = True
-                self._render_timer.start(int(1000 / 30))
+                
+                # Restart rendering
+                frame_rate = 30
+                if self._video_stream and self._video_stream.average_rate:
+                    frame_rate = float(self._video_stream.average_rate)
+                self._render_timer.start(int(1000 / frame_rate))
         
         except Exception as e:
             self._last_error = f"Seek failed: {str(e)}"
@@ -354,25 +371,35 @@ class FFmpegPlayer(BasePlayer):
     def _decode_loop(self):
         """Background thread for decoding frames."""
         try:
+            # Check if container is still valid
+            if not self._container or not self._video_stream:
+                return
+            
             for packet in self._container.demux(self._video_stream):
                 if self._stop_decode.is_set():
                     break
                 
-                for frame in packet.decode():
-                    if self._stop_decode.is_set():
-                        break
-                    
-                    # Convert to RGB
-                    frame_rgb = frame.to_ndarray(format='rgb24')
-                    
-                    # Put in queue (block if full)
-                    try:
-                        self._decode_queue.put((frame_rgb, frame.width, frame.height), timeout=1.0)
-                    except queue.Full:
-                        continue  # Skip frame if queue is full
+                try:
+                    for frame in packet.decode():
+                        if self._stop_decode.is_set():
+                            break
+                        
+                        # Convert to RGB
+                        frame_rgb = frame.to_ndarray(format='rgb24')
+                        
+                        # Put in queue (block if full)
+                        try:
+                            self._decode_queue.put((frame_rgb, frame.width, frame.height), timeout=1.0)
+                        except queue.Full:
+                            # Skip frame if queue is full
+                            continue
+                except Exception as decode_error:
+                    # Handle decode errors gracefully
+                    print(f"Frame decode error: {decode_error}")
+                    continue
         
         except Exception as e:
-            print(f"FFmpegPlayer decode error: {e}")
+            print(f"FFmpegPlayer decode loop error: {e}")
     
     def _render_frame(self):
         """Render the next frame (called by timer)."""
