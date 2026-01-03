@@ -733,11 +733,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (done)
             break;
 
-        // Check for WASAPI flush requests from audio thread (Windows only)
-        if (state.audioOutput) {
-            state.audioOutput->checkAndFlushIfNeeded();
-        }
-
         // Process video frames with A/V synchronization (same as macOS)
         if (state.fileLoaded && state.decoder && state.decoder->hasVideo() && state.isPlaying && videoErrorCount < MAX_VIDEO_ERRORS) {
             // Get audio clock for synchronization

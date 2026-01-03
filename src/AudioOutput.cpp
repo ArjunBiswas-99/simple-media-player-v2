@@ -401,13 +401,8 @@ void AudioOutput::audioThreadFunc() {
         
         // Get buffer
         BYTE* data;
-        std::cout << "THREAD: Calling GetBuffer(" << numFramesAvailable << ")" << std::endl;
         hr = m_renderClient->GetBuffer(numFramesAvailable, &data);
-        if (FAILED(hr)) {
-            std::cout << "THREAD: GetBuffer FAILED: 0x" << std::hex << hr << std::dec << std::endl;
-            continue;
-        }
-        std::cout << "THREAD: GetBuffer succeeded" << std::endl;
+        if (FAILED(hr)) continue;
         
         // Fill buffer with audio data
         UINT32 framesFilled = 0;
@@ -480,35 +475,36 @@ void AudioOutput::audioThreadFunc() {
                                   ((timeDiff < 0) || (timeDiff > 0.5));
             
             if (isSeekDetected) {
-                // Seek detected - request flush but DON'T update clock yet
-                // Clock will be updated when we start copying new audio after flush
-                double oldClock = m_audioClock;
-                m_flushRequested.store(true);
-                // Clean log format: SEEK POSITION - AUDIO CLOCK POSITION - VIDEO POSITION (no video info here)
-                // We'll log this with more complete info when resume happens
-                
-                // Delete stale frame (decoder will provide fresh frames from new position)
+                // Seek detected - discard stale frame and output silence
                 delete frame;
                 
-                // Fill with silence and return
-                memset(floatBuffer, 0, numFramesAvailable * m_channels * sizeof(float));
-                hr = m_renderClient->ReleaseBuffer(numFramesAvailable, 0);
-                continue;  // Skip to next iteration
+                // Fill remaining buffer with silence
+                UINT32 remainingFrames = numFramesAvailable - framesFilled;
+                if (remainingFrames > 0) {
+                    memset(floatBuffer, 0, remainingFrames * m_channels * sizeof(float));
+                }
+                framesFilled = numFramesAvailable;
+                break;  // Exit inner loop to release buffer
             } else if (m_audioClock < 0.001 && frameOffset == 0) {
                 // Very first frame - initialize clock
                 m_audioClock = frame->pts;
                 m_lastClockUpdate = frame->pts;
             }
             
-            // If flush is pending, fill silence and wait
+            // If flush is pending, output silence and clear flag
             if (m_flushRequested.load()) {
-                // Delete frame - it's from old position, decoder will provide fresh frames
                 delete frame;
                 
-                // Fill with silence
-                memset(floatBuffer, 0, numFramesAvailable * m_channels * sizeof(float));
-                hr = m_renderClient->ReleaseBuffer(numFramesAvailable, 0);
-                continue;
+                // Fill remaining buffer with silence
+                UINT32 remainingFrames = numFramesAvailable - framesFilled;
+                if (remainingFrames > 0) {
+                    memset(floatBuffer, 0, remainingFrames * m_channels * sizeof(float));
+                }
+                framesFilled = numFramesAvailable;
+                
+                // Clear flush flag after outputting one silence buffer
+                m_flushRequested.store(false);
+                break;  // Exit inner loop to release buffer
             }
             
             // Log first frame after flush completes
@@ -525,10 +521,8 @@ void AudioOutput::audioThreadFunc() {
             
             if (logNextFrame && frameOffset == 0) {
                 // First complete frame after flush - synchronize clock to new position
-                double oldClock = m_audioClock;
                 m_audioClock = frame->pts;
                 m_lastClockUpdate = frame->pts;
-                std::cout << frame->pts << " - " << m_audioClock << " - N/A" << std::endl;
                 logNextFrame = false;
             }
             
@@ -560,12 +554,9 @@ void AudioOutput::audioThreadFunc() {
         }
         
         // Release buffer
-        std::cout << "THREAD: Calling ReleaseBuffer(" << numFramesAvailable << ")" << std::endl;
         hr = m_renderClient->ReleaseBuffer(numFramesAvailable, 0);
         if (FAILED(hr)) {
-            std::cerr << "THREAD: ReleaseBuffer FAILED: 0x" << std::hex << hr << std::dec << std::endl;
-        } else {
-            std::cout << "THREAD: ReleaseBuffer succeeded" << std::endl;
+            std::cerr << "ReleaseBuffer error: 0x" << std::hex << hr << std::dec << std::endl;
         }
     }
 }
@@ -584,34 +575,8 @@ void AudioOutput::checkAndFlushIfNeeded() {
         return;
     }
     
-    // Stop audio client
-    std::cout << "FLUSH: Calling Stop()" << std::endl;
-    HRESULT hr = m_audioClient->Stop();
-    std::cout << "FLUSH: Stop() returned: 0x" << std::hex << hr << std::dec << std::endl;
-    if (FAILED(hr)) {
-        m_flushRequested.store(false);
-        return;
-    }
-    
-    std::cout << "FLUSH: Calling Reset()" << std::endl;
-    hr = m_audioClient->Reset();
-    std::cout << "FLUSH: Reset() returned: 0x" << std::hex << hr << std::dec << std::endl;
-    if (FAILED(hr)) {
-        m_audioClient->Start();  // Try to restart anyway
-        m_flushRequested.store(false);
-        return;
-    }
-    
-    std::cout << "FLUSH: Calling Start()" << std::endl;
-    hr = m_audioClient->Start();
-    std::cout << "FLUSH: Start() returned: 0x" << std::hex << hr << std::dec << std::endl;
-    if (FAILED(hr)) {
-        m_flushRequested.store(false);
-        return;
-    }
-    
-    std::cout << "FLUSH: Complete" << std::endl;
-    // Clear the flush request flag - audio callback will resume normal operation
+    // Flush is now handled by audio thread - this function is kept for compatibility
+    // but does nothing to avoid race condition
     m_flushRequested.store(false);
 #endif
 }
