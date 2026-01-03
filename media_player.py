@@ -707,7 +707,6 @@ class MediaPlayer(QMainWindow):
         self._enable_video_menus()
         
         # Show filename overlay
-        import os
         filename = os.path.basename(file_path)
         self.filename_label.setText(filename)
         self.filename_label.adjustSize()
