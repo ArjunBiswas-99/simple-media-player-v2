@@ -1,0 +1,13 @@
+ C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> python player.py
+Traceback (most recent call last):
+  File "C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\player.py", line 232, in open_file
+    self.player.play(filename)
+  File "C:\Python310\lib\site-packages\mpv.py", line 1880, in play
+    self.loadfile(filename)
+  File "C:\Python310\lib\site-packages\mpv.py", line 1329, in loadfile
+    self.command('loadfile', filename.encode(fs_enc), mode, MPV._encode_options(options))
+  File "C:\Python310\lib\site-packages\mpv.py", line 1227, in command
+    _mpv_command_node(self.handle, ppointer, out)
+  File "C:\Python310\lib\site-packages\mpv.py", line 142, in raise_for_ec
+    raise ex
+ValueError: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x000001C7C4552A40>, <mpv.LP_MpvNode object at 0x000001C7C68F4740>, <mpv.LP_MpvNode object at 0x000001C7C68F46C0>))
