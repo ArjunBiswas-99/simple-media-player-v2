@@ -145,7 +145,7 @@ class PlayerManager(QObject):
         """Set audio output for both players."""
         self._audio_output = audio_output
         self._qt_player.set_audio_output(audio_output)
-        self._ffmpeg_player.set_audio_output(audio_output)
+        self._mpv_player.set_audio_output(audio_output)
     
     def setVideoOutput(self, video_widget: QVideoWidget):
         """Set video output widget (QVideoWidget for Qt player)."""
@@ -154,9 +154,9 @@ class PlayerManager(QObject):
         self._qt_player.set_video_output(video_widget)
     
     def setCustomVideoOutput(self, custom_widget: CustomVideoWidget):
-        """Set custom video output widget (for FFmpeg player)."""
+        """Set custom video output widget (for mpv player)."""
         self._custom_video_widget = custom_widget
-        self._ffmpeg_player.set_video_output(custom_widget)
+        self._mpv_player.set_video_output(custom_widget)
     
     def setSource(self, url):
         """
@@ -170,8 +170,8 @@ class PlayerManager(QObject):
             file_path = url
         
         # Determine which player to use
-        use_ffmpeg = self._should_use_ffmpeg(file_path)
-        target_player = self._ffmpeg_player if use_ffmpeg else self._qt_player
+        use_mpv = self._should_use_mpv(file_path)
+        target_player = self._mpv_player if use_mpv else self._qt_player
         
         # Switch player if needed
         if target_player != self._current_player:

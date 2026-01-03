@@ -5,7 +5,7 @@ Uses libmpv for robust .ts file playback with perfect A/V sync.
 import os
 import sys
 import platform
-import mpv
+# Note: mpv imported lazily in _load_mpv() to avoid import errors if library not found
 from PyQt6.QtCore import QTimer, QUrl, Qt
 from PyQt6.QtMultimedia import QMediaPlayer
 from PyQt6.QtWidgets import QWidget
@@ -18,7 +18,11 @@ class MpvPlayer(BasePlayer):
     def __init__(self, parent=None):
         super().__init__(parent)
         
-        # Find and load libmpv
+        # mpv module (loaded lazily)
+        self._mpv_module = None
+        self._mpv_load_error = None
+        
+        # Find libmpv location
         self._libmpv_path = self._find_libmpv()
         
         # State
@@ -36,6 +40,62 @@ class MpvPlayer(BasePlayer):
         
         # Error tracking
         self._last_error = ""
+    
+    def _load_mpv(self):
+        """Lazy load mpv module to avoid import errors at startup."""
+        if self._mpv_module is not None:
+            return True
+        
+        if self._mpv_load_error is not None:
+            return False  # Already tried and failed
+        
+        try:
+            # Set library path before import if we have bundled version
+            if self._libmpv_path:
+                import ctypes.util
+                # Override find_library to return our bundled path
+                original_find = ctypes.util.find_library
+                def find_mpv(name):
+                    if 'mpv' in name.lower():
+                        return self._libmpv_path
+                    return original_find(name)
+                ctypes.util.find_library = find_mpv
+            
+            # Now import mpv
+            import mpv as mpv_module
+            self._mpv_module = mpv_module
+            
+            # Restore original find_library
+            if self._libmpv_path:
+                ctypes.util.find_library = original_find
+            
+            return True
+            
+        except OSError as e:
+            self._mpv_load_error = str(e)
+            
+            # Provide helpful error message
+            if 'Windows' in platform.system():
+                self._mpv_load_error = (
+                    "libmpv-2.dll not found. Please download it from:\n"
+                    "https://sourceforge.net/projects/mpv-player-windows/files/libmpv/\n"
+                    "and place it in: external/mpv/windows/libmpv-2.dll"
+                )
+            elif 'Darwin' in platform.system():
+                self._mpv_load_error = (
+                    "libmpv not found. Please run: brew install mpv\n"
+                    "Or the bundled library may be missing from: external/mpv/macos/"
+                )
+            else:
+                self._mpv_load_error = f"libmpv not found: {e}"
+            
+            print(f"MpvPlayer: {self._mpv_load_error}")
+            return False
+        
+        except Exception as e:
+            self._mpv_load_error = f"Failed to load mpv: {str(e)}"
+            print(f"MpvPlayer: {self._mpv_load_error}")
+            return False
     
     def _find_libmpv(self):
         """Locate libmpv library - checks bundled location first, then system."""
@@ -66,38 +126,25 @@ class MpvPlayer(BasePlayer):
     
     def _create_mpv_instance(self, widget):
         """Create mpv player instance with widget embedding."""
+        # Load mpv module first
+        if not self._load_mpv():
+            self._last_error = self._mpv_load_error or "Failed to load mpv"
+            return False
+        
         try:
             # Ensure widget has native window handle
             widget.setAttribute(Qt.WidgetAttribute.WA_NativeWindow, True)
             widget.setAttribute(Qt.WidgetAttribute.WA_DontCreateNativeAncestors, False)
             
-            # Prepare mpv kwargs
-            mpv_kwargs = {}
-            
-            # Add libmpv path if we found bundled version
-            if self._libmpv_path:
-                mpv_kwargs['libmpv'] = self._libmpv_path
-            
-            # Create base mpv instance first (to load library)
-            try:
-                if mpv_kwargs:
-                    self._player = mpv.MPV(**mpv_kwargs)
-                else:
-                    self._player = mpv.MPV()
-            except OSError as e:
-                # Try without explicit path, let python-mpv find it
-                if 'Cannot find libmpv' in str(e):
-                    self._player = mpv.MPV()
-                else:
-                    raise
-            
-            # Now configure for widget embedding
-            self._player.wid = str(int(widget.winId()))
-            self._player.keep_open = 'yes'
-            self._player.idle = 'yes'
-            self._player.input_default_bindings = False
-            self._player.input_vo_keyboard = False
-            self._player.osc = False
+            # Create mpv instance
+            self._player = self._mpv_module.MPV(
+                wid=str(int(widget.winId())),
+                keep_open='yes',
+                idle='yes',
+                input_default_bindings=False,
+                input_vo_keyboard=False,
+                osc=False
+            )
             
             # Register event handlers
             @self._player.event_callback('end-file')
