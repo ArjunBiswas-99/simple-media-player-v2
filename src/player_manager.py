@@ -36,6 +36,8 @@ class PlayerManager(QObject):
     hasAudioChanged = pyqtSignal(bool)
     videoOutputChanged = pyqtSignal()
     bufferProgressChanged = pyqtSignal(float)
+    indexingProgress = pyqtSignal(int)  # Indexing progress for FFmpegPlayer
+    indexedDurationChanged = pyqtSignal(int)  # Indexed duration for FFmpegPlayer
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -74,6 +76,8 @@ class PlayerManager(QObject):
         player.hasAudioChanged.connect(lambda has: self._forward_if_active(player, self.hasAudioChanged, has))
         player.videoOutputChanged.connect(lambda: self._forward_if_active(player, self.videoOutputChanged))
         player.bufferProgressChanged.connect(lambda prog: self._forward_if_active(player, self.bufferProgressChanged, prog))
+        player.indexingProgress.connect(lambda prog: self._forward_if_active(player, self.indexingProgress, prog))
+        player.indexedDurationChanged.connect(lambda dur: self._forward_if_active(player, self.indexedDurationChanged, dur))
     
     def _forward_if_active(self, player: BasePlayer, signal, *args):
         """Forward signal only if it came from the active player."""
@@ -280,6 +284,12 @@ class PlayerManager(QObject):
     def isUsingFFmpegPlayer(self) -> bool:
         """Check if currently using FFmpegPlayer."""
         return isinstance(self._current_player, FFmpegPlayer)
+    
+    def indexed_duration(self) -> int:
+        """Get indexed duration for FFmpegPlayer (in milliseconds)."""
+        if isinstance(self._current_player, FFmpegPlayer):
+            return self._current_player.indexed_duration()
+        return self._current_player.duration()  # Qt player is always "indexed"
     
     # ==================== Fallback Mechanism ====================
     

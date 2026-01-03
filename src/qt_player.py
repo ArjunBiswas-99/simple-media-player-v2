@@ -66,6 +66,9 @@ class QtPlayer(BasePlayer):
             url = QUrl.fromLocalFile(url)
         self._source = url
         self._player.setSource(url)
+        # Qt player is always "fully indexed" (no progressive indexing needed)
+        self.indexingProgress.emit(100)
+        self.indexedDurationChanged.emit(self._player.duration())
     
     def play(self):
         """Start playback."""
@@ -155,6 +158,10 @@ class QtPlayer(BasePlayer):
     def audio_output(self):
         """Get the audio output device."""
         return self._audio_output
+    
+    def indexed_duration(self):
+        """Get indexed duration (Qt player is always fully indexed)."""
+        return self._player.duration()
     
     def cleanup(self):
         """Clean up resources before switching players."""

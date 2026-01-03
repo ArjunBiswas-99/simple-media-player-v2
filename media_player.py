@@ -43,6 +43,7 @@ class MediaPlayer(QMainWindow):
         self.current_audio_device = "Default"
         self.current_stereo_mode = "Stereo"
         self.current_visualization = "Disable"
+        self.indexed_duration_ms = 0  # Track indexed duration for seek blocking
         
         # Setup components in correct order
         self._setup_media_player()
@@ -80,10 +81,24 @@ class MediaPlayer(QMainWindow):
         self.video_widget = QVideoWidget()
         self.video_widget.setStyleSheet(f"background-color: {THEME_BLACK};")
         self.video_widget.setAspectRatioMode(Qt.AspectRatioMode.KeepAspectRatio)
+        
+        # Add double-click fullscreen to Qt video widget
+        def qt_video_double_click(event):
+            self.toggle_fullscreen()
+            QVideoWidget.mouseDoubleClickEvent(self.video_widget, event)
+        self.video_widget.mouseDoubleClickEvent = qt_video_double_click
+        
         self.video_stack.addWidget(self.video_widget)
         
         # Custom video widget (for FFmpeg player - .ts files)
         self.custom_video_widget = CustomVideoWidget()
+        
+        # Add double-click fullscreen to custom video widget
+        def custom_video_double_click(event):
+            self.toggle_fullscreen()
+            CustomVideoWidget.mouseDoubleClickEvent(self.custom_video_widget, event)
+        self.custom_video_widget.mouseDoubleClickEvent = custom_video_double_click
+        
         self.video_stack.addWidget(self.custom_video_widget)
         
         # Set up both video outputs in player manager
@@ -280,6 +295,25 @@ class MediaPlayer(QMainWindow):
         layout.setContentsMargins(CONTROL_PADDING, CONTROL_PADDING, CONTROL_PADDING, CONTROL_PADDING_BOTTOM)
         layout.setSpacing(0)
         
+        # Indexing progress bar (for .ts files) - shown underneath timeline
+        self.indexing_progress_bar = QProgressBar()
+        self.indexing_progress_bar.setRange(0, 100)
+        self.indexing_progress_bar.setValue(0)
+        self.indexing_progress_bar.setTextVisible(False)
+        self.indexing_progress_bar.setFixedHeight(3)  # Thin bar underneath
+        self.indexing_progress_bar.setStyleSheet("""
+            QProgressBar {
+                background-color: transparent;
+                border: none;
+            }
+            QProgressBar::chunk {
+                background-color: rgba(255, 255, 255, 0.3);
+                border-radius: 1px;
+            }
+        """)
+        self.indexing_progress_bar.setVisible(False)  # Hidden by default
+        layout.addWidget(self.indexing_progress_bar)
+        
         # Timeline slider with click-to-seek support
         self.timeline = QSlider(Qt.Orientation.Horizontal)
         self.timeline.setRange(0, 0)
@@ -296,6 +330,17 @@ class MediaPlayer(QMainWindow):
                 
                 # Set slider value based on percentage
                 new_value = int(self.timeline.minimum() + percentage * (self.timeline.maximum() - self.timeline.minimum()))
+                
+                # Check if seeking to unindexed region (for FFmpegPlayer only)
+                if self.player.isUsingFFmpegPlayer():
+                    indexed_duration = self.player.indexed_duration()
+                    if new_value > indexed_duration:
+                        # Block seek to unindexed region
+                        from PyQt6.QtWidgets import QToolTip
+                        global_pos = self.timeline.mapToGlobal(event.position().toPoint())
+                        QToolTip.showText(global_pos, "⏳ Indexing in progress... Please wait", self.timeline, self.timeline.rect(), 2000)
+                        return  # Don't seek
+                
                 self.timeline.setValue(new_value)
                 
                 # Seek to the position
@@ -649,6 +694,8 @@ class MediaPlayer(QMainWindow):
         self.player.positionChanged.connect(self._on_position_changed)
         self.player.durationChanged.connect(self._on_duration_changed)
         self.player.playbackStateChanged.connect(self._on_state_changed)
+        self.player.indexingProgress.connect(self._on_indexing_progress)
+        self.player.indexedDurationChanged.connect(self._on_indexed_duration_changed)
         
         # Button signals
         self.play_pause_btn.clicked.connect(self.toggle_play_pause)
@@ -997,6 +1044,21 @@ class MediaPlayer(QMainWindow):
             self.play_pause_btn.icon_name = 'fa5s.pause'
         elif state == QMediaPlayer.PlaybackState.StoppedState:
             self.play_pause_btn.setIcon(qta.icon('fa5s.play', color=THEME_PRIMARY))
+    
+    def _on_indexing_progress(self, progress):
+        """Update indexing progress bar"""
+        self.indexing_progress_bar.setValue(progress)
+        if progress >= 100:
+            # Hide progress bar when indexing complete
+            self.indexing_progress_bar.setVisible(False)
+        else:
+            # Show progress bar while indexing
+            self.indexing_progress_bar.setVisible(True)
+    
+    def _on_indexed_duration_changed(self, indexed_duration):
+        """Track indexed duration for seek blocking"""
+        # Store indexed duration for later use in seek validation
+        self.indexed_duration_ms = indexed_duration
             self.play_pause_btn.icon_name = 'fa5s.play'
             # Disable video menus when stopped
             self._disable_video_menus()

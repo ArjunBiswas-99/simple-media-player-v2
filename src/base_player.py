@@ -24,6 +24,8 @@ class BasePlayer(QObject, metaclass=QABCMeta):
     hasAudioChanged = pyqtSignal(bool)  # Whether audio is available
     videoOutputChanged = pyqtSignal()  # Video output changed
     bufferProgressChanged = pyqtSignal(float)  # Buffer progress (0.0-1.0)
+    indexingProgress = pyqtSignal(int)  # Indexing progress percentage (0-100)
+    indexedDurationChanged = pyqtSignal(int)  # Indexed duration in milliseconds
     
     def __init__(self, parent=None):
         super().__init__(parent)

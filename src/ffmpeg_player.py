@@ -57,6 +57,13 @@ class FFmpegPlayer(BasePlayer):
         self._audio_buffer = bytearray()
         self._audio_resampler = None  # Reuse single resampler instance
         
+        # Keyframe indexing
+        self._keyframe_index = []  # List of {pts: int, offset: int} dicts
+        self._indexed_duration = 0  # How far we've indexed (in milliseconds)
+        self._indexing_complete = False
+        self._indexing_thread = None
+        self._stop_indexing = threading.Event()
+        
         # Error handling
         self._last_error = ""
     
@@ -148,6 +155,9 @@ class FFmpegPlayer(BasePlayer):
             # Update media status
             self._media_status = QMediaPlayer.MediaStatus.LoadedMedia
             self.mediaStatusChanged.emit(self._media_status)
+            
+            # Start background indexing
+            self._start_background_indexing()
             
         except Exception as e:
             self._last_error = f"Failed to open media: {str(e)}"
@@ -289,12 +299,22 @@ class FFmpegPlayer(BasePlayer):
         
         # Seek the container
         try:
-            # Convert milliseconds to microseconds
-            seek_target = int(position_ms * 1000)
-            
-            # Use BACKWARD flag for keyframe seeking
-            # This is non-blocking - container just repositions, decode thread will catch up
-            self._container.seek(seek_target, backward=True, any_frame=False)
+            # Check if we can use indexed seeking
+            if position_ms <= self._indexed_duration and self._keyframe_index:
+                # INDEXED SEEK - Accurate and fast
+                keyframe = self._find_nearest_keyframe(position_ms)
+                if keyframe:
+                    # Seek to exact keyframe PTS
+                    seek_target = int(keyframe['pts'])
+                    self._container.seek(seek_target, stream=self._video_stream, backward=False, any_frame=False)
+                else:
+                    # Fallback to blind seek
+                    seek_target = int(position_ms * 1000)
+                    self._container.seek(seek_target, backward=True, any_frame=False)
+            else:
+                # UNINDEXED SEEK - Blind seek (less accurate)
+                seek_target = int(position_ms * 1000)
+                self._container.seek(seek_target, backward=True, any_frame=False)
             
             # Update position
             self._position = position_ms
@@ -426,6 +446,11 @@ class FFmpegPlayer(BasePlayer):
         """Clean up resources before switching players."""
         self.stop()
         
+        # Stop indexing thread
+        if self._indexing_thread and self._indexing_thread.is_alive():
+            self._stop_indexing.set()
+            self._indexing_thread.join(timeout=2.0)
+        
         if self._container:
             try:
                 self._container.close()
@@ -436,6 +461,9 @@ class FFmpegPlayer(BasePlayer):
         self._video_stream = None
         self._audio_stream = None
         self._audio_resampler = None
+        self._keyframe_index = []
+        self._indexed_duration = 0
+        self._indexing_complete = False
     
     # ==================== Internal Methods ====================
     
@@ -554,4 +582,96 @@ class FFmpegPlayer(BasePlayer):
                     except queue.Empty:
                         break
             except Exception as e:
-                pass
+                pass    
+    def _start_background_indexing(self):
+        """Start background thread to build keyframe index."""
+        # Reset indexing state
+        self._keyframe_index = []
+        self._indexed_duration = 0
+        self._indexing_complete = False
+        self._stop_indexing.clear()
+        
+        # Start indexing thread
+        self._indexing_thread = threading.Thread(target=self._build_keyframe_index, daemon=True)
+        self._indexing_thread.start()
+    
+    def _build_keyframe_index(self):
+        """Background thread: Scan file and build keyframe index."""
+        try:
+            # Need separate container for indexing (avoid conflicts with playback)
+            index_container = av.open(self._source, options={'buffer_size': str(4 * 1024 * 1024)})  # 4MB buffer
+            
+            video_stream = index_container.streams.video[0] if index_container.streams.video else None
+            if not video_stream:
+                return
+            
+            total_duration = self._duration if self._duration > 0 else 1
+            last_progress = -1
+            
+            # Scan only video packets (skip audio for speed)
+            for packet in index_container.demux(video_stream):
+                if self._stop_indexing.is_set():
+                    break
+                
+                # Record keyframes
+                if packet.is_keyframe and packet.pts is not None:
+                    keyframe_info = {
+                        'pts': int(packet.pts),  # Presentation timestamp
+                        'pts_ms': int(packet.pts * packet.stream.time_base * 1000),  # PTS in milliseconds
+                    }
+                    self._keyframe_index.append(keyframe_info)
+                    
+                    # Update indexed duration
+                    self._indexed_duration = keyframe_info['pts_ms']
+                    
+                    # Emit progress (throttle to every 1%)
+                    progress = int((self._indexed_duration / total_duration) * 100)
+                    if progress > last_progress:
+                        last_progress = progress
+                        self.indexingProgress.emit(progress)
+                        self.indexedDurationChanged.emit(self._indexed_duration)
+            
+            # Indexing complete
+            self._indexing_complete = True
+            self.indexingProgress.emit(100)
+            self.indexedDurationChanged.emit(self._duration)
+            
+            # Close index container
+            index_container.close()
+            
+            print(f"✅ Indexing complete: {len(self._keyframe_index)} keyframes indexed")
+            
+        except Exception as e:
+            print(f"❌ Indexing error: {e}")
+    
+    def _find_nearest_keyframe(self, target_ms):
+        """Find nearest keyframe at or before target position.
+        
+        Args:
+            target_ms: Target position in milliseconds
+            
+        Returns:
+            Keyframe dict or None if not found
+        """
+        if not self._keyframe_index:
+            return None
+        
+        # Binary search for keyframe at or before target
+        left, right = 0, len(self._keyframe_index) - 1
+        result = None
+        
+        while left <= right:
+            mid = (left + right) // 2
+            keyframe = self._keyframe_index[mid]
+            
+            if keyframe['pts_ms'] <= target_ms:
+                result = keyframe
+                left = mid + 1  # Try to find closer keyframe
+            else:
+                right = mid - 1
+        
+        return result
+    
+    def indexed_duration(self):
+        """Get the duration that has been indexed (in milliseconds)."""
+        return self._indexed_duration
