@@ -521,14 +521,27 @@ class FFmpegPlayer(BasePlayer):
             # No frame available, continue
             pass
         
-        # Output audio data
+        # Output audio data - only write amount corresponding to one video frame
         if self._audio_io_device and self._audio_sink:
             try:
-                # Get audio data from queue
-                while not self._audio_queue.empty():
-                    audio_data = self._audio_queue.get_nowait()
-                    # Write to audio sink
-                    if self._audio_io_device.isOpen():
-                        self._audio_io_device.write(audio_data)
-            except:
+                # Calculate how much audio to write for one video frame
+                # At 48kHz stereo s16: 48000 samples/sec * 2 channels * 2 bytes = 192000 bytes/sec
+                frame_rate = 30
+                if self._video_stream and self._video_stream.average_rate:
+                    frame_rate = float(self._video_stream.average_rate)
+                
+                # Bytes per video frame at 48kHz stereo s16
+                bytes_per_frame = int((48000 * 2 * 2) / frame_rate)
+                
+                # Write only the audio for this frame duration
+                bytes_written = 0
+                while bytes_written < bytes_per_frame and not self._audio_queue.empty():
+                    try:
+                        audio_data = self._audio_queue.get_nowait()
+                        if self._audio_io_device.isOpen():
+                            written = self._audio_io_device.write(audio_data)
+                            bytes_written += len(audio_data)
+                    except queue.Empty:
+                        break
+            except Exception as e:
                 pass
