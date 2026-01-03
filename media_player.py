@@ -344,8 +344,8 @@ class MediaPlayer(QMainWindow):
         )
         
         # Playback controls
-        self.skip_back_btn = self._create_icon_button('fa5s.backward', BUTTON_SIZE_SMALL, ICON_SIZE_SMALL, "Rewind 10s")
-        self.skip_forward_btn = self._create_icon_button('fa5s.forward', BUTTON_SIZE_SMALL, ICON_SIZE_SMALL, "Forward 10s")
+        self.skip_back_btn = self._create_icon_button('fa5s.undo', BUTTON_SIZE_SMALL, ICON_SIZE_SMALL, "Rewind 10s")
+        self.skip_forward_btn = self._create_icon_button('fa5s.redo', BUTTON_SIZE_SMALL, ICON_SIZE_SMALL, "Forward 10s")
         self.stop_btn = self._create_icon_button('fa5s.stop', BUTTON_SIZE_SMALL, ICON_SIZE_SMALL, "Stop (S)")
         
         # Volume controls
