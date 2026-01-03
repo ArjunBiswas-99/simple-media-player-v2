@@ -1,6 +1,6 @@
 """
 Player Manager
-Orchestrates switching between QtPlayer and future specialized players.
+Orchestrates switching between QtPlayer and MpvPlayer based on file type.
 Provides seamless player switching while preserving state and UI consistency.
 """
 import os
@@ -9,13 +9,14 @@ from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 from .base_player import BasePlayer
 from .qt_player import QtPlayer
+from .mpv_player import MpvPlayer
 from .custom_video_widget import CustomVideoWidget
 
 
-# Feature flag - currently only QtPlayer available
-ENABLE_MPV_FOR_TS = False  # Will be True after Phase 3
+# Feature flag - enable mpv for .ts files
+ENABLE_MPV_FOR_TS = True
 
-# File extensions that will use MpvPlayer (future)
+# File extensions that will use MpvPlayer
 MPV_EXTENSIONS = ['.ts', '.m2ts', '.mts']
 
 
@@ -39,10 +40,9 @@ class PlayerManager(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         
-        # Create Qt player (only player available currently)
+        # Create both players
         self._qt_player = QtPlayer(self)
-        # TODO: Add MpvPlayer in Phase 3
-        self._mpv_player = None
+        self._mpv_player = MpvPlayer(self)
         
         # Current active player
         self._current_player: BasePlayer = self._qt_player
@@ -58,9 +58,9 @@ class PlayerManager(QObject):
         self._is_muted = False
         self._playback_rate = 1.0
         
-        # Connect signals from Qt player
+        # Connect signals from both players
         self._connect_player_signals(self._qt_player)
-        # TODO Phase 3: Connect MpvPlayer signals when created
+        self._connect_player_signals(self._mpv_player)
     
     def _connect_player_signals(self, player: BasePlayer):
         """Connect a player's signals to manager's signals."""
@@ -278,8 +278,8 @@ class PlayerManager(QObject):
         return self._current_player.get_player_type()
     
     def isUsingFFmpegPlayer(self) -> bool:
-        """Check if currently using FFmpegPlayer (legacy - always False now)."""
-        return False  # FFmpegPlayer removed, will be replaced by MpvPlayer
+        """Check if currently using MpvPlayer (legacy method name for compatibility)."""
+        return isinstance(self._current_player, MpvPlayer)
     
     # ==================== Fallback Mechanism ====================
     

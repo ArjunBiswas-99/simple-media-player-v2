@@ -1,0 +1,393 @@
+"""
+MPV Player Implementation
+Uses libmpv for robust .ts file playback with perfect A/V sync.
+"""
+import os
+import sys
+import platform
+import mpv
+from PyQt6.QtCore import QTimer, QUrl, Qt
+from PyQt6.QtMultimedia import QMediaPlayer
+from PyQt6.QtWidgets import QWidget
+from .base_player import BasePlayer
+
+
+class MpvPlayer(BasePlayer):
+    """mpv-based media player for .ts files."""
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        
+        # Find and load libmpv
+        self._libmpv_path = self._find_libmpv()
+        
+        # State
+        self._player = None
+        self._video_widget = None
+        self._audio_output = None
+        self._playback_state = QMediaPlayer.PlaybackState.StoppedState
+        self._media_status = QMediaPlayer.MediaStatus.NoMedia
+        self._is_seeking = False
+        
+        # Position update timer
+        self._position_timer = QTimer(self)
+        self._position_timer.timeout.connect(self._update_position)
+        self._position_timer.setInterval(100)  # Update every 100ms
+        
+        # Error tracking
+        self._last_error = ""
+    
+    def _find_libmpv(self):
+        """Locate libmpv library - checks bundled location first, then system."""
+        # Get repo root (two levels up from src/)
+        repo_root = os.path.dirname(os.path.dirname(__file__))
+        
+        # Check platform
+        system = platform.system()
+        
+        if system == 'Windows':
+            lib_name = 'libmpv-2.dll'
+            bundled_path = os.path.join(repo_root, 'external', 'mpv', 'windows', lib_name)
+        elif system == 'Darwin':  # macOS
+            lib_name = 'libmpv.2.dylib'
+            bundled_path = os.path.join(repo_root, 'external', 'mpv', 'macos', lib_name)
+        elif system == 'Linux':
+            lib_name = 'libmpv.so.2'
+            bundled_path = os.path.join(repo_root, 'external', 'mpv', 'linux', lib_name)
+        else:
+            bundled_path = None
+        
+        # Check bundled location first
+        if bundled_path and os.path.exists(bundled_path):
+            return bundled_path
+        
+        # Fall back to system-installed mpv (python-mpv will find it)
+        return None
+    
+    def _create_mpv_instance(self, widget):
+        """Create mpv player instance with widget embedding."""
+        try:
+            # Ensure widget has native window handle
+            widget.setAttribute(Qt.WidgetAttribute.WA_NativeWindow, True)
+            widget.setAttribute(Qt.WidgetAttribute.WA_DontCreateNativeAncestors, False)
+            
+            # Create mpv instance
+            kwargs = {
+                'wid': str(int(widget.winId())),
+                'keep_open': 'yes',
+                'idle': 'yes',
+                'input_default_bindings': False,
+                'input_vo_keyboard': False,
+                'osc': False,
+            }
+            
+            # Add libmpv path if found
+            if self._libmpv_path:
+                kwargs['libmpv'] = self._libmpv_path
+            
+            self._player = mpv.MPV(**kwargs)
+            
+            # Register event handlers
+            @self._player.event_callback('end-file')
+            def on_end_file(event):
+                self._on_end_of_media()
+            
+            @self._player.property_observer('duration')
+            def on_duration_change(name, value):
+                if value:
+                    self._duration = int(value * 1000)  # Convert to ms
+                    self.durationChanged.emit(self._duration)
+            
+            return True
+            
+        except Exception as e:
+            self._last_error = f"Failed to initialize mpv: {str(e)}"
+            print(f"MpvPlayer error: {self._last_error}")
+            return False
+    
+    # ==================== BasePlayer Interface Implementation ====================
+    
+    def set_video_output(self, video_widget):
+        """Set the video output widget."""
+        self._video_widget = video_widget
+        
+        if not isinstance(video_widget, QWidget):
+            self._last_error = "Invalid video widget"
+            return
+        
+        # Create mpv instance embedded in widget
+        if not self._create_mpv_instance(video_widget):
+            self.errorOccurred.emit(
+                QMediaPlayer.Error.ResourceError,
+                self._last_error
+            )
+    
+    def set_audio_output(self, audio_output):
+        """Set the audio output device (mpv handles audio internally)."""
+        self._audio_output = audio_output
+        # Note: mpv uses system audio directly, not Qt's audio output
+        # Volume/mute controls still work via mpv properties
+    
+    def set_source(self, url):
+        """Set the media source URL."""
+        if not self._player:
+            self._last_error = "mpv player not initialized"
+            self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
+            return
+        
+        # Stop current playback
+        self.stop()
+        
+        # Store source
+        if isinstance(url, QUrl):
+            url = url.toLocalFile()
+        self._source = url
+        
+        # Load file
+        try:
+            self._player.loadfile(url, 'replace')
+            self._media_status = QMediaPlayer.MediaStatus.LoadedMedia
+            self.mediaStatusChanged.emit(self._media_status)
+            
+            # Check if has video/audio
+            # Note: these properties may not be immediately available
+            self.hasVideoChanged.emit(True)  # Assume .ts has video
+            self.hasAudioChanged.emit(True)  # Assume .ts has audio
+            
+        except Exception as e:
+            self._last_error = f"Failed to load file: {str(e)}"
+            self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
+            self._media_status = QMediaPlayer.MediaStatus.InvalidMedia
+            self.mediaStatusChanged.emit(self._media_status)
+    
+    def play(self):
+        """Start playback."""
+        if not self._player:
+            return
+        
+        try:
+            self._player.pause = False
+            self._position_timer.start()
+            self._playback_state = QMediaPlayer.PlaybackState.PlayingState
+            self.playbackStateChanged.emit(self._playback_state)
+            self._media_status = QMediaPlayer.MediaStatus.BufferedMedia
+            self.mediaStatusChanged.emit(self._media_status)
+        except Exception as e:
+            self._last_error = f"Play error: {str(e)}"
+            self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
+    
+    def pause(self):
+        """Pause playback."""
+        if not self._player:
+            return
+        
+        try:
+            self._player.pause = True
+            self._position_timer.stop()
+            self._playback_state = QMediaPlayer.PlaybackState.PausedState
+            self.playbackStateChanged.emit(self._playback_state)
+        except Exception as e:
+            self._last_error = f"Pause error: {str(e)}"
+            self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
+    
+    def stop(self):
+        """Stop playback."""
+        if not self._player:
+            return
+        
+        try:
+            self._player.stop()
+            self._position_timer.stop()
+            self._position = 0
+            self.positionChanged.emit(0)
+            self._playback_state = QMediaPlayer.PlaybackState.StoppedState
+            self.playbackStateChanged.emit(self._playback_state)
+        except Exception as e:
+            self._last_error = f"Stop error: {str(e)}"
+            self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
+    
+    def set_position(self, position_ms):
+        """Seek to position in milliseconds."""
+        if not self._player:
+            return
+        
+        try:
+            self._is_seeking = True
+            position_sec = position_ms / 1000.0
+            self._player.seek(position_sec, 'absolute')
+            self._position = position_ms
+            self.positionChanged.emit(position_ms)
+            self._is_seeking = False
+        except Exception as e:
+            self._last_error = f"Seek error: {str(e)}"
+            self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
+            self._is_seeking = False
+    
+    def position(self):
+        """Get current position in milliseconds."""
+        if not self._player:
+            return 0
+        
+        try:
+            pos = self._player.time_pos
+            if pos is not None:
+                return int(pos * 1000)
+        except:
+            pass
+        
+        return self._position
+    
+    def duration(self):
+        """Get media duration in milliseconds."""
+        if not self._player:
+            return 0
+        
+        try:
+            dur = self._player.duration
+            if dur is not None:
+                return int(dur * 1000)
+        except:
+            pass
+        
+        return self._duration
+    
+    def set_playback_rate(self, rate):
+        """Set playback speed (0.25x to 2.0x)."""
+        if not self._player:
+            return
+        
+        try:
+            self._playback_rate = rate
+            self._player.speed = rate
+        except Exception as e:
+            self._last_error = f"Set playback rate error: {str(e)}"
+            self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
+    
+    def playback_rate(self):
+        """Get current playback rate."""
+        if not self._player:
+            return self._playback_rate
+        
+        try:
+            return self._player.speed
+        except:
+            return self._playback_rate
+    
+    def playback_state(self):
+        """Get current playback state."""
+        return self._playback_state
+    
+    def media_status(self):
+        """Get current media status."""
+        return self._media_status
+    
+    def has_video(self):
+        """Check if media has video."""
+        # For .ts files, assume always true
+        return True
+    
+    def has_audio(self):
+        """Check if media has audio."""
+        # For .ts files, assume always true
+        return True
+    
+    def error_string(self):
+        """Get last error message."""
+        return self._last_error
+    
+    def set_volume(self, volume):
+        """Set volume (0.0 to 1.0)."""
+        if not self._player:
+            return
+        
+        try:
+            self._volume = volume
+            self._player.volume = int(volume * 100)  # mpv uses 0-100
+        except Exception as e:
+            self._last_error = f"Set volume error: {str(e)}"
+            self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
+    
+    def volume(self):
+        """Get current volume."""
+        if not self._player:
+            return self._volume
+        
+        try:
+            return self._player.volume / 100.0
+        except:
+            return self._volume
+    
+    def set_muted(self, muted):
+        """Set mute state."""
+        if not self._player:
+            return
+        
+        try:
+            self._is_muted = muted
+            self._player.mute = muted
+        except Exception as e:
+            self._last_error = f"Set mute error: {str(e)}"
+            self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
+    
+    def is_muted(self):
+        """Get mute state."""
+        if not self._player:
+            return self._is_muted
+        
+        try:
+            return self._player.mute
+        except:
+            return self._is_muted
+    
+    def is_seekable(self):
+        """Check if media is seekable."""
+        if not self._player:
+            return False
+        
+        try:
+            return self._player.seekable
+        except:
+            return True  # Assume seekable for files
+    
+    def buffer_progress(self):
+        """Get buffer progress (0.0 to 1.0)."""
+        # For local files, consider fully buffered
+        return 1.0
+    
+    def audio_output(self):
+        """Get the audio output device."""
+        return self._audio_output
+    
+    def get_player_type(self):
+        """Get player type identifier."""
+        return "mpv"
+    
+    def cleanup(self):
+        """Clean up resources before switching players."""
+        self.stop()
+        
+        if self._player:
+            try:
+                self._player.terminate()
+            except:
+                pass
+            self._player = None
+    
+    # ==================== Internal Methods ====================
+    
+    def _update_position(self):
+        """Emit position updates (called by timer)."""
+        if not self._is_seeking:
+            pos = self.position()
+            self.positionChanged.emit(pos)
+            
+            # Check if reached end
+            if self._duration > 0 and pos >= self._duration - 100:  # 100ms tolerance
+                # Let mpv's end-file event handle it
+                pass
+    
+    def _on_end_of_media(self):
+        """Handle end of playback."""
+        self.stop()
+        self._media_status = QMediaPlayer.MediaStatus.EndOfMedia
+        self.mediaStatusChanged.emit(self._media_status)
