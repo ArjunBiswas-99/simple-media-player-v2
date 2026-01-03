@@ -16,7 +16,8 @@ from PyQt6.QtMultimediaWidgets import QVideoWidget
 
 from constants import *
 from styles import *
-from widgets import SpeedIndicator, PlaylistPopover, SettingsPopover, InfoPopover
+from widgets import SpeedIndicator, PlaylistPopover, SettingsPopover, InfoPopover, TimelineTooltip
+from thumbnail_generator import ThumbnailGenerator
 
 
 class MediaPlayer(QMainWindow):
@@ -33,6 +34,7 @@ class MediaPlayer(QMainWindow):
         self.is_2x_speed = False
         self.normal_rate = 1.0
         self.current_file = None
+        self.thumbnail_generator = None
         
         # Setup components in correct order
         self._setup_media_player()
@@ -173,6 +175,9 @@ class MediaPlayer(QMainWindow):
         self.skip_overlay.setGraphicsEffect(self.skip_overlay_effect)
         self.skip_overlay.hide()
         
+        # Timeline hover tooltip
+        self.timeline_tooltip = TimelineTooltip(self)
+        
         # Timer for detecting click vs hold (for 2x speed)
         self.click_timer = QTimer(self)
         self.click_timer.setSingleShot(True)
@@ -245,6 +250,7 @@ class MediaPlayer(QMainWindow):
         self.timeline = QSlider(Qt.Orientation.Horizontal)
         self.timeline.setRange(0, 0)
         self.timeline.setStyleSheet(get_timeline_style())
+        self.timeline.setMouseTracking(True)  # Enable hover tracking
         
         # Enable click-to-seek by overriding mouse press behavior
         def timeline_mouse_press(event):
@@ -265,7 +271,45 @@ class MediaPlayer(QMainWindow):
             # Call original handler for other mouse buttons
             QSlider.mousePressEvent(self.timeline, event)
         
+        def timeline_mouse_move(event):
+            """Show hover preview tooltip"""
+            if self.player.duration() > 0:
+                # Calculate timestamp from mouse position
+                slider_width = self.timeline.width()
+                x_pos = event.position().x()
+                progress = max(0, min(1, x_pos / slider_width))
+                timestamp = progress * (self.player.duration() / 1000.0)  # Convert to seconds
+                
+                # Format time
+                formatted_time = self._format_time(int(timestamp * 1000))
+                
+                # Get global position for tooltip
+                global_pos = self.timeline.mapToGlobal(event.position().toPoint())
+                
+                # Show tooltip
+                self.timeline_tooltip.show_at_position(
+                    global_pos.x(), global_pos.y(), timestamp, formatted_time
+                )
+                
+                # Request thumbnail from generator
+                if self.thumbnail_generator:
+                    self.thumbnail_generator.request_thumbnail(timestamp)
+                    
+                    # Try to get exact or nearest thumbnail
+                    jpeg_bytes = self.thumbnail_generator.get_nearest_thumbnail(timestamp)
+                    if jpeg_bytes:
+                        self.timeline_tooltip.update_thumbnail(jpeg_bytes)
+            
+            QSlider.mouseMoveEvent(self.timeline, event)
+        
+        def timeline_leave(event):
+            """Hide tooltip when mouse leaves"""
+            self.timeline_tooltip.reset()
+            QSlider.leaveEvent(self.timeline, event)
+        
         self.timeline.mousePressEvent = timeline_mouse_press
+        self.timeline.mouseMoveEvent = timeline_mouse_move
+        self.timeline.leaveEvent = timeline_leave
         
         # Timeline with duration at the end
         timeline_row = QHBoxLayout()
@@ -534,6 +578,9 @@ class MediaPlayer(QMainWindow):
             
     def load_video(self, file_path):
         """Load and play a video file"""
+        # Cleanup previous thumbnails
+        self._cleanup_thumbnails()
+        
         self.current_file = file_path
         self.player.setSource(QUrl.fromLocalFile(file_path))
         self.player.play()
@@ -555,6 +602,9 @@ class MediaPlayer(QMainWindow):
         
         # Fade out after 2.5 seconds
         QTimer.singleShot(2500, lambda: self._fade_filename_label())
+        
+        # Start thumbnail generation in background
+        self._start_thumbnail_generation(file_path)
         
     # Public Methods - Playback Control
     
@@ -646,6 +696,45 @@ class MediaPlayer(QMainWindow):
         self.filename_fade.setEndValue(0.0)
         self.filename_fade.finished.connect(self.filename_label.hide)
         self.filename_fade.start()
+    
+    def _start_thumbnail_generation(self, file_path):
+        """Start background thumbnail generation"""
+        # Stop existing generator if any
+        if self.thumbnail_generator:
+            self.thumbnail_generator.stop()
+            self.thumbnail_generator.clear()
+        
+        # Get video duration (wait a bit if not ready)
+        def try_start():
+            duration = self.player.duration() / 1000.0  # Convert to seconds
+            
+            if duration > 0:
+                # Create and start generator
+                self.thumbnail_generator = ThumbnailGenerator(file_path, duration)
+                self.thumbnail_generator.thumbnail_ready.connect(self._on_thumbnail_ready)
+                self.thumbnail_generator.start()
+            else:
+                # Try again in 100ms
+                QTimer.singleShot(100, try_start)
+        
+        try_start()
+    
+    def _on_thumbnail_ready(self, timestamp, jpeg_bytes):
+        """Handle newly generated thumbnail"""
+        # If tooltip is showing this timestamp, update it
+        if self.timeline_tooltip.isVisible() and self.timeline_tooltip.current_timestamp:
+            # Check if thumbnail is for current hover position (with small tolerance)
+            if abs(self.timeline_tooltip.current_timestamp - timestamp) < 2.0:
+                self.timeline_tooltip.update_thumbnail(jpeg_bytes)
+    
+    def _cleanup_thumbnails(self):
+        """Clean up thumbnail generator and cache"""
+        if self.thumbnail_generator:
+            self.thumbnail_generator.stop()
+            self.thumbnail_generator.clear()
+            self.thumbnail_generator = None
+        
+        self.timeline_tooltip.reset()
             
     def show_about(self):
         """Show about dialog"""
@@ -1029,3 +1118,8 @@ class MediaPlayer(QMainWindow):
         # Sequence: fade in → wait 300ms → fade out
         self.skip_fade_in.start()
         QTimer.singleShot(450, self.skip_fade_out.start)  # 150ms fade in + 300ms wait
+    
+    def closeEvent(self, event):
+        """Clean up on application close"""
+        self._cleanup_thumbnails()
+        super().closeEvent(event)
