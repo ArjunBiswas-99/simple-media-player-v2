@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QPushButton, QSlider, QLabel, QFileDialog, QMessageBox, QGraphicsOpacityEffect
 )
 from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation, QSize, QEasingCurve, QSequentialAnimationGroup, QParallelAnimationGroup, QPoint, QRect
-from PyQt6.QtGui import QCursor, QAction, QPainter, QColor
+from PyQt6.QtGui import QCursor, QAction, QPainter, QColor, QActionGroup
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput, QMediaMetaData
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 
@@ -38,6 +38,9 @@ class MediaPlayer(QMainWindow):
         self.current_aspect_ratio = "Default"
         self.current_zoom = "1:1 Original"
         self.current_crop = "Default"
+        self.current_audio_device = "Default"
+        self.current_stereo_mode = "Stereo"
+        self.current_visualization = "Disable"
         
         # Setup components in correct order
         self._setup_media_player()
@@ -469,6 +472,63 @@ class MediaPlayer(QMainWindow):
         audio_menu.addSeparator()
         self._add_action(audio_menu, "Volume &Up", "Up", lambda: self.adjust_volume(5), "fa5s.volume-up")
         self._add_action(audio_menu, "Volume &Down", "Down", lambda: self.adjust_volume(-5), "fa5s.volume-down")
+        audio_menu.addSeparator()
+        
+        # Audio Track submenu
+        self.audio_track_menu = audio_menu.addMenu("Audio &Track")
+        self.audio_track_menu.setIcon(qta.icon("fa5s.music", color='white'))
+        self.audio_track_menu.setEnabled(False)
+        
+        # Audio Device submenu
+        self.audio_device_menu = audio_menu.addMenu("Audio &Device")
+        self.audio_device_menu.setIcon(qta.icon("fa5s.headphones", color='white'))
+        self.audio_device_actions = {}
+        self.audio_device_action_group = QActionGroup(self)
+        self.audio_device_action_group.setExclusive(True)
+        device_list = [("Default", None)]
+        from PyQt6.QtMultimedia import QMediaDevices
+        for device in QMediaDevices.audioOutputs():
+            device_list.append((device.description(), device))
+        for label, device in device_list:
+            action = self._add_action(self.audio_device_menu, label, None,
+                           lambda checked, d=device: self.set_audio_device(d), "fa5s.headphones")
+            action.setCheckable(True)
+            action.setActionGroup(self.audio_device_action_group)
+            if label == "Default":
+                action.setChecked(True)
+            self.audio_device_actions[label] = action
+        
+        # Stereo Mode submenu
+        self.stereo_mode_menu = audio_menu.addMenu("&Stereo Mode")
+        self.stereo_mode_menu.setIcon(qta.icon("fa5s.broadcast-tower", color='white'))
+        self.stereo_mode_actions = {}
+        self.stereo_mode_action_group = QActionGroup(self)
+        self.stereo_mode_action_group.setExclusive(True)
+        stereo_modes = ["Mono", "Stereo", "Left", "Right", "Reverse Stereo"]
+        for mode in stereo_modes:
+            action = self._add_action(self.stereo_mode_menu, mode, None,
+                           lambda checked, m=mode: self.set_stereo_mode(m), "fa5s.broadcast-tower")
+            action.setCheckable(True)
+            action.setActionGroup(self.stereo_mode_action_group)
+            if mode == "Stereo":
+                action.setChecked(True)
+            self.stereo_mode_actions[mode] = action
+        
+        # Visualizations submenu
+        self.visualization_menu = audio_menu.addMenu("&Visualizations")
+        self.visualization_menu.setIcon(qta.icon("fa5s.wave-square", color='white'))
+        self.visualization_actions = {}
+        self.visualization_action_group = QActionGroup(self)
+        self.visualization_action_group.setExclusive(True)
+        visualizations = ["Disable", "Spectrometer", "Scope", "Spectrum", "VU Meter", "Goom", "projectM", "3D Spectrum"]
+        for viz in visualizations:
+            action = self._add_action(self.visualization_menu, viz, None,
+                           lambda checked, v=viz: self.set_visualization(v), "fa5s.wave-square")
+            action.setCheckable(True)
+            action.setActionGroup(self.visualization_action_group)
+            if viz == "Disable":
+                action.setChecked(True)
+            self.visualization_actions[viz] = action
         
         # Video Menu
         video_menu = menubar.addMenu("&Video")
@@ -479,6 +539,8 @@ class MediaPlayer(QMainWindow):
         self.aspect_menu = video_menu.addMenu("&Aspect Ratio")
         self.aspect_menu.setIcon(qta.icon("fa5s.expand-arrows-alt", color='white'))
         self.aspect_actions = {}
+        self.aspect_action_group = QActionGroup(self)
+        self.aspect_action_group.setExclusive(True)
         aspect_ratios = [("Default", None), ("16:9", (16, 9)), ("4:3", (4, 3)), ("1:1", (1, 1)), 
                         ("16:10", (16, 10)), ("2.21:1", (221, 100)), ("2.35:1", (235, 100)), 
                         ("2.39:1", (239, 100)), ("5:4", (5, 4))]
@@ -486,6 +548,7 @@ class MediaPlayer(QMainWindow):
             action = self._add_action(self.aspect_menu, label, "A" if label == "Default" else None,
                            lambda checked, l=label, r=ratio: self.set_aspect_ratio(l, r), "fa5s.expand-arrows-alt")
             action.setCheckable(True)
+            action.setActionGroup(self.aspect_action_group)
             if label == "Default":
                 action.setChecked(True)
             self.aspect_actions[label] = action
@@ -494,12 +557,15 @@ class MediaPlayer(QMainWindow):
         self.zoom_menu = video_menu.addMenu("&Zoom")
         self.zoom_menu.setIcon(qta.icon("fa5s.search-plus", color='white'))
         self.zoom_actions = {}
+        self.zoom_action_group = QActionGroup(self)
+        self.zoom_action_group.setExclusive(True)
         zoom_levels = [("Default", 1.0), ("1:4 Quarter", 0.25), ("1:2 Half", 0.5), 
                       ("1:1 Original", 1.0), ("2:1 Double", 2.0)]
         for label, scale in zoom_levels:
             action = self._add_action(self.zoom_menu, label, None,
                            lambda checked, l=label, s=scale: self.set_zoom(l, s), "fa5s.search-plus")
             action.setCheckable(True)
+            action.setActionGroup(self.zoom_action_group)
             if label == "1:1 Original":
                 action.setChecked(True)
             self.zoom_actions[label] = action
@@ -508,6 +574,8 @@ class MediaPlayer(QMainWindow):
         self.crop_menu = video_menu.addMenu("&Crop")
         self.crop_menu.setIcon(qta.icon("fa5s.crop", color='white'))
         self.crop_actions = {}
+        self.crop_action_group = QActionGroup(self)
+        self.crop_action_group.setExclusive(True)
         crop_ratios = [("Default", None), ("16:9", (16, 9)), ("4:3", (4, 3)), ("1:1", (1, 1)), 
                       ("16:10", (16, 10)), ("2.21:1", (221, 100)), ("2.35:1", (235, 100)), 
                       ("2.39:1", (239, 100)), ("5:4", (5, 4))]
@@ -515,6 +583,7 @@ class MediaPlayer(QMainWindow):
             action = self._add_action(self.crop_menu, label, "C" if label == "Default" else None,
                            lambda checked, l=label, r=ratio: self.set_crop(l, r), "fa5s.crop")
             action.setCheckable(True)
+            action.setActionGroup(self.crop_action_group)
             if label == "Default":
                 action.setChecked(True)
             self.crop_actions[label] = action
@@ -1251,10 +1320,7 @@ class MediaPlayer(QMainWindow):
     
     def set_aspect_ratio(self, label, ratio):
         """Set video aspect ratio"""
-        # Uncheck all aspect ratio actions
-        for action in self.aspect_actions.values():
-            action.setChecked(False)
-        # Check the selected one
+        # QActionGroup handles unchecking other actions automatically
         self.aspect_actions[label].setChecked(True)
         self.current_aspect_ratio = label
         
@@ -1297,10 +1363,7 @@ class MediaPlayer(QMainWindow):
     
     def set_zoom(self, label, scale):
         """Set video zoom level"""
-        # Uncheck all zoom actions
-        for action in self.zoom_actions.values():
-            action.setChecked(False)
-        # Check the selected one
+        # QActionGroup handles unchecking other actions automatically
         self.zoom_actions[label].setChecked(True)
         self.current_zoom = label
         
@@ -1325,10 +1388,7 @@ class MediaPlayer(QMainWindow):
     
     def set_crop(self, label, ratio):
         """Set video crop ratio"""
-        # Uncheck all crop actions
-        for action in self.crop_actions.values():
-            action.setChecked(False)
-        # Check the selected one
+        # QActionGroup handles unchecking other actions automatically
         self.crop_actions[label].setChecked(True)
         self.current_crop = label
         
@@ -1378,6 +1438,68 @@ class MediaPlayer(QMainWindow):
                                        lambda: None, "fa5s.video")
         track_action.setEnabled(False)
     
+    def update_audio_tracks(self):
+        """Update audio track menu with available tracks"""
+        self.audio_track_menu.clear()
+        
+        # PyQt6 QMediaPlayer doesn't directly expose multiple audio tracks
+        # This is a placeholder - showing default track
+        track_action = self._add_action(self.audio_track_menu, "Track 1 (Default)", None,
+                                       lambda: None, "fa5s.music")
+        track_action.setCheckable(True)
+        track_action.setChecked(True)
+        track_action.setEnabled(False)
+    
+    def set_audio_device(self, device):
+        """Set audio output device"""
+        # QActionGroup handles unchecking other actions automatically
+        device_name = "Default" if device is None else device.description()
+        if device_name in self.audio_device_actions:
+            self.audio_device_actions[device_name].setChecked(True)
+        self.current_audio_device = device_name
+        
+        # Apply device change
+        if device:
+            from PyQt6.QtMultimedia import QAudioOutput
+            new_audio_output = QAudioOutput(device)
+            new_audio_output.setVolume(self.audio_output.volume())
+            self.audio_output = new_audio_output
+            self.player.setAudioOutput(self.audio_output)
+        
+        # Show feedback overlay
+        self._show_setting_overlay(f"Audio Device: {device_name}")
+    
+    def set_stereo_mode(self, mode):
+        """Set stereo mode"""
+        # QActionGroup handles unchecking other actions automatically
+        self.stereo_mode_actions[mode].setChecked(True)
+        self.current_stereo_mode = mode
+        
+        # Apply stereo mode
+        # Note: Qt6 QAudioOutput doesn't have direct channel mixing controls
+        # This would require custom audio processing with lower-level APIs
+        # For now, we just track the setting
+        
+        # Show feedback overlay
+        self._show_setting_overlay(f"Stereo Mode: {mode}")
+    
+    def set_visualization(self, viz):
+        """Set audio visualization"""
+        # QActionGroup handles unchecking other actions automatically
+        self.visualization_actions[viz].setChecked(True)
+        self.current_visualization = viz
+        
+        # Apply visualization
+        # Note: Audio visualizations would require:
+        # 1. Audio spectrum analysis (FFT)
+        # 2. Custom rendering widget
+        # 3. Real-time audio data access
+        # This is beyond Qt's basic multimedia capabilities
+        # For now, we just track the setting
+        
+        # Show feedback overlay
+        self._show_setting_overlay(f"Visualization: {viz}")
+    
     def take_snapshot(self):
         """Take snapshot of current video frame"""
         if not self.current_file or self.player.playbackState() == QMediaPlayer.PlaybackState.StoppedState:
@@ -1417,6 +1539,10 @@ class MediaPlayer(QMainWindow):
         self.video_track_menu.setEnabled(True)
         self.snapshot_action.setEnabled(True)
         self.update_video_tracks()
+        
+        # Enable audio track menu
+        self.audio_track_menu.setEnabled(True)
+        self.update_audio_tracks()
     
     def _disable_video_menus(self):
         """Disable video-related menus when no video"""
@@ -1425,6 +1551,9 @@ class MediaPlayer(QMainWindow):
         self.crop_menu.setEnabled(False)
         self.video_track_menu.setEnabled(False)
         self.snapshot_action.setEnabled(False)
+        
+        # Disable audio track menu
+        self.audio_track_menu.setEnabled(False)
     
     def closeEvent(self, event):
         """Clean up on application close"""
