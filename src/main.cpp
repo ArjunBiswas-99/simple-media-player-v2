@@ -135,6 +135,7 @@ struct AppState {
     int droppedFrames = 0;               // Count of dropped frames
     int displayedFrames = 0;             // Count of displayed frames
     bool justSeeked = false;             // Flag to ignore old frame timestamps after seek
+    bool syncTargetSet = false;          // Flag to ensure sync target is set only once per seek
 };
 
 // Forward declarations
@@ -763,23 +764,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 
                 double videoPTS = state.pendingFrame->pts;
                 
-                // Sync audio clock to first video frame after seek
-                if (state.justSeeked && useAudioSync && state.audioOutput) {
-                    std::cout << "[VIDEO] Syncing audio clock to first video frame: " << videoPTS << std::endl;
+                // Sync audio clock to first video frame after seek (only once per seek)
+                if (state.justSeeked && useAudioSync && state.audioOutput && !state.syncTargetSet) {
+                    std::cout << "[VIDEO] Setting sync target to first video frame: " << videoPTS << std::endl;
                     state.audioOutput->setAudioClock(videoPTS);
                     state.audioOutput->setSyncTarget(videoPTS);  // Tell audio to reach this PTS
                     audioClock = videoPTS;
-                    // DON'T clear justSeeked yet - wait for audio to be ready
+                    state.syncTargetSet = true;  // Mark that we've set the sync target
                 }
                 
                 // If just seeked, wait for audio to reach sync target before displaying
                 if (state.justSeeked && useAudioSync && state.audioOutput) {
                     if (!state.audioOutput->isAudioReady()) {
-                        // Audio not ready yet - don't display this frame
+                        // Audio not ready yet - don't display this frame, keep waiting
                         continue;
                     }
                     // Audio is ready - can proceed with display
                     std::cout << "[VIDEO] Audio ready, proceeding with display" << std::endl;
+                    state.justSeeked = false;  // Clear the flag now that sync is complete
+                    state.syncTargetSet = false;  // Reset for next seek
                 }
                 
                 // Sync audio clock to first video frame to prevent initial drift
@@ -2147,6 +2150,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
             
             // Set flag to prevent old frames from resetting currentTime
             state.justSeeked = true;
+            state.syncTargetSet = false;
             state.videoStartTime = 0.0;
             
             if (state.audioOutput) {
@@ -2174,6 +2178,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
             
             // Set flag to prevent old frames from resetting currentTime
             state.justSeeked = true;
+            state.syncTargetSet = false;
             state.videoStartTime = 0.0;
             
             if (state.audioOutput) {
@@ -2381,6 +2386,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
                 
                 // Set flag to prevent old frames from resetting currentTime
                 state.justSeeked = true;
+                state.syncTargetSet = false;
                 state.videoStartTime = 0.0;
                 
                 // Reset audio clock to match seek position
@@ -2516,6 +2522,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
             
             state.decoder->seek(state.currentTime);
             state.justSeeked = true;
+            state.syncTargetSet = false;
             state.videoStartTime = 0.0;
             
             // Reset audio clock
@@ -2571,6 +2578,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
             
             state.decoder->seek(state.currentTime);
             state.justSeeked = true;
+            state.syncTargetSet = false;
             state.videoStartTime = 0.0;
             
             // Reset audio clock
@@ -2867,6 +2875,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
             // Perform the seek first
             state.decoder->seek(state.currentTime);
             state.justSeeked = true;
+            state.syncTargetSet = false;
             state.videoStartTime = 0.0;
             
             // IMPORTANT: Pause AFTER seek (seek resumes decoder thread)
@@ -2963,6 +2972,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
             // Perform the seek first
             state.decoder->seek(state.currentTime);
             state.justSeeked = true;
+            state.syncTargetSet = false;
             state.videoStartTime = 0.0;
             
             // IMPORTANT: Pause AFTER seek (seek resumes decoder thread)
