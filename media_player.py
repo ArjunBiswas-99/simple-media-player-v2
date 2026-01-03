@@ -72,7 +72,10 @@ class MediaPlayer(QMainWindow):
         self.speed_indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         # Filename overlay label
-        self.filename_label = QLabel(self.video_widget)
+        self.filename_label = QLabel(self)
+        self.filename_label.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
+        self.filename_label.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.filename_label.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.filename_label.setStyleSheet(f"""
             QLabel {{
                 background-color: rgba(0, 0, 0, 180);
@@ -84,11 +87,9 @@ class MediaPlayer(QMainWindow):
             }}
         """)
         self.filename_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.filename_label_effect = QGraphicsOpacityEffect()
+        self.filename_label.setGraphicsEffect(self.filename_label_effect)
         self.filename_label.hide()
-        
-        # Filename fade animation
-        self.filename_anim = QPropertyAnimation(self.filename_label, b"windowOpacity")
-        self.filename_anim.setDuration(500)
         
         # Play/Pause overlay (YouTube-style)
         self.play_pause_overlay = QLabel(self)  # Parent to main window, not video widget
@@ -511,12 +512,13 @@ class MediaPlayer(QMainWindow):
         self.filename_label.setText(filename)
         self.filename_label.adjustSize()
         
-        # Center the label
-        label_x = (self.video_widget.width() - self.filename_label.width()) // 2
-        label_y = self.video_widget.height() - CONTROL_BAR_HEIGHT - self.filename_label.height() - 20
-        self.filename_label.move(label_x, label_y)
+        # Position in center using global coordinates
+        video_global_pos = self.video_widget.mapToGlobal(self.video_widget.rect().center())
+        x = video_global_pos.x() - self.filename_label.width() // 2
+        y = video_global_pos.y() - self.filename_label.height() // 2
+        self.filename_label.move(x, y)
         
-        self.filename_label.setWindowOpacity(1.0)
+        self.filename_label_effect.setOpacity(1.0)
         self.filename_label.show()
         
         # Fade out after 2.5 seconds
@@ -606,10 +608,12 @@ class MediaPlayer(QMainWindow):
     
     def _fade_filename_label(self):
         """Fade out the filename label"""
-        self.filename_anim.setStartValue(1.0)
-        self.filename_anim.setEndValue(0.0)
-        self.filename_anim.finished.connect(self.filename_label.hide)
-        self.filename_anim.start()
+        self.filename_fade = QPropertyAnimation(self.filename_label_effect, b"opacity")
+        self.filename_fade.setDuration(500)
+        self.filename_fade.setStartValue(1.0)
+        self.filename_fade.setEndValue(0.0)
+        self.filename_fade.finished.connect(self.filename_label.hide)
+        self.filename_fade.start()
             
     def show_about(self):
         """Show about dialog"""
@@ -671,9 +675,11 @@ class MediaPlayer(QMainWindow):
         self.is_seeking = False
         
     def _set_volume(self, value):
-        """Set volume (0-100) and update icon"""
+        """Set volume (0-100) and update icon with overlay feedback"""
         self.audio_output.setVolume(value / 100.0)
         self._update_volume_icon(value)
+        self._show_volume_overlay(value)
+        self.show_controls()
         
     # Private Methods - Player Signals
     
