@@ -7,7 +7,7 @@ import threading
 import time
 import queue
 from PyQt6.QtCore import QTimer, QUrl, Qt
-from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput, QAudioFormat, QAudioSink
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput, QAudioFormat, QAudioSink, QAudio
 from PyQt6.QtGui import QImage
 from .base_player import BasePlayer
 from .custom_video_widget import CustomVideoWidget
@@ -170,8 +170,8 @@ class FFmpegPlayer(BasePlayer):
             self._decode_thread.start()
         
         # Start audio sink if available
-        if self._audio_sink and self._audio_io_device:
-            if self._audio_sink.state() != self._audio_sink.State.ActiveState:
+        if self._audio_sink:
+            if self._audio_sink.state() != QAudio.State.ActiveState:
                 self._audio_io_device = self._audio_sink.start()
         
         # Start rendering
