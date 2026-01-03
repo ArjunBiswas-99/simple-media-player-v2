@@ -1,9 +1,14 @@
-r
-        vendor_id       : [0][0][0][0]
-🔄 Switching player: QtPlayer → FFmpegPlayer for sss.ts
+-v2> python .\main.py    
+qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.2 LGPL version 2.1 or later
+🔄 Switching player: QtPlayer → FFmpegPlayer for 3 Deadly Lady.ts
+🎬 Using FFmpeg player for: 3 Deadly Lady.ts
 Traceback (most recent call last):
   File "C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\media_player.py", line 687, in open_file
     self.load_video(filename)
-  File "C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\media_player.py", line 700, in load_video
-    print(f"?? Using FFmpeg player for: {os.path.basename(file_path)}")
-UnboundLocalError: local variable 'os' referenced before assignment
+  File "C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\media_player.py", line 704, in load_video
+    self.player.play()
+  File "C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\player_manager.py", line 185, in play
+    self._current_player.play()
+  File "C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\ffmpeg_player.py", line 174, in play
+    if self._audio_sink.state() != self._audio_sink.State.ActiveState:
+AttributeError: 'QAudioSink' object has no attribute 'State'. Did you mean: 'state'?
