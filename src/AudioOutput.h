@@ -35,8 +35,8 @@ public:
     
     void pushAudioFrame(AudioFrame* frame);
     
-    // Audio clock for A/V sync
-    double getAudioClock() const { return m_audioClock; }
+    // Audio clock for A/V sync (compensated for buffered audio)
+    double getAudioClock() const;
     void setAudioClock(double time) { m_audioClock = time; }
     
     // Clear audio queue (for seeking)

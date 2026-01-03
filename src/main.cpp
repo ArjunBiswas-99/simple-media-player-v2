@@ -782,6 +782,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     }
                     // Audio is ready - can proceed with display
                     std::cout << "[VIDEO] Audio ready, proceeding with display" << std::endl;
+                    state.audioOutput->clearForceSyncFlag();  // Clear flag so audio can resume
                     state.justSeeked = false;  // Clear the flag now that sync is complete
                     state.syncTargetSet = false;  // Reset for next seek
                 }
@@ -864,13 +865,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     
                     // Update time
                     state.currentTime = (float)videoPTS;
-                    
-                    // Clear force sync flag and justSeeked AFTER displaying first frame post-seek
-                    if (state.justSeeked && state.audioOutput) {
-                        state.audioOutput->clearForceSyncFlag();  // Now audio can resume
-                        state.justSeeked = false;
-                        std::cout << "[VIDEO] Frame displayed, both audio and video synced and resuming" << std::endl;
-                    }
                     
                     // Release frame
                     delete state.pendingFrame;

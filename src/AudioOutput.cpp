@@ -4,6 +4,25 @@
 #include <chrono>
 #include <iomanip>
 
+double AudioOutput::getAudioClock() const {
+    double clock = m_audioClock.load();
+    
+#ifdef _WIN32
+    // Compensate for buffered audio in WASAPI
+    if (m_audioClient && m_playing) {
+        UINT32 numFramesPadding = 0;
+        HRESULT hr = m_audioClient->GetCurrentPadding(&numFramesPadding);
+        if (SUCCEEDED(hr) && numFramesPadding > 0 && m_sampleRate > 0) {
+            // Subtract buffered audio latency from clock
+            double bufferLatency = (double)numFramesPadding / m_sampleRate;
+            clock -= bufferLatency;
+        }
+    }
+#endif
+    
+    return clock;
+}
+
 AudioOutput::AudioOutput()
     : m_sampleRate(0)
     , m_channels(0)
