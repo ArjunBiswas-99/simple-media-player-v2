@@ -592,9 +592,9 @@ class MediaPlayer(QMainWindow):
         self.filename_label.adjustSize()
         
         # Position in center using global coordinates
-        video_global_pos = self.video_widget.mapToGlobal(self.video_widget.rect().center())
-        x = video_global_pos.x() - self.filename_label.width() // 2
-        y = video_global_pos.y() - self.filename_label.height() // 2
+        video_global_pos = self.video_widget.mapToGlobal(self.video_widget.rect().topLeft())
+        x = video_global_pos.x() + (self.video_widget.width() - self.filename_label.width()) // 2
+        y = video_global_pos.y() + 20  # 20px from top
         self.filename_label.move(x, y)
         
         self.filename_label_effect.setOpacity(1.0)
@@ -615,13 +615,13 @@ class MediaPlayer(QMainWindow):
             # Paused state - show play icon in red
             self.play_pause_btn.setIcon(qta.icon('fa5s.play', color=THEME_PRIMARY))
             self.play_pause_btn.icon_name = 'fa5s.play'
-            self._show_play_pause_overlay('▶')
+            self._show_play_pause_overlay('fa5s.play')
         else:
             self.player.play()
             # Playing state - show pause icon in white (active state)
             self.play_pause_btn.setIcon(qta.icon('fa5s.pause', color='white'))
             self.play_pause_btn.icon_name = 'fa5s.pause'
-            self._show_play_pause_overlay('⏸')
+            self._show_play_pause_overlay('fa5s.pause')
             
     def seek_relative(self, ms):
         """Seek relative to current position with feedback animation"""
@@ -657,10 +657,16 @@ class MediaPlayer(QMainWindow):
             self.showNormal()
             self.menuBar().show()
             self.fullscreen_btn.setIcon(qta.icon('fa5s.expand', color=THEME_PRIMARY))
+            # Restore cursor
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            self.controls_widget.show()
         else:
             self.showFullScreen()
             self.menuBar().hide()
             self.fullscreen_btn.setIcon(qta.icon('fa5s.compress', color=THEME_PRIMARY))
+            # Enable mouse tracking for fullscreen
+            self.setMouseTracking(True)
+            self.video_widget.setMouseTracking(True)
         
         # Fade controls back in
         QTimer.singleShot(200, lambda: self.controls_widget.setStyleSheet(self.controls_widget.styleSheet().replace(" QWidget { opacity: 0.5; }", "")))
@@ -906,6 +912,9 @@ class MediaPlayer(QMainWindow):
     def mouseMoveEvent(self, event):
         """Show controls on mouse move"""
         self.show_controls()
+        # Ensure cursor is visible in fullscreen
+        if self.isFullScreen():
+            self.setCursor(Qt.CursorShape.ArrowCursor)
         
     def mouseDoubleClickEvent(self, event):
         """Toggle fullscreen on double click"""
@@ -953,18 +962,22 @@ class MediaPlayer(QMainWindow):
             # Stop pulse timer
             if hasattr(self, 'speed_pulse_timer'):
                 self.speed_pulse_timer.stop()
+                self.speed_pulse_timer.deleteLater()
             
             # Fade out using opacity effect
             effect = self.speed_indicator.graphicsEffect()
             if effect:
-                anim = QPropertyAnimation(effect, b"opacity")
-                anim.setDuration(FADE_DURATION)
-                anim.setStartValue(1.0)
-                anim.setEndValue(0.0)
-                anim.finished.connect(self.speed_indicator.hide)
-                anim.start()
-                # Store reference to prevent garbage collection
-                self.speed_fade_out = anim
+                # Stop any existing animations
+                if hasattr(self, 'speed_fade_out') and self.speed_fade_out:
+                    self.speed_fade_out.stop()
+                
+                self.speed_fade_out = QPropertyAnimation(effect, b"opacity")
+                self.speed_fade_out.setDuration(FADE_DURATION)
+                self.speed_fade_out.setStartValue(effect.opacity)  # Start from current opacity
+                self.speed_fade_out.setEndValue(0.0)
+                self.speed_fade_out.finished.connect(self.speed_indicator.hide)
+                self.speed_fade_out.finished.connect(lambda: effect.setOpacity(1.0))  # Reset opacity
+                self.speed_fade_out.start()
             else:
                 self.speed_indicator.hide()
             
@@ -1003,15 +1016,17 @@ class MediaPlayer(QMainWindow):
         self._pulse_anims.append(pulse_anim)
         pulse_anim.finished.connect(lambda: self._pulse_anims.remove(pulse_anim) if pulse_anim in self._pulse_anims else None)
     
-    def _show_play_pause_overlay(self, icon_text):
+    def _show_play_pause_overlay(self, icon_name):
         """Show play/pause overlay animation (YouTube-style)"""
-        self.play_pause_overlay.setText(icon_text)
+        # Use Font Awesome icon instead of emoji
+        icon = qta.icon(icon_name, color='white')
+        pixmap = icon.pixmap(QSize(72, 72))
+        self.play_pause_overlay.setPixmap(pixmap)
+        self.play_pause_overlay.setFixedSize(100, 100)
         self.play_pause_overlay.setStyleSheet(f"""
             QLabel {{
                 background-color: rgba(0, 0, 0, 180);
-                color: white;
                 border-radius: 50px;
-                font-size: 48px;
             }}
         """)
         

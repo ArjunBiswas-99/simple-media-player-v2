@@ -11,7 +11,7 @@ class SpeedIndicator(QLabel):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setText("2×")
+        self.setText(">> 2×")
         self.setStyleSheet(f"""
             QLabel {{
                 color: white;
