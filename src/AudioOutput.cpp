@@ -24,6 +24,8 @@ AudioOutput::AudioOutput()
     , m_stopAudioThread(false)
     , m_flushRequested(false)
     , m_forceSyncToNextFrame(false)
+    , m_syncTargetPTS(-1.0)
+    , m_audioReadyAfterSeek(true)
     , m_partialFrame(nullptr)
     , m_partialFrameOffset(0)
 #endif
@@ -314,6 +316,7 @@ void AudioOutput::clearQueue() {
     // Force sync to next frame after queue clear (for accurate post-seek sync)
 #ifdef _WIN32
     m_forceSyncToNextFrame.store(true);
+    m_audioReadyAfterSeek.store(false);  // Audio needs to reach sync target
 #endif
 }
 
@@ -471,6 +474,30 @@ void AudioOutput::audioThreadFunc() {
             // Calculate frame size and available samples from current offset
             UINT32 totalFrameSamples = frame->size / (m_channels * sizeof(float));
             UINT32 availableSamples = totalFrameSamples - frameOffset;
+            
+            // Check if we need to discard frames until reaching sync target
+            double syncTarget = m_syncTargetPTS.load();
+            if (syncTarget > 0 && frame->pts < syncTarget && !m_audioReadyAfterSeek.load()) {
+                // Discard frame - haven't reached sync target yet
+                delete frame;
+                
+                // Output silence while waiting
+                UINT32 remainingFrames = numFramesAvailable - framesFilled;
+                if (remainingFrames > 0) {
+                    memset(floatBuffer, 0, remainingFrames * m_channels * sizeof(float));
+                }
+                framesFilled = numFramesAvailable;
+                
+                std::cout << "[AUDIO] Discarding frame PTS " << frame->pts << ", waiting for sync target " << syncTarget << std::endl;
+                break;
+            }
+            
+            // If we have a sync target and reached it, signal ready
+            if (syncTarget > 0 && frame->pts >= syncTarget && !m_audioReadyAfterSeek.load()) {
+                std::cout << "[AUDIO] Reached sync target! Frame PTS: " << frame->pts << ", target: " << syncTarget << std::endl;
+                m_audioReadyAfterSeek.store(true);
+                m_syncTargetPTS.store(-1.0);  // Clear sync target
+            }
             
             // If force sync flag is set, output silence and wait for video thread to sync and clear flag
             if (m_forceSyncToNextFrame.load()) {

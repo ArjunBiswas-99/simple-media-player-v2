@@ -758,8 +758,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 if (state.justSeeked && useAudioSync && state.audioOutput) {
                     std::cout << "[VIDEO] Syncing audio clock to first video frame: " << videoPTS << std::endl;
                     state.audioOutput->setAudioClock(videoPTS);
+                    state.audioOutput->setSyncTarget(videoPTS);  // Tell audio to reach this PTS
                     audioClock = videoPTS;
-                    // DON'T clear flag yet - wait until frame is actually displayed
+                    // DON'T clear justSeeked yet - wait for audio to be ready
+                }
+                
+                // If just seeked, wait for audio to reach sync target before displaying
+                if (state.justSeeked && useAudioSync && state.audioOutput) {
+                    if (!state.audioOutput->isAudioReady()) {
+                        // Audio not ready yet - don't display this frame
+                        continue;
+                    }
+                    // Audio is ready - can proceed with display
+                    std::cout << "[VIDEO] Audio ready, proceeding with display" << std::endl;
                 }
                 
                 // Sync audio clock to first video frame to prevent initial drift
@@ -841,11 +852,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     // Update time
                     state.currentTime = (float)videoPTS;
                     
-                    // Clear force sync flag AFTER displaying first frame post-seek
+                    // Clear force sync flag and justSeeked AFTER displaying first frame post-seek
                     if (state.justSeeked && state.audioOutput) {
                         state.audioOutput->clearForceSyncFlag();  // Now audio can resume
                         state.justSeeked = false;
-                        std::cout << "[VIDEO] Frame displayed, audio can resume" << std::endl;
+                        std::cout << "[VIDEO] Frame displayed, both audio and video synced and resuming" << std::endl;
                     }
                     
                     // Release frame

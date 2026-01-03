@@ -49,6 +49,23 @@ public:
 #endif
     }
     
+    // Set sync target PTS that audio must reach after seek
+    void setSyncTarget(double pts) {
+#ifdef _WIN32
+        m_syncTargetPTS.store(pts);
+        m_audioReadyAfterSeek.store(false);
+#endif
+    }
+    
+    // Check if audio has reached sync target after seek
+    bool isAudioReady() const {
+#ifdef _WIN32
+        return m_audioReadyAfterSeek.load();
+#else
+        return true;
+#endif
+    }
+    
     // Check and perform WASAPI flush if requested (call from main thread)
     void checkAndFlushIfNeeded();
     
@@ -76,6 +93,10 @@ private:
     
     // Force sync to next frame (set after clearQueue for accurate post-seek sync)
     std::atomic<bool> m_forceSyncToNextFrame;
+    
+    // Sync target after seek - audio must reach this PTS before resuming
+    std::atomic<double> m_syncTargetPTS;
+    std::atomic<bool> m_audioReadyAfterSeek;
     
     // Partial frame handling for WASAPI
     AudioFrame* m_partialFrame;
