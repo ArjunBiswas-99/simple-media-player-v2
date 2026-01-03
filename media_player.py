@@ -35,6 +35,9 @@ class MediaPlayer(QMainWindow):
         self.normal_rate = 1.0
         self.current_file = None
         self.thumbnail_generator = None
+        self.current_aspect_ratio = "Default"
+        self.current_zoom = "1:1 Original"
+        self.current_crop = "Default"
         
         # Setup components in correct order
         self._setup_media_player()
@@ -189,6 +192,10 @@ class MediaPlayer(QMainWindow):
         self.skip_reset_timer = QTimer(self)
         self.skip_reset_timer.setSingleShot(True)
         self.skip_reset_timer.timeout.connect(self._reset_skip_accumulator)
+        
+        # Video transformation state
+        self._forced_aspect_ratio = None
+        self._zoom_scale = 1.0
         
         # Add mouse click handler with hold detection
         def video_mouse_press(event):
@@ -469,14 +476,60 @@ class MediaPlayer(QMainWindow):
         video_menu.addSeparator()
         
         # Aspect ratio submenu
-        aspect_menu = video_menu.addMenu("&Aspect Ratio")
-        aspect_menu.setIcon(qta.icon("fa5s.expand-arrows-alt", color='white'))
-        for label, mode in [("Default", Qt.AspectRatioMode.KeepAspectRatio),
-                           ("16:9", Qt.AspectRatioMode.KeepAspectRatio),
-                           ("4:3", Qt.AspectRatioMode.KeepAspectRatio),
-                           ("Stretch", Qt.AspectRatioMode.IgnoreAspectRatio)]:
-            self._add_action(aspect_menu, label, None,
-                           lambda checked, m=mode: self.video_widget.setAspectRatioMode(m))
+        self.aspect_menu = video_menu.addMenu("&Aspect Ratio")
+        self.aspect_menu.setIcon(qta.icon("fa5s.expand-arrows-alt", color='white'))
+        self.aspect_actions = {}
+        aspect_ratios = [("Default", None), ("16:9", (16, 9)), ("4:3", (4, 3)), ("1:1", (1, 1)), 
+                        ("16:10", (16, 10)), ("2.21:1", (221, 100)), ("2.35:1", (235, 100)), 
+                        ("2.39:1", (239, 100)), ("5:4", (5, 4))]
+        for label, ratio in aspect_ratios:
+            action = self._add_action(self.aspect_menu, label, "A" if label == "Default" else None,
+                           lambda checked, l=label, r=ratio: self.set_aspect_ratio(l, r), "fa5s.expand-arrows-alt")
+            action.setCheckable(True)
+            if label == "Default":
+                action.setChecked(True)
+            self.aspect_actions[label] = action
+        
+        # Zoom submenu
+        self.zoom_menu = video_menu.addMenu("&Zoom")
+        self.zoom_menu.setIcon(qta.icon("fa5s.search-plus", color='white'))
+        self.zoom_actions = {}
+        zoom_levels = [("Default", 1.0), ("1:4 Quarter", 0.25), ("1:2 Half", 0.5), 
+                      ("1:1 Original", 1.0), ("2:1 Double", 2.0)]
+        for label, scale in zoom_levels:
+            action = self._add_action(self.zoom_menu, label, None,
+                           lambda checked, l=label, s=scale: self.set_zoom(l, s), "fa5s.search-plus")
+            action.setCheckable(True)
+            if label == "1:1 Original":
+                action.setChecked(True)
+            self.zoom_actions[label] = action
+        
+        # Crop submenu
+        self.crop_menu = video_menu.addMenu("&Crop")
+        self.crop_menu.setIcon(qta.icon("fa5s.crop", color='white'))
+        self.crop_actions = {}
+        crop_ratios = [("Default", None), ("16:9", (16, 9)), ("4:3", (4, 3)), ("1:1", (1, 1)), 
+                      ("16:10", (16, 10)), ("2.21:1", (221, 100)), ("2.35:1", (235, 100)), 
+                      ("2.39:1", (239, 100)), ("5:4", (5, 4))]
+        for label, ratio in crop_ratios:
+            action = self._add_action(self.crop_menu, label, "C" if label == "Default" else None,
+                           lambda checked, l=label, r=ratio: self.set_crop(l, r), "fa5s.crop")
+            action.setCheckable(True)
+            if label == "Default":
+                action.setChecked(True)
+            self.crop_actions[label] = action
+        
+        # Video Track submenu
+        self.video_track_menu = video_menu.addMenu("Video &Track")
+        self.video_track_menu.setIcon(qta.icon("fa5s.video", color='white'))
+        self.video_track_menu.setEnabled(False)  # Enabled when video loads
+        
+        video_menu.addSeparator()
+        
+        # Take Snapshot
+        self.snapshot_action = self._add_action(video_menu, "Take &Snapshot", "S",
+                                                self.take_snapshot, "fa5s.camera")
+        self.snapshot_action.setEnabled(False)  # Enabled when video loads
         
         # Tools Menu
         tools_menu = menubar.addMenu("&Tools")
@@ -491,6 +544,7 @@ class MediaPlayer(QMainWindow):
             action.setShortcut(shortcut)
         action.triggered.connect(callback)
         menu.addAction(action)
+        return action  # Return action for checkable items
         
     def _setup_popovers(self):
         """Create popover widgets"""
@@ -553,6 +607,9 @@ class MediaPlayer(QMainWindow):
         self.current_file = file_path
         self.player.setSource(QUrl.fromLocalFile(file_path))
         self.player.play()
+        
+        # Enable video menus
+        self._enable_video_menus()
         
         # Show filename overlay
         import os
@@ -844,6 +901,11 @@ class MediaPlayer(QMainWindow):
         if state == QMediaPlayer.PlaybackState.PlayingState:
             self.play_pause_btn.setIcon(qta.icon('fa5s.pause', color='white'))
             self.play_pause_btn.icon_name = 'fa5s.pause'
+        elif state == QMediaPlayer.PlaybackState.StoppedState:
+            self.play_pause_btn.setIcon(qta.icon('fa5s.play', color=THEME_PRIMARY))
+            self.play_pause_btn.icon_name = 'fa5s.play'
+            # Disable video menus when stopped
+            self._disable_video_menus()
         else:
             self.play_pause_btn.setIcon(qta.icon('fa5s.play', color=THEME_PRIMARY))
             self.play_pause_btn.icon_name = 'fa5s.play'
@@ -884,8 +946,7 @@ class MediaPlayer(QMainWindow):
             self.adjust_volume(-5)
         elif key == Qt.Key.Key_M:
             self.toggle_mute()
-        elif key == Qt.Key.Key_S:
-            self.player.stop()
+        # Note: Key_S is handled by snapshot action in menu
             
         self.show_controls()
         
@@ -1116,9 +1177,254 @@ class MediaPlayer(QMainWindow):
         self.skip_fade_in.start()
         QTimer.singleShot(450, self.skip_fade_out.start)  # 150ms fade in + 300ms wait
     
+    def _show_setting_overlay(self, text):
+        """Show VLC-style setting overlay in top-right corner"""
+        if not hasattr(self, 'setting_overlay'):
+            # Create overlay window as top-level (no parent)
+            self.setting_overlay = QLabel()
+            self.setting_overlay.setWindowFlags(
+                Qt.WindowType.WindowStaysOnTopHint | 
+                Qt.WindowType.FramelessWindowHint |
+                Qt.WindowType.Tool
+            )
+            self.setting_overlay.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+            self.setting_overlay.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+            self.setting_overlay.setStyleSheet(f"""
+                QLabel {{
+                    background-color: rgba(0, 0, 0, 180);
+                    color: white;
+                    font-size: 18px;
+                    font-weight: bold;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                }}
+            """)
+            self.setting_overlay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            
+            # Graphics effect for fade
+            self.setting_overlay_effect = QGraphicsOpacityEffect(self.setting_overlay)
+            self.setting_overlay.setGraphicsEffect(self.setting_overlay_effect)
+        
+        # Update text
+        self.setting_overlay.setText(text)
+        self.setting_overlay.adjustSize()
+        
+        # Position in top-right corner in global coordinates
+        video_global_rect = self.video_widget.mapToGlobal(self.video_widget.rect().topRight())
+        x = video_global_rect.x() - self.setting_overlay.width() - 30
+        y = video_global_rect.y() + 30
+        self.setting_overlay.move(x, y)
+        
+        # Fade in
+        self.setting_overlay_effect.setOpacity(0)
+        self.setting_overlay.show()
+        self.setting_overlay.raise_()
+        self.setting_overlay.activateWindow()
+        
+        # Stop any existing animations
+        if hasattr(self, 'setting_fade_in_anim'):
+            self.setting_fade_in_anim.stop()
+        if hasattr(self, 'setting_fade_out_anim'):
+            self.setting_fade_out_anim.stop()
+        
+        # Store animations as instance variables
+        self.setting_fade_in_anim = QPropertyAnimation(self.setting_overlay_effect, b"opacity")
+        self.setting_fade_in_anim.setDuration(200)
+        self.setting_fade_in_anim.setStartValue(0.0)
+        self.setting_fade_in_anim.setEndValue(1.0)
+        
+        self.setting_fade_out_anim = QPropertyAnimation(self.setting_overlay_effect, b"opacity")
+        self.setting_fade_out_anim.setDuration(300)
+        self.setting_fade_out_anim.setStartValue(1.0)
+        self.setting_fade_out_anim.setEndValue(0.0)
+        self.setting_fade_out_anim.finished.connect(self.setting_overlay.hide)
+        
+        # Sequence: fade in → wait 1.5s → fade out
+        self.setting_fade_in_anim.start()
+        QTimer.singleShot(1700, self.setting_fade_out_anim.start)  # 200ms fade in + 1500ms wait
+    
     def _reset_skip_accumulator(self):
         """Reset the skip accumulator after timeout"""
         self.skip_accumulator = 0
+    
+    # Video Settings Methods
+    
+    def set_aspect_ratio(self, label, ratio):
+        """Set video aspect ratio"""
+        # Uncheck all aspect ratio actions
+        for action in self.aspect_actions.values():
+            action.setChecked(False)
+        # Check the selected one
+        self.aspect_actions[label].setChecked(True)
+        self.current_aspect_ratio = label
+        
+        if ratio is None:
+            # Default - keep original aspect ratio, remove constraints
+            self.video_widget.setAspectRatioMode(Qt.AspectRatioMode.KeepAspectRatio)
+            self.video_widget.setMinimumSize(0, 0)
+            self.video_widget.setMaximumSize(16777215, 16777215)
+        else:
+            # Force specific aspect ratio by constraining dimensions
+            ratio_w, ratio_h = ratio
+            target_ratio = ratio_w / ratio_h
+            
+            # Get current size
+            current_width = self.video_widget.width()
+            current_height = self.video_widget.height()
+            
+            # Calculate new dimensions based on target ratio
+            # Try to keep width, adjust height
+            new_height = int(current_width / target_ratio)
+            if new_height <= current_height:
+                # Width-constrained: set max height
+                self.video_widget.setMinimumHeight(new_height)
+                self.video_widget.setMaximumHeight(new_height)
+                self.video_widget.setMinimumWidth(0)
+                self.video_widget.setMaximumWidth(16777215)
+            else:
+                # Height-constrained: set max width
+                new_width = int(current_height * target_ratio)
+                self.video_widget.setMinimumWidth(new_width)
+                self.video_widget.setMaximumWidth(new_width)
+                self.video_widget.setMinimumHeight(0)
+                self.video_widget.setMaximumHeight(16777215)
+            
+            # Use IgnoreAspectRatio to fill the constrained area
+            self.video_widget.setAspectRatioMode(Qt.AspectRatioMode.IgnoreAspectRatio)
+        
+        # Show feedback overlay
+        self._show_setting_overlay(f"Aspect Ratio: {label}")
+    
+    def set_zoom(self, label, scale):
+        """Set video zoom level"""
+        # Uncheck all zoom actions
+        for action in self.zoom_actions.values():
+            action.setChecked(False)
+        # Check the selected one
+        self.zoom_actions[label].setChecked(True)
+        self.current_zoom = label
+        
+        # Store zoom scale
+        self._zoom_scale = scale if scale else 1.0
+        
+        # Adjust window size to show zoom effect
+        if scale and scale != 1.0:
+            current_size = self.size()
+            new_width = int(current_size.width() * scale)
+            new_height = int(current_size.height() * scale)
+            # Keep reasonable bounds
+            new_width = max(400, min(new_width, 3840))  # Min 400px, max 4K width
+            new_height = max(300, min(new_height, 2160))  # Min 300px, max 4K height
+            self.resize(new_width, new_height)
+        else:
+            # Default - reset to reasonable size
+            self.resize(1280, 720)
+        
+        # Show feedback overlay
+        self._show_setting_overlay(f"Zoom: {label}")
+    
+    def set_crop(self, label, ratio):
+        """Set video crop ratio"""
+        # Uncheck all crop actions
+        for action in self.crop_actions.values():
+            action.setChecked(False)
+        # Check the selected one
+        self.crop_actions[label].setChecked(True)
+        self.current_crop = label
+        
+        if ratio is None:
+            # Default - no crop, keep original aspect, remove constraints
+            self.video_widget.setAspectRatioMode(Qt.AspectRatioMode.KeepAspectRatio)
+            self.video_widget.setMinimumSize(0, 0)
+            self.video_widget.setMaximumSize(16777215, 16777215)
+        else:
+            # Crop by forcing specific aspect ratio (same as aspect ratio feature)
+            ratio_w, ratio_h = ratio
+            target_ratio = ratio_w / ratio_h
+            
+            # Get current size
+            current_width = self.video_widget.width()
+            current_height = self.video_widget.height()
+            
+            # Calculate new dimensions based on target ratio
+            new_height = int(current_width / target_ratio)
+            if new_height <= current_height:
+                # Width-constrained: set max height
+                self.video_widget.setMinimumHeight(new_height)
+                self.video_widget.setMaximumHeight(new_height)
+                self.video_widget.setMinimumWidth(0)
+                self.video_widget.setMaximumWidth(16777215)
+            else:
+                # Height-constrained: set max width
+                new_width = int(current_height * target_ratio)
+                self.video_widget.setMinimumWidth(new_width)
+                self.video_widget.setMaximumWidth(new_width)
+                self.video_widget.setMinimumHeight(0)
+                self.video_widget.setMaximumHeight(16777215)
+            
+            # Use IgnoreAspectRatio to fill and stretch
+            self.video_widget.setAspectRatioMode(Qt.AspectRatioMode.IgnoreAspectRatio)
+        
+        # Show feedback overlay
+        self._show_setting_overlay(f"Crop: {label}")
+    
+    def update_video_tracks(self):
+        """Update video track menu with available tracks"""
+        self.video_track_menu.clear()
+        
+        # PyQt6 QMediaPlayer doesn't directly expose multiple video tracks
+        # This is a placeholder for when metadata is available
+        track_action = self._add_action(self.video_track_menu, "Track 1 (Current)", None,
+                                       lambda: None, "fa5s.video")
+        track_action.setEnabled(False)
+    
+    def take_snapshot(self):
+        """Take snapshot of current video frame"""
+        if not self.current_file or self.player.playbackState() == QMediaPlayer.PlaybackState.StoppedState:
+            return
+        
+        # Get video frame - Qt6 approach
+        from PyQt6.QtGui import QPixmap, QImage
+        from pathlib import Path
+        import datetime
+        
+        # Create snapshot using video widget
+        pixmap = self.video_widget.grab()
+        
+        if pixmap.isNull():
+            QMessageBox.warning(self, "Snapshot Failed", "Could not capture video frame.")
+            return
+        
+        # Generate filename with timestamp
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        downloads_folder = str(Path.home() / "Downloads")
+        filename = f"snapshot_{timestamp}.png"
+        filepath = str(Path(downloads_folder) / filename)
+        
+        # Save as PNG
+        if pixmap.save(filepath, "PNG"):
+            # Show feedback overlay instead of dialog
+            self._show_setting_overlay(f"Snapshot saved:\n{filename}")
+        else:
+            QMessageBox.warning(self, "Snapshot Failed", 
+                               "Could not save snapshot file.")
+    
+    def _enable_video_menus(self):
+        """Enable video-related menus when video is loaded"""
+        self.aspect_menu.setEnabled(True)
+        self.zoom_menu.setEnabled(True)
+        self.crop_menu.setEnabled(True)
+        self.video_track_menu.setEnabled(True)
+        self.snapshot_action.setEnabled(True)
+        self.update_video_tracks()
+    
+    def _disable_video_menus(self):
+        """Disable video-related menus when no video"""
+        self.aspect_menu.setEnabled(False)
+        self.zoom_menu.setEnabled(False)
+        self.crop_menu.setEnabled(False)
+        self.video_track_menu.setEnabled(False)
+        self.snapshot_action.setEnabled(False)
     
     def closeEvent(self, event):
         """Clean up on application close"""
