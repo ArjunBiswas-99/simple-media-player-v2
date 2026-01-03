@@ -91,7 +91,10 @@ class MediaPlayer(QMainWindow):
         self.filename_anim.setDuration(500)
         
         # Play/Pause overlay (YouTube-style)
-        self.play_pause_overlay = QLabel(self.video_widget)
+        self.play_pause_overlay = QLabel(self)  # Parent to main window, not video widget
+        self.play_pause_overlay.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
+        self.play_pause_overlay.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.play_pause_overlay.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.play_pause_overlay.setStyleSheet(f"""
             QLabel {{
                 background-color: rgba(0, 0, 0, 180);
@@ -106,7 +109,10 @@ class MediaPlayer(QMainWindow):
         self.play_pause_overlay.hide()
         
         # Volume feedback overlay (top-right)
-        self.volume_overlay = QWidget(self.video_widget)
+        self.volume_overlay = QWidget(self)
+        self.volume_overlay.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
+        self.volume_overlay.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.volume_overlay.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.volume_overlay.setStyleSheet(f"""
             QWidget {{
                 background-color: rgba(0, 0, 0, 200);
@@ -140,7 +146,10 @@ class MediaPlayer(QMainWindow):
         self.volume_overlay.hide()
         
         # Skip feedback overlay (center)
-        self.skip_overlay = QLabel(self.video_widget)
+        self.skip_overlay = QLabel(self)
+        self.skip_overlay.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
+        self.skip_overlay.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.skip_overlay.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.skip_overlay.setStyleSheet(f"""
             QLabel {{
                 background-color: rgba(0, 0, 0, 180);
@@ -808,32 +817,31 @@ class MediaPlayer(QMainWindow):
             }}
         """)
         
-        # Position in center
-        video_rect = self.video_widget.rect()
-        x = (video_rect.width() - self.play_pause_overlay.width()) // 2
-        y = (video_rect.height() - self.play_pause_overlay.height()) // 2
+        # Position in center of video widget in global coordinates
+        video_global_pos = self.video_widget.mapToGlobal(self.video_widget.rect().center())
+        x = video_global_pos.x() - self.play_pause_overlay.width() // 2
+        y = video_global_pos.y() - self.play_pause_overlay.height() // 2
         self.play_pause_overlay.move(x, y)
         
         # Fade in, stay, fade out using QGraphicsOpacityEffect
         self.play_pause_overlay_effect.setOpacity(0)
         self.play_pause_overlay.show()
         
-        # Fade in animation (100ms)
-        fade_in = QPropertyAnimation(self.play_pause_overlay_effect, b"opacity")
-        fade_in.setDuration(100)
-        fade_in.setStartValue(0.0)
-        fade_in.setEndValue(1.0)
+        # Store animations as instance variables to prevent garbage collection
+        self.pp_fade_in = QPropertyAnimation(self.play_pause_overlay_effect, b"opacity")
+        self.pp_fade_in.setDuration(100)
+        self.pp_fade_in.setStartValue(0.0)
+        self.pp_fade_in.setEndValue(1.0)
         
-        # Fade out animation (300ms)
-        fade_out = QPropertyAnimation(self.play_pause_overlay_effect, b"opacity")
-        fade_out.setDuration(300)
-        fade_out.setStartValue(1.0)
-        fade_out.setEndValue(0.0)
-        fade_out.finished.connect(self.play_pause_overlay.hide)
+        self.pp_fade_out = QPropertyAnimation(self.play_pause_overlay_effect, b"opacity")
+        self.pp_fade_out.setDuration(300)
+        self.pp_fade_out.setStartValue(1.0)
+        self.pp_fade_out.setEndValue(0.0)
+        self.pp_fade_out.finished.connect(self.play_pause_overlay.hide)
         
         # Sequence: fade in → wait 400ms → fade out
-        fade_in.start()
-        QTimer.singleShot(500, fade_out.start)  # 100ms fade in + 400ms wait
+        self.pp_fade_in.start()
+        QTimer.singleShot(500, self.pp_fade_out.start)  # 100ms fade in + 400ms wait
     
     def _show_volume_overlay(self, volume):
         """Show volume feedback overlay with bar"""
@@ -853,62 +861,62 @@ class MediaPlayer(QMainWindow):
         self.volume_overlay_fill.setFixedSize(40, bar_height)
         self.volume_overlay_fill.move(0, 150 - bar_height)
         
-        # Position in top-right corner
-        video_rect = self.video_widget.rect()
-        x = video_rect.width() - self.volume_overlay.width() - 20
-        y = 20
+        # Position in top-right corner in global coordinates
+        video_global_rect = self.video_widget.mapToGlobal(self.video_widget.rect().topRight())
+        x = video_global_rect.x() - self.volume_overlay.width() - 20
+        y = video_global_rect.y() + 20
         self.volume_overlay.move(x, y)
         
         # Fade in using QGraphicsOpacityEffect
         self.volume_overlay_effect.setOpacity(0)
         self.volume_overlay.show()
         
-        fade_in = QPropertyAnimation(self.volume_overlay_effect, b"opacity")
-        fade_in.setDuration(150)
-        fade_in.setStartValue(0.0)
-        fade_in.setEndValue(1.0)
-        fade_in.start()
+        # Store animation as instance variable
+        self.vol_fade_in = QPropertyAnimation(self.volume_overlay_effect, b"opacity")
+        self.vol_fade_in.setDuration(150)
+        self.vol_fade_in.setStartValue(0.0)
+        self.vol_fade_in.setEndValue(1.0)
+        self.vol_fade_in.start()
         
         # Auto-hide after 1 second
         QTimer.singleShot(1150, self._hide_volume_overlay)
     
     def _hide_volume_overlay(self):
         """Fade out volume overlay"""
-        fade_out = QPropertyAnimation(self.volume_overlay_effect, b"opacity")
-        fade_out.setDuration(300)
-        fade_out.setStartValue(1.0)
-        fade_out.setEndValue(0.0)
-        fade_out.finished.connect(self.volume_overlay.hide)
-        fade_out.start()
+        self.vol_fade_out = QPropertyAnimation(self.volume_overlay_effect, b"opacity")
+        self.vol_fade_out.setDuration(300)
+        self.vol_fade_out.setStartValue(1.0)
+        self.vol_fade_out.setEndValue(0.0)
+        self.vol_fade_out.finished.connect(self.volume_overlay.hide)
+        self.vol_fade_out.start()
     
     def _show_skip_overlay(self, text):
         """Show skip feedback overlay (+10s/-10s)"""
         self.skip_overlay.setText(text)
-        
-        # Position in center
-        video_rect = self.video_widget.rect()
         self.skip_overlay.adjustSize()
-        x = (video_rect.width() - self.skip_overlay.width()) // 2
-        y = (video_rect.height() - self.skip_overlay.height()) // 2
+        
+        # Position in center of video widget in global coordinates
+        video_global_pos = self.video_widget.mapToGlobal(self.video_widget.rect().center())
+        x = video_global_pos.x() - self.skip_overlay.width() // 2
+        y = video_global_pos.y() - self.skip_overlay.height() // 2
         self.skip_overlay.move(x, y)
         
         # Bounce + fade animation using QGraphicsOpacityEffect
         self.skip_overlay_effect.setOpacity(0)
         self.skip_overlay.show()
         
-        # Fade in with slight upward movement
-        fade_in = QPropertyAnimation(self.skip_overlay_effect, b"opacity")
-        fade_in.setDuration(150)
-        fade_in.setStartValue(0.0)
-        fade_in.setEndValue(1.0)
+        # Store animations as instance variables
+        self.skip_fade_in = QPropertyAnimation(self.skip_overlay_effect, b"opacity")
+        self.skip_fade_in.setDuration(150)
+        self.skip_fade_in.setStartValue(0.0)
+        self.skip_fade_in.setEndValue(1.0)
         
-        # Fade out
-        fade_out = QPropertyAnimation(self.skip_overlay_effect, b"opacity")
-        fade_out.setDuration(200)
-        fade_out.setStartValue(1.0)
-        fade_out.setEndValue(0.0)
-        fade_out.finished.connect(self.skip_overlay.hide)
+        self.skip_fade_out = QPropertyAnimation(self.skip_overlay_effect, b"opacity")
+        self.skip_fade_out.setDuration(200)
+        self.skip_fade_out.setStartValue(1.0)
+        self.skip_fade_out.setEndValue(0.0)
+        self.skip_fade_out.finished.connect(self.skip_overlay.hide)
         
         # Sequence: fade in → wait 300ms → fade out
-        fade_in.start()
-        QTimer.singleShot(450, fade_out.start)  # 150ms fade in + 300ms wait
+        self.skip_fade_in.start()
+        QTimer.singleShot(450, self.skip_fade_out.start)  # 150ms fade in + 300ms wait
