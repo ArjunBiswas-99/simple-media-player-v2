@@ -1,53 +1,97 @@
-# Netflix-Style Media Player (Python)
+# Netflix-Style Media Player v2.1
 
-A modern, Netflix-inspired media player built with Python, PyQt6, and MPV.
+A professional, Netflix-inspired media player with minimal VLC-style controls, built with Python and PyQt6.
 
-## Features
+## ✨ Features
 
-- 🎬 Perfect A/V synchronization (powered by MPV)
-- 🎨 Netflix-style dark UI with smooth animations
-- ⌨️ Full keyboard shortcuts
-- 🖱️ Auto-hiding controls with fade animations
-- 🎯 Timeline scrubbing
-- 🔊 Volume control
-- ⛶ Fullscreen support
-- 🎞️ Supports all major video formats
+### Core Playback
+- 🎬 **Perfect A/V Sync** - Powered by Qt Multimedia with FFmpeg 7.1.2
+- 🎯 **Click-to-Seek** - Click anywhere on timeline to jump instantly
+- ⚡ **YouTube 2x Speed** - Hold mouse on video for 2× playback
+- 🎞️ **Format Support** - MP4, MKV, AVI, MOV, WMV, FLV, WebM, MPG, MPEG
 
-## Installation
+### UX Excellence
+- 🎨 **Minimal Controls** - VLC-inspired compact design (~65px height)
+- 📁 **Playlist Popover** - Browse all videos in current folder
+- ⚙️ **Speed Control** - 0.25× to 2× with glass-effect popover
+- 🌙 **Auto-Hide Controls** - Fade after 3s in fullscreen
+- 🎭 **Netflix Aesthetics** - Professional red/black color scheme
+
+### Professional Features
+- 🎹 **VLC Menu Bar** - File, Playback, Audio, Video, Help menus
+- ⌨️ **Full Keyboard Control** - Space, arrows, F11, volume, mute
+- 🖱️ **Smart Mouse Gestures** - Double-click fullscreen, hold for 2×
+- ⛶ **Dual-Mode Behavior** - Controls stay in windowed, hide in fullscreen
+
+## 🚀 Quick Start
 
 ```bash
 # Install dependencies
-pip install -r requirements.txt
+pip install PyQt6 PyQt6-Multimedia
 
 # Run the player
-python player.py
+python main.py
 ```
 
-## Keyboard Shortcuts
+## 📁 Project Structure (SOLID Principles)
 
-- **Space** - Play/Pause
-- **Left Arrow** - Seek backward 5s
-- **Right Arrow** - Seek forward 5s
-- **F** - Toggle fullscreen
-- **O** - Open file
-- **Esc** - Exit fullscreen
+```
+simple-media-player-v2/
+├── main.py                    # Entry point with Qt application setup
+├── media_player.py            # Main window orchestration
+├── constants.py               # Netflix colors, sizes, dimensions
+├── styles.py                  # Reusable stylesheet generators
+└── widgets/
+    ├── __init__.py
+    ├── speed_indicator.py     # YouTube-style 2× overlay
+    ├── playlist_popover.py    # Netflix folder video list
+    └── settings_popover.py    # Speed control popover
+```
 
-## Controls
+### Architecture Highlights
+- **Single Responsibility**: Each module has one clear purpose
+- **Open/Closed**: Styles/constants easily extended
+- **DRY**: Reusable style generators, no duplication
+- **Separation of Concerns**: UI, logic, and styling separated
 
-- **⏸/▶** - Play/Pause
-- **⏪** - Skip backward 10s
-- **⏩** - Skip forward 10s
-- **🔊** - Volume control
-- **⛶** - Fullscreen
-- **Timeline** - Click/drag to seek
+## ⌨️ Keyboard Shortcuts
 
-## Technical Details
+| Key | Action |
+|-----|--------|
+| **Space** | Play/Pause |
+| **Left/Right** | Seek ±5s |
+| **Up/Down** | Volume ±5% |
+| **F / F11** | Toggle fullscreen |
+| **M** | Mute/Unmute |
+| **S** | Stop |
+| **O** | Open file dialog |
+| **Esc** | Exit fullscreen |
 
-- **UI Framework**: PyQt6
-- **Video Backend**: python-mpv (MPV bindings)
-- **A/V Sync**: Handled automatically by MPV
-- **No manual sync code needed**
-- **Cross-platform**: Windows, macOS, Linux
+## 🎮 Controls
+
+```
+[▶/⏸] [⏪] [⏩] [⏹] | [🔊][━━━━] [1×] [☰] [⚙] | [0:00] [⛶]
+  ^     ^    ^    ^      ^     ^    ^   ^   ^      ^    ^
+  |     |    |    |      |     |    |   |   |      |    └─ Fullscreen
+  |     |    |    |      |     |    |   |   |      └────── Time
+  |     |    |    |      |     |    |   |   └───────────── Settings
+  |     |    |    |      |     |    |   └───────────────── Playlist
+  |     |    |    |      |     |    └───────────────────── Speed
+  |     |    |    |      |     └────────────────────────── Volume
+  |     |    |    |      └──────────────────────────────── Mute
+  |     |    |    └─────────────────────────────────────── Stop
+  |     |    └──────────────────────────────────────────── Forward 10s
+  |     └───────────────────────────────────────────────── Rewind 10s
+  └─────────────────────────────────────────────────────── Play/Pause (PRIMARY)
+```
+
+## 🛠️ Technical Stack
+
+- **UI Framework**: PyQt6 6.x
+- **Video Backend**: Qt Multimedia (QMediaPlayer + FFmpeg 7.1.2)
+- **A/V Sync**: Native Qt synchronization (no manual code)
+- **Python**: 3.10+ required
+- **Platform**: Cross-platform (macOS, Windows, Linux)
 
 ## Why Python + MPV?
 
