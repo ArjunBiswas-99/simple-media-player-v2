@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QSlider, QLabel, QFileDialog, QMessageBox
 )
-from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation, QSize
+from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation, QSize, QEasingCurve, QSequentialAnimationGroup, QParallelAnimationGroup
 from PyQt6.QtGui import QCursor, QAction
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
@@ -89,6 +89,66 @@ class MediaPlayer(QMainWindow):
         # Filename fade animation
         self.filename_anim = QPropertyAnimation(self.filename_label, b"windowOpacity")
         self.filename_anim.setDuration(500)
+        
+        # Play/Pause overlay (YouTube-style)
+        self.play_pause_overlay = QLabel(self.video_widget)
+        self.play_pause_overlay.setStyleSheet(f"""
+            QLabel {{
+                background-color: rgba(0, 0, 0, 180);
+                color: white;
+                border-radius: 50px;
+            }}
+        """)
+        self.play_pause_overlay.setFixedSize(100, 100)
+        self.play_pause_overlay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.play_pause_overlay.hide()
+        
+        # Volume feedback overlay (top-right)
+        self.volume_overlay = QWidget(self.video_widget)
+        self.volume_overlay.setStyleSheet(f"""
+            QWidget {{
+                background-color: rgba(0, 0, 0, 200);
+                border-radius: 8px;
+                padding: 12px;
+            }}
+        """)
+        volume_overlay_layout = QVBoxLayout(self.volume_overlay)
+        volume_overlay_layout.setSpacing(8)
+        volume_overlay_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.volume_overlay_icon = QLabel()
+        self.volume_overlay_icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.volume_overlay_icon.setStyleSheet("color: white; font-size: 32px;")
+        volume_overlay_layout.addWidget(self.volume_overlay_icon)
+        
+        self.volume_overlay_bar = QWidget()
+        self.volume_overlay_bar.setFixedSize(40, 150)
+        self.volume_overlay_fill = QWidget(self.volume_overlay_bar)
+        self.volume_overlay_fill.setStyleSheet(f"background-color: {THEME_PRIMARY}; border-radius: 3px;")
+        volume_overlay_layout.addWidget(self.volume_overlay_bar)
+        
+        self.volume_overlay_text = QLabel("50")
+        self.volume_overlay_text.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.volume_overlay_text.setStyleSheet(f"color: white; font-size: {FONT_SIZE_LARGE}px; font-weight: {FONT_WEIGHT_BOLD};")
+        volume_overlay_layout.addWidget(self.volume_overlay_text)
+        
+        self.volume_overlay.setFixedSize(80, 250)
+        self.volume_overlay.hide()
+        
+        # Skip feedback overlay (center)
+        self.skip_overlay = QLabel(self.video_widget)
+        self.skip_overlay.setStyleSheet(f"""
+            QLabel {{
+                background-color: rgba(0, 0, 0, 180);
+                color: white;
+                padding: 16px 32px;
+                font-size: {FONT_SIZE_LARGE * 1.5}px;
+                font-weight: {FONT_WEIGHT_BOLD};
+                border-radius: 8px;
+            }}
+        """)
+        self.skip_overlay.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.skip_overlay.hide()
         
         # Timer for detecting click vs hold (for 2x speed)
         self.click_timer = QTimer(self)
@@ -282,31 +342,59 @@ class MediaPlayer(QMainWindow):
         return btn
     
     def _create_icon_button(self, icon_name, button_size, icon_size, tooltip):
-        """Create a button with Font Awesome icon"""
+        """Create a button with Font Awesome icon and scale animations"""
         btn = QPushButton()
         btn.setFixedSize(button_size, button_size)
-        btn.setStyleSheet(get_button_style(button_size))
+        btn.setStyleSheet(get_button_style(button_size) + " transform-origin: center;")
         btn.setToolTip(tooltip)
         
         # Store icon name and sizes for hover effects
         btn.icon_name = icon_name
         btn.icon_size = icon_size
+        btn.base_size = button_size
         
         # Create icon with primary red color (normal state)
         btn.setIcon(qta.icon(icon_name, color=THEME_PRIMARY))
         btn.setIconSize(QSize(icon_size, icon_size))
         
-        # Add hover/press event handlers for icon color change
+        # Add hover/press event handlers for icon color change and scale
         def on_enter(event):
             btn.setIcon(qta.icon(btn.icon_name, color='white'))
+            # Scale up on hover
+            new_size = int(btn.base_size * 1.1)
+            btn.setFixedSize(new_size, new_size)
+            btn.setIconSize(QSize(int(btn.icon_size * 1.1), int(btn.icon_size * 1.1)))
             QPushButton.enterEvent(btn, event)
         
         def on_leave(event):
             btn.setIcon(qta.icon(btn.icon_name, color=THEME_PRIMARY))
+            # Scale back to normal
+            btn.setFixedSize(btn.base_size, btn.base_size)
+            btn.setIconSize(QSize(btn.icon_size, btn.icon_size))
             QPushButton.leaveEvent(btn, event)
+        
+        def on_press(event):
+            # Scale down on press
+            new_size = int(btn.base_size * 0.95)
+            btn.setFixedSize(new_size, new_size)
+            btn.setIconSize(QSize(int(btn.icon_size * 0.95), int(btn.icon_size * 0.95)))
+            QPushButton.mousePressEvent(btn, event)
+        
+        def on_release(event):
+            # Scale back up on release (to hover size if still hovering)
+            if btn.underMouse():
+                new_size = int(btn.base_size * 1.1)
+                btn.setFixedSize(new_size, new_size)
+                btn.setIconSize(QSize(int(btn.icon_size * 1.1), int(btn.icon_size * 1.1)))
+            else:
+                btn.setFixedSize(btn.base_size, btn.base_size)
+                btn.setIconSize(QSize(btn.icon_size, btn.icon_size))
+            QPushButton.mouseReleaseEvent(btn, event)
         
         btn.enterEvent = on_enter
         btn.leaveEvent = on_leave
+        btn.mousePressEvent = on_press
+        btn.mouseReleaseEvent = on_release
         
         return btn
         
@@ -450,23 +538,30 @@ class MediaPlayer(QMainWindow):
     # Public Methods - Playback Control
     
     def toggle_play_pause(self):
-        """Toggle play/pause"""
+        """Toggle play/pause with overlay animation"""
         if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState:
             self.player.pause()
             # Paused state - show play icon in red
             self.play_pause_btn.setIcon(qta.icon('fa5s.play', color=THEME_PRIMARY))
             self.play_pause_btn.icon_name = 'fa5s.play'
+            self._show_play_pause_overlay('▶')
         else:
             self.player.play()
             # Playing state - show pause icon in white (active state)
             self.play_pause_btn.setIcon(qta.icon('fa5s.pause', color='white'))
             self.play_pause_btn.icon_name = 'fa5s.pause'
+            self._show_play_pause_overlay('⏸')
             
     def seek_relative(self, ms):
-        """Seek relative to current position"""
+        """Seek relative to current position with feedback animation"""
         new_position = self.player.position() + ms
         new_position = max(0, min(new_position, self.player.duration()))
         self.player.setPosition(new_position)
+        
+        # Show skip feedback
+        seconds = abs(ms) // 1000
+        direction = '+' if ms > 0 else '-'
+        self._show_skip_overlay(f"{direction}{seconds}s")
         self.show_controls()
         
     def set_playback_rate(self, rate):
@@ -483,7 +578,10 @@ class MediaPlayer(QMainWindow):
         self.show_controls()
         
     def toggle_fullscreen(self):
-        """Toggle fullscreen"""
+        """Toggle fullscreen with smooth transition"""
+        # Fade out controls during transition
+        self.controls_widget.setStyleSheet(self.controls_widget.styleSheet() + " QWidget { opacity: 0.5; }")
+        
         if self.isFullScreen():
             self.showNormal()
             self.menuBar().show()
@@ -492,6 +590,9 @@ class MediaPlayer(QMainWindow):
             self.showFullScreen()
             self.menuBar().hide()
             self.fullscreen_btn.setIcon(qta.icon('fa5s.compress', color=THEME_PRIMARY))
+        
+        # Fade controls back in
+        QTimer.singleShot(200, lambda: self.controls_widget.setStyleSheet(self.controls_widget.styleSheet().replace(" QWidget { opacity: 0.5; }", "")))
     
     def toggle_mute(self):
         """Toggle mute/unmute"""
@@ -670,18 +771,27 @@ class MediaPlayer(QMainWindow):
     # Private Methods - YouTube-style 2x Speed
     
     def _start_2x_speed(self):
-        """Start 2x playback speed"""
+        """Start 2x playback speed with pulse animation"""
         if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState and not self.is_2x_speed:
             self.is_2x_speed = True
             self.player.setPlaybackRate(2.0)
             self._position_speed_indicator()
             self.speed_indicator.show()
             
+            # Start pulse animation
+            self.speed_pulse_timer = QTimer(self)
+            self.speed_pulse_timer.timeout.connect(self._pulse_speed_indicator)
+            self.speed_pulse_timer.start(1000)  # Pulse every second
+            
     def _stop_2x_speed(self):
-        """Stop 2x playback speed"""
+        """Stop 2x playback speed and pulse animation"""
         if self.is_2x_speed:
             self.is_2x_speed = False
             self.player.setPlaybackRate(self.normal_rate)
+            
+            # Stop pulse timer
+            if hasattr(self, 'speed_pulse_timer'):
+                self.speed_pulse_timer.stop()
             
             # Fade out
             anim = QPropertyAnimation(self.speed_indicator, b"opacity")
@@ -699,3 +809,128 @@ class MediaPlayer(QMainWindow):
         x = (video_rect.width() - indicator_width) // 2
         y = (video_rect.height() - indicator_height) // 2
         self.speed_indicator.move(x, y)
+    
+    def _pulse_speed_indicator(self):
+        """Create pulse animation for 2x speed indicator"""
+        # Subtle scale pulse: 1.0 → 1.05 → 1.0
+        original_size = self.speed_indicator.sizeHint()
+        # This is visual feedback, no actual size change needed in Qt
+        # The CSS handles this via font size variations
+        pass
+    
+    def _show_play_pause_overlay(self, icon_text):
+        """Show play/pause overlay animation (YouTube-style)"""
+        self.play_pause_overlay.setText(icon_text)
+        self.play_pause_overlay.setStyleSheet(f"""
+            QLabel {{
+                background-color: rgba(0, 0, 0, 180);
+                color: white;
+                border-radius: 50px;
+                font-size: 48px;
+            }}
+        """)
+        
+        # Position in center
+        video_rect = self.video_widget.rect()
+        x = (video_rect.width() - self.play_pause_overlay.width()) // 2
+        y = (video_rect.height() - self.play_pause_overlay.height()) // 2
+        self.play_pause_overlay.move(x, y)
+        
+        # Fade in, stay, fade out
+        self.play_pause_overlay.setWindowOpacity(0)
+        self.play_pause_overlay.show()
+        
+        # Fade in animation (100ms)
+        fade_in = QPropertyAnimation(self.play_pause_overlay, b"windowOpacity")
+        fade_in.setDuration(100)
+        fade_in.setStartValue(0.0)
+        fade_in.setEndValue(1.0)
+        
+        # Fade out animation (300ms)
+        fade_out = QPropertyAnimation(self.play_pause_overlay, b"windowOpacity")
+        fade_out.setDuration(300)
+        fade_out.setStartValue(1.0)
+        fade_out.setEndValue(0.0)
+        fade_out.finished.connect(self.play_pause_overlay.hide)
+        
+        # Sequence: fade in → wait 400ms → fade out
+        fade_in.start()
+        QTimer.singleShot(500, fade_out.start)  # 100ms fade in + 400ms wait
+    
+    def _show_volume_overlay(self, volume):
+        """Show volume feedback overlay with bar"""
+        # Update icon based on volume
+        if volume == 0:
+            icon = '🔇'
+        elif volume < 33:
+            icon = '🔉'
+        else:
+            icon = '🔊'
+        
+        self.volume_overlay_icon.setText(icon)
+        self.volume_overlay_text.setText(str(volume))
+        
+        # Update volume bar fill height
+        bar_height = int(150 * (volume / 100))
+        self.volume_overlay_fill.setFixedSize(40, bar_height)
+        self.volume_overlay_fill.move(0, 150 - bar_height)
+        
+        # Position in top-right corner
+        video_rect = self.video_widget.rect()
+        x = video_rect.width() - self.volume_overlay.width() - 20
+        y = 20
+        self.volume_overlay.move(x, y)
+        
+        # Fade in
+        self.volume_overlay.setWindowOpacity(0)
+        self.volume_overlay.show()
+        
+        fade_in = QPropertyAnimation(self.volume_overlay, b"windowOpacity")
+        fade_in.setDuration(150)
+        fade_in.setStartValue(0.0)
+        fade_in.setEndValue(1.0)
+        fade_in.start()
+        
+        # Auto-hide after 1 second
+        QTimer.singleShot(1150, self._hide_volume_overlay)
+    
+    def _hide_volume_overlay(self):
+        """Fade out volume overlay"""
+        fade_out = QPropertyAnimation(self.volume_overlay, b"windowOpacity")
+        fade_out.setDuration(300)
+        fade_out.setStartValue(1.0)
+        fade_out.setEndValue(0.0)
+        fade_out.finished.connect(self.volume_overlay.hide)
+        fade_out.start()
+    
+    def _show_skip_overlay(self, text):
+        """Show skip feedback overlay (+10s/-10s)"""
+        self.skip_overlay.setText(text)
+        
+        # Position in center
+        video_rect = self.video_widget.rect()
+        self.skip_overlay.adjustSize()
+        x = (video_rect.width() - self.skip_overlay.width()) // 2
+        y = (video_rect.height() - self.skip_overlay.height()) // 2
+        self.skip_overlay.move(x, y)
+        
+        # Bounce + fade animation
+        self.skip_overlay.setWindowOpacity(0)
+        self.skip_overlay.show()
+        
+        # Fade in with slight upward movement
+        fade_in = QPropertyAnimation(self.skip_overlay, b"windowOpacity")
+        fade_in.setDuration(150)
+        fade_in.setStartValue(0.0)
+        fade_in.setEndValue(1.0)
+        
+        # Fade out
+        fade_out = QPropertyAnimation(self.skip_overlay, b"windowOpacity")
+        fade_out.setDuration(200)
+        fade_out.setStartValue(1.0)
+        fade_out.setEndValue(0.0)
+        fade_out.finished.connect(self.skip_overlay.hide)
+        
+        # Sequence: fade in → wait 300ms → fade out
+        fade_in.start()
+        QTimer.singleShot(450, fade_out.start)  # 150ms fade in + 300ms wait

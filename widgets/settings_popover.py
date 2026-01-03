@@ -3,7 +3,7 @@ Settings Popover Widget - Playback speed controls
 """
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QRadioButton, QButtonGroup, QFrame
-from PyQt6.QtCore import Qt, QPoint
+from PyQt6.QtCore import Qt, QPoint, QTimer, QPropertyAnimation
 from PyQt6.QtGui import QColor
 from constants import *
 from styles import get_popover_container_style
@@ -120,8 +120,23 @@ class SettingsPopover(QWidget):
         container.setGraphicsEffect(shadow)
         
     def _on_speed_changed(self, rate):
-        """Handle speed change"""
+        """Handle speed change with visual feedback animation"""
         if self.media_player_ref:
+            # Find the checked radio button and highlight it
+            for button in self.speed_group.buttons():
+                if button.isChecked():
+                    # Flash animation - brief highlight
+                    original_style = button.styleSheet()
+                    button.setStyleSheet(original_style + f"""
+                        QRadioButton {{
+                            background-color: rgba(229, 9, 20, 30);
+                            border-radius: 4px;
+                        }}
+                    """)
+                    # Reset after 200ms
+                    QTimer.singleShot(200, lambda b=button, s=original_style: b.setStyleSheet(s))
+                    break
+            
             self.media_player_ref.set_playback_rate(rate)
             
     def show_at_button(self, button):
