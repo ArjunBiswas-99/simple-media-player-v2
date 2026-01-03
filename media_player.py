@@ -184,6 +184,12 @@ class MediaPlayer(QMainWindow):
         self.click_timer.timeout.connect(self._start_2x_speed)
         self.video_press_pos = None
         
+        # Cumulative skip tracking (YouTube-style)
+        self.skip_accumulator = 0  # Total seconds skipped
+        self.skip_reset_timer = QTimer(self)
+        self.skip_reset_timer.setSingleShot(True)
+        self.skip_reset_timer.timeout.connect(self._reset_skip_accumulator)
+        
         # Add mouse click handler with hold detection
         def video_mouse_press(event):
             if event.button() == Qt.MouseButton.LeftButton:
@@ -629,10 +635,23 @@ class MediaPlayer(QMainWindow):
         new_position = max(0, min(new_position, self.player.duration()))
         self.player.setPosition(new_position)
         
-        # Show skip feedback
-        seconds = abs(ms) // 1000
-        direction = '+' if ms > 0 else '-'
-        self._show_skip_overlay(f"{direction}{seconds}s")
+        # Accumulate skip amount (YouTube-style)
+        seconds = ms // 1000  # Keep sign
+        
+        # If direction changed, reset accumulator
+        if (self.skip_accumulator > 0 and seconds < 0) or (self.skip_accumulator < 0 and seconds > 0):
+            self.skip_accumulator = 0
+        
+        self.skip_accumulator += seconds
+        
+        # Show cumulative skip feedback
+        direction = '+' if self.skip_accumulator > 0 else '-'
+        self._show_skip_overlay(f"{direction}{abs(self.skip_accumulator)}s")
+        
+        # Reset accumulator after 2 seconds of no activity
+        self.skip_reset_timer.stop()
+        self.skip_reset_timer.start(2000)
+        
         self.show_controls()
         
     def set_playback_rate(self, rate):
@@ -1133,6 +1152,10 @@ class MediaPlayer(QMainWindow):
         # Sequence: fade in → wait 300ms → fade out
         self.skip_fade_in.start()
         QTimer.singleShot(450, self.skip_fade_out.start)  # 150ms fade in + 300ms wait
+    
+    def _reset_skip_accumulator(self):
+        """Reset the skip accumulator after timeout"""
+        self.skip_accumulator = 0
     
     def closeEvent(self, event):
         """Clean up on application close"""
