@@ -1,983 +1,953 @@
 Loaded: The Heat.mp4
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer succeeded
 0.083 - 0.083 - 0.083
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-1.75133 - 2.70962 - 1.75133
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-3.37796 - 4.33624 - 3.37796
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-5.00458 - 5.96287 - 5.00458
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-6.6312 - 7.5895 - 6.6312
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-8.25783 - 9.21612 - 8.25783
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-9.88446 - 10.8427 - 9.88446
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-SEEK - 10.3015 - 1104.5
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-1104.94 - 1104.89 - 1104.94
-1105.35 - 1105.31 - 1105.35
-1105.77 - 1105.72 - 1105.77
-1106.19 - 1106.14 - 1106.19
-1106.61 - 1106.56 - 1106.61
-1107.02 - 1106.97 - 1107.02
-1107.44 - 1107.39 - 1107.44
-1107.86 - 1107.8 - 1107.86
-1108.27 - 1108.22 - 1108.27
-1108.69 - 1108.64 - 1108.69
-1109.11 - 1109.06 - 1109.11
-1109.52 - 1109.48 - 1109.52
-1109.94 - 1109.89 - 1109.94
-1110.36 - 1110.31 - 1110.36
-1110.78 - 1110.73 - 1110.78
-1111.19 - 1111.14 - 1111.19
-1111.61 - 1111.56 - 1111.61
-1112.03 - 1111.97 - 1112.03
-1112.44 - 1112.39 - 1112.44
-1112.86 - 1112.81 - 1112.86
-1113.28 - 1113.22 - 1113.28
-1113.7 - 1113.64 - 1113.7
-1114.11 - 1114.05 - 1114.11
-1114.53 - 1114.47 - 1114.53
-1114.95 - 1114.89 - 1114.95
-1115.36 - 1115.3 - 1115.36
-1115.78 - 1115.72 - 1115.78
-1116.2 - 1116.13 - 1116.2
-1116.62 - 1116.55 - 1116.62
-1117.03 - 1116.97 - 1117.03
-1117.45 - 1117.38 - 1117.45
-1117.87 - 1117.8 - 1117.87
-1118.28 - 1118.21 - 1118.28
-1118.7 - 1118.63 - 1118.7
-1119.12 - 1119.05 - 1119.12
-1119.49 - 1119.46 - 1119.49
-1119.91 - 1119.88 - 1119.91
-1120.33 - 1120.29 - 1120.33
-SEEK - 1120.74 - 2190.06
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2190.94 - 2191.9 - 2190.94
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2192.56 - 2193.52 - 2192.56
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2194.19 - 2195.15 - 2194.19
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2195.82 - 2196.78 - 2195.82
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2197.44 - 2198.4 - 2197.44
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2199.07 - 2200.03 - 2199.07
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2200.7 - 2201.66 - 2200.7
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2202.32 - 2203.28 - 2202.32
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-SEEK - 2202.87 - 2499.32
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2500.58 - 2501.54 - 2500.58
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2502.21 - 2503.17 - 2502.21
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2503.83 - 2504.79 - 2503.83
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2505.46 - 2506.42 - 2505.46
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-SEEK - 2506.13 - 2903.25
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2904.44 - 2904.4 - 2904.44
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 888900209706.07 - 2907.03 - 2906.07
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890FLUSH: Calling Stop()0
+07
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)FLUSH: Calling Stop()
 
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2907.7 - 2908.65 - 2907.7
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2909.32 - 2910.28 - 2909.32
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2910.95 - 2911.91 - 2910.95
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-2912.58 - 2913.53 - 2912.58
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
-Failed to release buffer: 88890007
+THREAD: ReleaseBuffer FAILED: 0x8889FLUSH: Stop() returned: 0x000
+0FLUSH: Calling Reset()7
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+FLUSH: Calling Stop()
+THREAD: ReleaseBuffer FAILED: 0x888FLUSH: Stop() returned: 0x900
+0FLUSH: Calling Reset()0
+7FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000FLUSH: Calling Stop()
+)
+THREAD: ReleaseBuffer FAILED: 0x8FLUSH: Stop() returned: 0x808
+9FLUSH: Calling Reset()0
+0FLUSH: Reset() returned: 0x007
+FLUSH: Calling Start()
+
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x8889000FLUSH: Calling Stop()7
+
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+THREAD: Calling GetBuffer(48000)
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+FLUSH: Calling Stop()
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0xFLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x808
+8FLUSH: Calling Start()9
+00FLUSH: Start() returned: 0x007
+FLUSH: Complete
+
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+FLUSH: Calling Stop()
+THREAD: ReleaseBuffer FAILED: 0x88FLUSH: Stop() returned: 0x809
+0FLUSH: Calling Reset()0
+0FLUSH: Reset() returned: 0x70
+FLUSH: Calling Start()
+
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+THREAD: Calling GetBuffer(FLUSH: Calling Stop()512)
+
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+THREAD: ReleaseBuffer succeeded
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+1.70962 - 2.66791 - 1.70962
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000FLUSH: Calling Stop()
+)
+THREAD: ReleaseBuffer FAILED: 0xFLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x808
+8FLUSH: Calling Start()9
+00FLUSH: Start() returned: 0x007
+FLUSH: Complete
+
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+FLUSH: Calling Stop()
+THREAD: ReleaseBuffer FAILED: 0x88890FLUSH: Stop() returned: 0x000
+7FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+FLUSH: Calling Stop()
+THREAD: ReleaseBuffer FAILED: 0x88FLUSH: Stop() returned: 0x809
+0FLUSH: Calling Reset()0
+0FLUSH: Reset() returned: 0x70
+FLUSH: Calling Start()
+
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x8FLUSH: Calling Stop()8
+8900FLUSH: Stop() returned: 0x007
+FLUSH: Calling Reset()
+
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x888FLUSH: Calling Stop()9
+0007
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+FLUSH: Calling Stop()
+THREAD: ReleaseBuffer FAILED: 0x888FLUSH: Stop() returned: 0x900
+0FLUSH: Calling Reset()0
+7FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0xFLUSH: Calling Stop()
+888FLUSH: Stop() returned: 0x900
+0FLUSH: Calling Reset()0
+7FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0xFLUSH: Calling Stop()
+8889FLUSH: Stop() returned: 0x000
+0FLUSH: Calling Reset()7
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x8889FLUSH: Calling Stop()0
+007
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0xFLUSH: Calling Stop()
+88FLUSH: Stop() returned: 0x809
+0FLUSH: Calling Reset()0
+0FLUSH: Reset() returned: 0x70
+FLUSH: Calling Start()
+
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0THREAD: Calling GetBuffer(48000)
+
+FLUSH: Complete
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88FLUSH: Calling Stop()8
+90007FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+3.33624 - 4.29453 - 3.33624
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x888900FLUSH: Calling Stop()0
+7
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+THREAD: Calling GetBuffer(48000)
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer succeeded
+THREAD: Calling GetBuffer(512)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(512)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+FLUSH: Calling Stop()
+THREAD: ReleaseBuffer FAILED: 0x888FLUSH: Stop() returned: 0x900
+0FLUSH: Calling Reset()0
+7FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
+FLUSH: Stop() returned: 0x0
+FLUSH: Calling Reset()
+FLUSH: Reset() returned: 0x0
+FLUSH: Calling Start()
+FLUSH: Start() returned: 0x0
+FLUSH: Complete
+THREAD: Calling GetBuffer(48000)
+THREAD: GetBuffer succeeded
+THREAD: Calling ReleaseBuffer(48000)
+THREAD: ReleaseBuffer FAILED: 0x88890007
+FLUSH: Calling Stop()
