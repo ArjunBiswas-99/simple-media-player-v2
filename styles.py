@@ -160,14 +160,14 @@ def get_menubar_style():
             color: white;
             font-size: {FONT_SIZE_SMALL}px;
             font-weight: {FONT_WEIGHT_MEDIUM};
-            padding: 6px 12px;
+            padding: 4px 8px;
             border-bottom: 1px solid rgba(255, 255, 255, 8);
-            spacing: 8px;
+            spacing: 4px;
         }}
         QMenuBar::item {{
             background: transparent;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 6px 12px;
+            border-radius: 4px;
             margin: 0px 2px;
         }}
         QMenuBar::item:selected {{
@@ -186,14 +186,14 @@ def get_menubar_style():
             color: white;
             font-size: {FONT_SIZE_SMALL}px;
             border: 1px solid rgba(229, 9, 20, 80);
-            border-radius: 8px;
-            padding: 8px 0px;
+            border-radius: 6px;
+            padding: 4px 0px;
         }}
         QMenu::item {{
             background: transparent;
-            padding: 10px 40px 10px 40px;
-            margin: 2px 8px;
-            border-radius: 6px;
+            padding: 6px 32px 6px 32px;
+            margin: 1px 6px;
+            border-radius: 4px;
         }}
         QMenu::item:selected {{
             background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -207,9 +207,9 @@ def get_menubar_style():
                 stop:0 rgba(255, 255, 255, 0),
                 stop:0.5 rgba(255, 255, 255, 20),
                 stop:1 rgba(255, 255, 255, 0));
-            margin: 8px 16px;
+            margin: 4px 12px;
         }}
         QMenu::icon {{
-            padding-left: 10px;
+            padding-left: 8px;
         }}
     """

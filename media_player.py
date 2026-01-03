@@ -432,14 +432,12 @@ class MediaPlayer(QMainWindow):
         
         # File Menu
         file_menu = menubar.addMenu("&File")
-        file_menu.setIcon(qta.icon("fa5s.folder-open", color='white'))
         self._add_action(file_menu, "&Open File...", "Ctrl+O", self.open_file, "fa5s.folder-open")
         file_menu.addSeparator()
         self._add_action(file_menu, "E&xit", "Ctrl+Q", self.close, "fa5s.sign-out-alt")
         
         # Playback Menu
         playback_menu = menubar.addMenu("&Playback")
-        playback_menu.setIcon(qta.icon("fa5s.play", color='white'))
         self._add_action(playback_menu, "&Play/Pause", "Space", self.toggle_play_pause, "fa5s.play")
         self._add_action(playback_menu, "&Stop", "S", self.player.stop, "fa5s.stop")
         playback_menu.addSeparator()
@@ -460,7 +458,6 @@ class MediaPlayer(QMainWindow):
         
         # Audio Menu
         audio_menu = menubar.addMenu("&Audio")
-        audio_menu.setIcon(qta.icon("fa5s.volume-up", color='white'))
         self._add_action(audio_menu, "&Mute", "M", self.toggle_mute, "fa5s.volume-mute")
         audio_menu.addSeparator()
         self._add_action(audio_menu, "Volume &Up", "Up", lambda: self.adjust_volume(5), "fa5s.volume-up")
@@ -468,7 +465,6 @@ class MediaPlayer(QMainWindow):
         
         # Video Menu
         video_menu = menubar.addMenu("&Video")
-        video_menu.setIcon(qta.icon("fa5s.video", color='white'))
         self._add_action(video_menu, "&Fullscreen", "F11", self.toggle_fullscreen, "fa5s.expand")
         video_menu.addSeparator()
         
@@ -484,7 +480,6 @@ class MediaPlayer(QMainWindow):
         
         # Tools Menu
         tools_menu = menubar.addMenu("&Tools")
-        tools_menu.setIcon(qta.icon("fa5s.tools", color='white'))
         self._add_action(tools_menu, "&About", None, self.show_about, "fa5s.info-circle")
         
     def _add_action(self, menu, text, shortcut, callback, icon=None):
