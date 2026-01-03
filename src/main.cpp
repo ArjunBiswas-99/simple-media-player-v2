@@ -754,6 +754,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 
                 double videoPTS = state.pendingFrame->pts;
                 
+                // Sync audio clock to first video frame after seek
+                if (state.justSeeked && useAudioSync && state.audioOutput) {
+                    std::cout << "[VIDEO] Syncing audio clock to first video frame: " << videoPTS << std::endl;
+                    state.audioOutput->setAudioClock(videoPTS);
+                    state.audioOutput->clearForceSyncFlag();  // Signal audio thread to resume
+                    audioClock = videoPTS;
+                    state.justSeeked = false;
+                }
+                
                 // Sync audio clock to first video frame to prevent initial drift
                 static bool initialSyncDone = false;
                 if (!initialSyncDone && useAudioSync && state.audioOutput) {
@@ -2125,7 +2134,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
             
             if (state.audioOutput) {
                 state.audioOutput->clearQueue();
-                state.audioOutput->setAudioClock(state.currentTime);
+                // DON'T set audio clock here - let video sync to first frame
             }
             state.lastVideoFramePTS = state.currentTime;
             // Show skip animation for 0.8s
@@ -2152,7 +2161,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
             
             if (state.audioOutput) {
                 state.audioOutput->clearQueue();
-                state.audioOutput->setAudioClock(state.currentTime);
+                // DON'T set audio clock here - let video sync to first frame
             }
             state.lastVideoFramePTS = state.currentTime;
             // Show skip animation for 0.8s
@@ -2360,7 +2369,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
                 // Reset audio clock to match seek position
                 if (state.audioOutput) {
                     state.audioOutput->clearQueue();
-                    state.audioOutput->setAudioClock(state.currentTime);
+                    // DON'T set audio clock here - let video sync to first frame
                 }
                 // Reset video timing
                 state.lastVideoFramePTS = state.currentTime;
@@ -2495,7 +2504,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
             // Reset audio clock
             if (state.audioOutput) {
                 state.audioOutput->clearQueue();
-                state.audioOutput->setAudioClock(state.currentTime);
+                // DON'T set audio clock here - let video sync to first frame
             }
             state.lastVideoFramePTS = state.currentTime;
             
@@ -2550,7 +2559,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
             // Reset audio clock
             if (state.audioOutput) {
                 state.audioOutput->clearQueue();
-                state.audioOutput->setAudioClock(state.currentTime);
+                // DON'T set audio clock here - let video sync to first frame
             }
             state.lastVideoFramePTS = state.currentTime;
             
@@ -2858,7 +2867,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
             // Reset audio clock
             if (state.audioOutput) {
                 state.audioOutput->clearQueue();
-                state.audioOutput->setAudioClock(state.currentTime);
+                // DON'T set audio clock here - let video sync to first frame
             }
             state.lastVideoFramePTS = state.currentTime;
             
@@ -2954,7 +2963,7 @@ void RenderNetflixUI(AppState& state, HWND window) {
             // Reset audio clock
             if (state.audioOutput) {
                 state.audioOutput->clearQueue();
-                state.audioOutput->setAudioClock(state.currentTime);
+                // DON'T set audio clock here - let video sync to first frame
             }
             state.lastVideoFramePTS = state.currentTime;
             

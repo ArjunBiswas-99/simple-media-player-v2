@@ -23,6 +23,7 @@ AudioOutput::AudioOutput()
     , m_audioEvent(nullptr)
     , m_stopAudioThread(false)
     , m_flushRequested(false)
+    , m_forceSyncToNextFrame(false)
     , m_partialFrame(nullptr)
     , m_partialFrameOffset(0)
 #endif
@@ -310,6 +311,10 @@ void AudioOutput::clearQueue() {
         delete m_frameQueue.front();
         m_frameQueue.pop();
     }
+    // Force sync to next frame after queue clear (for accurate post-seek sync)
+#ifdef _WIN32
+    m_forceSyncToNextFrame.store(true);
+#endif
 }
 
 #ifdef __APPLE__
@@ -467,28 +472,49 @@ void AudioOutput::audioThreadFunc() {
             UINT32 totalFrameSamples = frame->size / (m_channels * sizeof(float));
             UINT32 availableSamples = totalFrameSamples - frameOffset;
             
-            // Detect seek: backward jump OR large forward jump (>0.5s)
-            // Normal playback has small forward progression (~0.02s per frame)
-            double timeDiff = frame->pts - m_audioClock;
-            bool isSeekDetected = (frameOffset == 0) && 
-                                  (m_audioClock > 0.001) && 
-                                  ((timeDiff < 0) || (timeDiff > 0.5));
-            
-            if (isSeekDetected) {
-                // Seek detected - discard stale frame and output silence
-                delete frame;
+            // If force sync flag is set, output silence and wait for video thread to sync and clear flag
+            if (m_forceSyncToNextFrame.load()) {
+                // Log that audio is waiting for video to sync (detect race condition)
+                static bool loggedWaiting = false;
+                if (!loggedWaiting) {
+                    std::cout << "[AUDIO] Waiting for video to sync (audio frame PTS: " << frame->pts << ")" << std::endl;
+                    loggedWaiting = true;
+                }
                 
-                // Fill remaining buffer with silence
+                delete frame;  // Discard audio frame
+                
+                // Output silence while waiting
                 UINT32 remainingFrames = numFramesAvailable - framesFilled;
                 if (remainingFrames > 0) {
                     memset(floatBuffer, 0, remainingFrames * m_channels * sizeof(float));
                 }
                 framesFilled = numFramesAvailable;
-                break;  // Exit inner loop to release buffer
-            } else if (m_audioClock < 0.001 && frameOffset == 0) {
-                // Very first frame - initialize clock
-                m_audioClock = frame->pts;
-                m_lastClockUpdate = frame->pts;
+                // DO NOT clear flag - let video thread clear it after syncing
+                break;
+            } else {
+                // Normal seek detection: backward jump OR large forward jump (>0.5s)
+                // Normal playback has small forward progression (~0.02s per frame)
+                double timeDiff = frame->pts - m_audioClock;
+                bool isSeekDetected = (frameOffset == 0) && 
+                                      (m_audioClock > 0.001) && 
+                                      ((timeDiff < 0) || (timeDiff > 0.5));
+                
+                if (isSeekDetected) {
+                    // Seek detected - discard stale frame and output silence
+                    delete frame;
+                    
+                    // Fill remaining buffer with silence
+                    UINT32 remainingFrames = numFramesAvailable - framesFilled;
+                    if (remainingFrames > 0) {
+                        memset(floatBuffer, 0, remainingFrames * m_channels * sizeof(float));
+                    }
+                    framesFilled = numFramesAvailable;
+                    break;  // Exit inner loop to release buffer
+                } else if (m_audioClock < 0.001 && frameOffset == 0) {
+                    // Very first frame - initialize clock
+                    m_audioClock = frame->pts;
+                    m_lastClockUpdate = frame->pts;
+                }
             }
             
             // If flush is pending, output silence and clear flag

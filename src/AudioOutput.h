@@ -42,6 +42,13 @@ public:
     // Clear audio queue (for seeking)
     void clearQueue();
     
+    // Clear force sync flag (called by video thread after syncing)
+    void clearForceSyncFlag() {
+#ifdef _WIN32
+        m_forceSyncToNextFrame.store(false);
+#endif
+    }
+    
     // Check and perform WASAPI flush if requested (call from main thread)
     void checkAndFlushIfNeeded();
     
@@ -66,6 +73,9 @@ private:
     // Flag-based seek flush mechanism
     std::atomic<bool> m_flushRequested;
     std::mutex m_flushMutex;
+    
+    // Force sync to next frame (set after clearQueue for accurate post-seek sync)
+    std::atomic<bool> m_forceSyncToNextFrame;
     
     // Partial frame handling for WASAPI
     AudioFrame* m_partialFrame;
