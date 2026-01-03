@@ -70,17 +70,19 @@ class MediaPlayer(QMainWindow):
         self.speed_indicator = SpeedIndicator(self.video_widget)
         self.speed_indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        # Minimal controls container
+        # Minimal controls container with advanced gradient
         self.controls_widget = QWidget()
         self.controls_widget.setFixedHeight(CONTROL_BAR_HEIGHT)
         self.controls_widget.setStyleSheet("""
             QWidget {
                 background: qlineargradient(
                     x1:0, y1:1, x2:0, y2:0,
-                    stop:0 rgba(20, 20, 20, 240),
-                    stop:0.3 rgba(20, 20, 20, 180),
+                    stop:0 rgba(15, 15, 15, 250),
+                    stop:0.4 rgba(20, 20, 20, 220),
+                    stop:0.7 rgba(25, 25, 25, 150),
                     stop:1 rgba(20, 20, 20, 0)
                 );
+                border-top: 1px solid rgba(229, 9, 20, 30);
             }
         """)
         layout.addWidget(self.controls_widget)
@@ -90,8 +92,8 @@ class MediaPlayer(QMainWindow):
     def _setup_controls(self):
         """Setup minimal VLC-style controls"""
         layout = QVBoxLayout(self.controls_widget)
-        layout.setContentsMargins(CONTROL_PADDING, CONTROL_PADDING, CONTROL_PADDING, CONTROL_PADDING)
-        layout.setSpacing(4)
+        layout.setContentsMargins(CONTROL_PADDING, CONTROL_PADDING, CONTROL_PADDING, CONTROL_PADDING_BOTTOM)
+        layout.setSpacing(6)
         
         # Timeline slider
         self.timeline = QSlider(Qt.Orientation.Horizontal)
@@ -102,6 +104,7 @@ class MediaPlayer(QMainWindow):
         # Bottom row: time labels and controls
         bottom_layout = QHBoxLayout()
         bottom_layout.setSpacing(BUTTON_SPACING)
+        bottom_layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         
         # Time labels
         self.current_time_label = QLabel("0:00")
