@@ -491,9 +491,9 @@ class MediaPlayer(QMainWindow):
             device_list.append((device.description(), device))
         for label, device in device_list:
             action = self._add_action(self.audio_device_menu, label, None,
-                           lambda checked, d=device: self.set_audio_device(d), "fa5s.headphones")
+                           lambda checked, d=device: self.set_audio_device(d), None)
             action.setCheckable(True)
-            action.setActionGroup(self.audio_device_action_group)
+            self.audio_device_action_group.addAction(action)
             if label == "Default":
                 action.setChecked(True)
             self.audio_device_actions[label] = action
@@ -507,9 +507,9 @@ class MediaPlayer(QMainWindow):
         stereo_modes = ["Mono", "Stereo", "Left", "Right", "Reverse Stereo"]
         for mode in stereo_modes:
             action = self._add_action(self.stereo_mode_menu, mode, None,
-                           lambda checked, m=mode: self.set_stereo_mode(m), "fa5s.broadcast-tower")
+                           lambda checked, m=mode: self.set_stereo_mode(m), None)
             action.setCheckable(True)
-            action.setActionGroup(self.stereo_mode_action_group)
+            self.stereo_mode_action_group.addAction(action)
             if mode == "Stereo":
                 action.setChecked(True)
             self.stereo_mode_actions[mode] = action
@@ -523,9 +523,9 @@ class MediaPlayer(QMainWindow):
         visualizations = ["Disable", "Spectrometer", "Scope", "Spectrum", "VU Meter", "Goom", "projectM", "3D Spectrum"]
         for viz in visualizations:
             action = self._add_action(self.visualization_menu, viz, None,
-                           lambda checked, v=viz: self.set_visualization(v), "fa5s.wave-square")
+                           lambda checked, v=viz: self.set_visualization(v), None)
             action.setCheckable(True)
-            action.setActionGroup(self.visualization_action_group)
+            self.visualization_action_group.addAction(action)
             if viz == "Disable":
                 action.setChecked(True)
             self.visualization_actions[viz] = action
@@ -546,9 +546,9 @@ class MediaPlayer(QMainWindow):
                         ("2.39:1", (239, 100)), ("5:4", (5, 4))]
         for label, ratio in aspect_ratios:
             action = self._add_action(self.aspect_menu, label, "A" if label == "Default" else None,
-                           lambda checked, l=label, r=ratio: self.set_aspect_ratio(l, r), "fa5s.expand-arrows-alt")
+                           lambda checked, l=label, r=ratio: self.set_aspect_ratio(l, r), None)
             action.setCheckable(True)
-            action.setActionGroup(self.aspect_action_group)
+            self.aspect_action_group.addAction(action)
             if label == "Default":
                 action.setChecked(True)
             self.aspect_actions[label] = action
@@ -563,9 +563,9 @@ class MediaPlayer(QMainWindow):
                       ("1:1 Original", 1.0), ("2:1 Double", 2.0)]
         for label, scale in zoom_levels:
             action = self._add_action(self.zoom_menu, label, None,
-                           lambda checked, l=label, s=scale: self.set_zoom(l, s), "fa5s.search-plus")
+                           lambda checked, l=label, s=scale: self.set_zoom(l, s), None)
             action.setCheckable(True)
-            action.setActionGroup(self.zoom_action_group)
+            self.zoom_action_group.addAction(action)
             if label == "1:1 Original":
                 action.setChecked(True)
             self.zoom_actions[label] = action
@@ -581,9 +581,9 @@ class MediaPlayer(QMainWindow):
                       ("2.39:1", (239, 100)), ("5:4", (5, 4))]
         for label, ratio in crop_ratios:
             action = self._add_action(self.crop_menu, label, "C" if label == "Default" else None,
-                           lambda checked, l=label, r=ratio: self.set_crop(l, r), "fa5s.crop")
+                           lambda checked, l=label, r=ratio: self.set_crop(l, r), None)
             action.setCheckable(True)
-            action.setActionGroup(self.crop_action_group)
+            self.crop_action_group.addAction(action)
             if label == "Default":
                 action.setChecked(True)
             self.crop_actions[label] = action
