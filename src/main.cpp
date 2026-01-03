@@ -758,9 +758,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 if (state.justSeeked && useAudioSync && state.audioOutput) {
                     std::cout << "[VIDEO] Syncing audio clock to first video frame: " << videoPTS << std::endl;
                     state.audioOutput->setAudioClock(videoPTS);
-                    state.audioOutput->clearForceSyncFlag();  // Signal audio thread to resume
                     audioClock = videoPTS;
-                    state.justSeeked = false;
+                    // DON'T clear flag yet - wait until frame is actually displayed
                 }
                 
                 // Sync audio clock to first video frame to prevent initial drift
@@ -841,6 +840,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     
                     // Update time
                     state.currentTime = (float)videoPTS;
+                    
+                    // Clear force sync flag AFTER displaying first frame post-seek
+                    if (state.justSeeked && state.audioOutput) {
+                        state.audioOutput->clearForceSyncFlag();  // Now audio can resume
+                        state.justSeeked = false;
+                        std::cout << "[VIDEO] Frame displayed, audio can resume" << std::endl;
+                    }
                     
                     // Release frame
                     delete state.pendingFrame;
