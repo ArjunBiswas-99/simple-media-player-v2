@@ -7,5 +7,6 @@ from .playlist_popover import PlaylistPopover
 from .settings_popover import SettingsPopover
 from .info_popover import InfoPopover
 from .timeline_tooltip import TimelineTooltip
+from .animated_button import AnimatedButton
 
-__all__ = ['SpeedIndicator', 'PlaylistPopover', 'SettingsPopover', 'InfoPopover']
+__all__ = ['SpeedIndicator', 'PlaylistPopover', 'SettingsPopover', 'InfoPopover', 'AnimatedButton']

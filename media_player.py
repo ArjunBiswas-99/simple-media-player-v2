@@ -9,14 +9,14 @@ from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QSlider, QLabel, QFileDialog, QMessageBox, QGraphicsOpacityEffect
 )
-from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation, QSize, QEasingCurve, QSequentialAnimationGroup, QParallelAnimationGroup
-from PyQt6.QtGui import QCursor, QAction
+from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation, QSize, QEasingCurve, QSequentialAnimationGroup, QParallelAnimationGroup, QPoint, QRect
+from PyQt6.QtGui import QCursor, QAction, QPainter, QColor
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput, QMediaMetaData
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 
 from constants import *
 from styles import *
-from widgets import SpeedIndicator, PlaylistPopover, SettingsPopover, InfoPopover, TimelineTooltip
+from widgets import SpeedIndicator, PlaylistPopover, SettingsPopover, InfoPopover, TimelineTooltip, AnimatedButton
 from thumbnail_generator import ThumbnailGenerator
 
 
@@ -422,49 +422,8 @@ class MediaPlayer(QMainWindow):
         return btn
     
     def _create_icon_button(self, icon_name, button_size, icon_size, tooltip):
-        """Create a button with Font Awesome icon"""
-        btn = QPushButton()
-        btn.setFixedSize(button_size, button_size)
-        btn.setStyleSheet(get_button_style(button_size))
-        btn.setToolTip(tooltip)
-        
-        # Store icon name and sizes for hover effects
-        btn.icon_name = icon_name
-        btn.icon_size = icon_size
-        
-        # Create icon with primary red color (normal state)
-        btn.setIcon(qta.icon(icon_name, color=THEME_PRIMARY))
-        btn.setIconSize(QSize(icon_size, icon_size))
-        
-        # Add hover/press event handlers for icon color change and scale animation
-        def on_enter(event):
-            btn.setIcon(qta.icon(btn.icon_name, color='white'))
-            # Animate scale up
-            if not hasattr(btn, '_scale_anim'):
-                btn._scale_anim = QPropertyAnimation(btn, b"iconSize")
-            btn._scale_anim.setDuration(150)
-            btn._scale_anim.setStartValue(btn.iconSize())
-            btn._scale_anim.setEndValue(QSize(int(icon_size * 1.15), int(icon_size * 1.15)))
-            btn._scale_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
-            btn._scale_anim.start()
-            QPushButton.enterEvent(btn, event)
-        
-        def on_leave(event):
-            btn.setIcon(qta.icon(btn.icon_name, color=THEME_PRIMARY))
-            # Animate scale down
-            if not hasattr(btn, '_scale_anim'):
-                btn._scale_anim = QPropertyAnimation(btn, b"iconSize")
-            btn._scale_anim.setDuration(150)
-            btn._scale_anim.setStartValue(btn.iconSize())
-            btn._scale_anim.setEndValue(QSize(icon_size, icon_size))
-            btn._scale_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
-            btn._scale_anim.start()
-            QPushButton.leaveEvent(btn, event)
-        
-        btn.enterEvent = on_enter
-        btn.leaveEvent = on_leave
-        
-        return btn
+        """Create an advanced animated button with ripple effect"""
+        return AnimatedButton(icon_name, button_size, icon_size, tooltip, self)
         
     def _setup_menu_bar(self):
         """Create professional menu bar"""
@@ -473,18 +432,21 @@ class MediaPlayer(QMainWindow):
         
         # File Menu
         file_menu = menubar.addMenu("&File")
-        self._add_action(file_menu, "&Open File...", "Ctrl+O", self.open_file)
+        file_menu.setIcon(qta.icon("fa5s.folder-open", color='white'))
+        self._add_action(file_menu, "&Open File...", "Ctrl+O", self.open_file, "fa5s.folder-open")
         file_menu.addSeparator()
-        self._add_action(file_menu, "E&xit", "Ctrl+Q", self.close)
+        self._add_action(file_menu, "E&xit", "Ctrl+Q", self.close, "fa5s.sign-out-alt")
         
         # Playback Menu
         playback_menu = menubar.addMenu("&Playback")
-        self._add_action(playback_menu, "&Play/Pause", "Space", self.toggle_play_pause)
-        self._add_action(playback_menu, "&Stop", "S", self.player.stop)
+        playback_menu.setIcon(qta.icon("fa5s.play", color='white'))
+        self._add_action(playback_menu, "&Play/Pause", "Space", self.toggle_play_pause, "fa5s.play")
+        self._add_action(playback_menu, "&Stop", "S", self.player.stop, "fa5s.stop")
         playback_menu.addSeparator()
         
         # Speed submenu
         speed_menu = playback_menu.addMenu("&Speed")
+        speed_menu.setIcon(qta.icon("fa5s.tachometer-alt", color='white'))
         for label, rate in [("0.25×", 0.25), ("0.5×", 0.5), ("0.75×", 0.75),
                            ("Normal (1×)", 1.0), ("1.25×", 1.25), ("1.5×", 1.5), ("2×", 2.0)]:
             self._add_action(speed_menu, label, None, 
@@ -492,24 +454,27 @@ class MediaPlayer(QMainWindow):
         
         playback_menu.addSeparator()
         self._add_action(playback_menu, "Jump Forward", "Right", 
-                        lambda: self.seek_relative(5000))
+                        lambda: self.seek_relative(5000), "fa5s.forward")
         self._add_action(playback_menu, "Jump Backward", "Left", 
-                        lambda: self.seek_relative(-5000))
+                        lambda: self.seek_relative(-5000), "fa5s.backward")
         
         # Audio Menu
         audio_menu = menubar.addMenu("&Audio")
-        self._add_action(audio_menu, "&Mute", "M", self.toggle_mute)
+        audio_menu.setIcon(qta.icon("fa5s.volume-up", color='white'))
+        self._add_action(audio_menu, "&Mute", "M", self.toggle_mute, "fa5s.volume-mute")
         audio_menu.addSeparator()
-        self._add_action(audio_menu, "Volume &Up", "Up", lambda: self.adjust_volume(5))
-        self._add_action(audio_menu, "Volume &Down", "Down", lambda: self.adjust_volume(-5))
+        self._add_action(audio_menu, "Volume &Up", "Up", lambda: self.adjust_volume(5), "fa5s.volume-up")
+        self._add_action(audio_menu, "Volume &Down", "Down", lambda: self.adjust_volume(-5), "fa5s.volume-down")
         
         # Video Menu
         video_menu = menubar.addMenu("&Video")
-        self._add_action(video_menu, "&Fullscreen", "F11", self.toggle_fullscreen)
+        video_menu.setIcon(qta.icon("fa5s.video", color='white'))
+        self._add_action(video_menu, "&Fullscreen", "F11", self.toggle_fullscreen, "fa5s.expand")
         video_menu.addSeparator()
         
         # Aspect ratio submenu
         aspect_menu = video_menu.addMenu("&Aspect Ratio")
+        aspect_menu.setIcon(qta.icon("fa5s.expand-arrows-alt", color='white'))
         for label, mode in [("Default", Qt.AspectRatioMode.KeepAspectRatio),
                            ("16:9", Qt.AspectRatioMode.KeepAspectRatio),
                            ("4:3", Qt.AspectRatioMode.KeepAspectRatio),
@@ -517,13 +482,16 @@ class MediaPlayer(QMainWindow):
             self._add_action(aspect_menu, label, None,
                            lambda checked, m=mode: self.video_widget.setAspectRatioMode(m))
         
-        # Help Menu
-        help_menu = menubar.addMenu("&Help")
-        self._add_action(help_menu, "&About", None, self.show_about)
+        # Tools Menu
+        tools_menu = menubar.addMenu("&Tools")
+        tools_menu.setIcon(qta.icon("fa5s.tools", color='white'))
+        self._add_action(tools_menu, "&About", None, self.show_about, "fa5s.info-circle")
         
-    def _add_action(self, menu, text, shortcut, callback):
-        """Helper to add menu action"""
+    def _add_action(self, menu, text, shortcut, callback, icon=None):
+        """Helper to add menu action with optional icon"""
         action = QAction(text, self)
+        if icon:
+            action.setIcon(qta.icon(icon, color='white'))
         if shortcut:
             action.setShortcut(shortcut)
         action.triggered.connect(callback)
