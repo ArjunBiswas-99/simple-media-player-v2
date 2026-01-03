@@ -293,30 +293,8 @@ class FFmpegPlayer(BasePlayer):
             seek_target = int(position_ms * 1000)
             
             # Use BACKWARD flag for keyframe seeking
+            # This is non-blocking - container just repositions, decode thread will catch up
             self._container.seek(seek_target, backward=True, any_frame=False)
-            
-            # For long seeks, skip frames to target position quickly
-            if self._video_stream:
-                target_pts = seek_target / 1000000.0  # Convert to seconds
-                frames_skipped = 0
-                
-                # Decode and skip frames until we reach target position
-                for packet in self._container.demux(self._video_stream):
-                    for frame in packet.decode():
-                        frame_time = float(frame.pts * self._video_stream.time_base)
-                        
-                        # If we're close to target, stop skipping
-                        if frame_time >= target_pts - 0.5:  # Within 0.5 seconds
-                            break
-                        frames_skipped += 1
-                        
-                        # Limit frame skipping to avoid taking too long
-                        if frames_skipped > 300:  # ~10 seconds at 30fps
-                            break
-                    
-                    # Break outer loop too
-                    if frames_skipped > 0:
-                        break
             
             # Update position
             self._position = position_ms
