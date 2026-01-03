@@ -603,9 +603,11 @@ class MediaPlayer(QMainWindow):
     def _on_state_changed(self, state):
         """Update play/pause button when state changes"""
         if state == QMediaPlayer.PlaybackState.PlayingState:
-            self.play_pause_btn.setText("⏸")
+            self.play_pause_btn.setIcon(qta.icon('fa5s.pause', color='white'))
+            self.play_pause_btn.icon_name = 'fa5s.pause'
         else:
-            self.play_pause_btn.setText("▶")
+            self.play_pause_btn.setIcon(qta.icon('fa5s.play', color=THEME_PRIMARY))
+            self.play_pause_btn.icon_name = 'fa5s.play'
             
     def _format_time(self, ms):
         """Format milliseconds to H:MM:SS or MM:SS"""
