@@ -325,23 +325,23 @@ class MediaPlayer(QMainWindow):
         controls_layout = QHBoxLayout()
         controls_layout.setSpacing(8)
         
-        button_style = f"""
-            QPushButton {{
+        button_style = """
+            QPushButton {
                 background-color: rgba(255, 255, 255, 15);
                 color: white;
                 border: none;
                 border-radius: 25px;
                 font-size: 18px;
                 font-weight: bold;
-            }}
-            QPushButton:hover {{
-                background-color: {self.NETFLIX_RED};
+            }
+            QPushButton:hover {
+                background-color: #e50914;
                 transform: scale(1.1);
-            }}
-            QPushButton:pressed {{
+            }
+            QPushButton:pressed {
                 background-color: #b8070f;
-            }}
-        """)
+            }
+        """
         
         self.open_btn = QPushButton("📁")
         self.open_btn.setFixedSize(50, 50)
@@ -355,7 +355,7 @@ class MediaPlayer(QMainWindow):
         
         self.play_pause_btn = QPushButton("▶")
         self.play_pause_btn.setFixedSize(60, 60)
-        self.play_pause_btn.setStyleSheet(button_style.replace("50px", "60px").replace("font-size: 18px", "font-size: 24px"))
+        self.play_pause_btn.setStyleSheet(button_style.replace("25px", "30px").replace("font-size: 18px", "font-size: 24px"))
         self.play_pause_btn.setToolTip("Play/Pause (Space)")
         
         self.skip_forward_btn = QPushButton("⏩")
