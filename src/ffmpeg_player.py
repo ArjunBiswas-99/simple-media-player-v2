@@ -7,7 +7,7 @@ import threading
 import time
 import queue
 from PyQt6.QtCore import QTimer, QUrl, Qt
-from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput, QAudioFormat, QAudioSink, QAudio
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput, QAudioFormat, QAudioSink
 from PyQt6.QtGui import QImage
 from .base_player import BasePlayer
 from .custom_video_widget import CustomVideoWidget
@@ -46,23 +46,10 @@ class FFmpegPlayer(BasePlayer):
         self._render_timer.timeout.connect(self._render_frame)
         self._render_timer.setTimerType(Qt.TimerType.PreciseTimer)  # PreciseTimer for smooth playback
         
-        # Decoding threads
+        # Decoding thread
         self._decode_thread = None
-        self._decode_queue = queue.Queue(maxsize=30)  # Video frame queue
-        self._audio_queue = queue.Queue(maxsize=100)  # Audio frame queue
+        self._decode_queue = queue.Queue(maxsize=30)  # Frame queue
         self._stop_decode = threading.Event()
-        
-        # Audio playback
-        self._audio_io_device = None  # QIODevice for audio output
-        self._audio_buffer = bytearray()
-        self._audio_resampler = None  # Reuse single resampler instance
-        
-        # Keyframe indexing
-        self._keyframe_index = []  # List of {pts: int, offset: int} dicts
-        self._indexed_duration = 0  # How far we've indexed (in milliseconds)
-        self._indexing_complete = False
-        self._indexing_thread = None
-        self._stop_indexing = threading.Event()
         
         # Error handling
         self._last_error = ""
@@ -87,10 +74,6 @@ class FFmpegPlayer(BasePlayer):
         if not self._audio_output:
             return
         
-        # Stop existing audio sink
-        if self._audio_sink:
-            self._audio_sink.stop()
-        
         # Create audio format (default: 48kHz, stereo, 16-bit)
         audio_format = QAudioFormat()
         audio_format.setSampleRate(48000)
@@ -100,10 +83,6 @@ class FFmpegPlayer(BasePlayer):
         # Create audio sink
         device = self._audio_output.device()
         self._audio_sink = QAudioSink(device, audio_format)
-        
-        # Start audio sink with a buffer
-        from PyQt6.QtCore import QBuffer, QIODevice
-        self._audio_io_device = self._audio_sink.start()
     
     def set_source(self, url):
         """Set the media source URL."""
@@ -144,20 +123,10 @@ class FFmpegPlayer(BasePlayer):
             if self._audio_stream:
                 self._audio_time_base = float(self._audio_stream.time_base)
                 self.hasAudioChanged.emit(True)
-                
-                # Create audio resampler once
-                self._audio_resampler = av.AudioResampler(
-                    format='s16',
-                    layout='stereo',
-                    rate=48000
-                )
             
             # Update media status
             self._media_status = QMediaPlayer.MediaStatus.LoadedMedia
             self.mediaStatusChanged.emit(self._media_status)
-            
-            # Start background indexing
-            self._start_background_indexing()
             
         except Exception as e:
             self._last_error = f"Failed to open media: {str(e)}"
@@ -187,20 +156,13 @@ class FFmpegPlayer(BasePlayer):
             self._decode_thread = threading.Thread(target=self._decode_loop, daemon=True)
             self._decode_thread.start()
         
-        # Start audio sink if available
-        if self._audio_sink:
-            if self._audio_sink.state() != QAudio.State.ActiveState:
-                self._audio_io_device = self._audio_sink.start()
-        
         # Start rendering
         self._is_playing = True
         frame_rate = 30  # Default FPS
         if self._video_stream and self._video_stream.average_rate:
             frame_rate = float(self._video_stream.average_rate)
         
-        # Adjust frame interval based on playback rate (for 2x speed support)
-        interval_ms = int(1000 / (frame_rate * self._playback_rate))
-        self._render_timer.start(interval_ms)
+        self._render_timer.start(int(1000 / frame_rate))
         
         # Update state
         self._playback_state = QMediaPlayer.PlaybackState.PlayingState
@@ -227,25 +189,15 @@ class FFmpegPlayer(BasePlayer):
         self._is_paused = False
         self._render_timer.stop()
         
-        # Stop audio sink
-        if self._audio_sink:
-            self._audio_sink.stop()
-        
         # Stop decode thread
         if self._decode_thread and self._decode_thread.is_alive():
             self._stop_decode.set()
             self._decode_thread.join(timeout=1.0)
         
-        # Clear frame queues
+        # Clear frame queue
         while not self._decode_queue.empty():
             try:
                 self._decode_queue.get_nowait()
-            except:
-                break
-        
-        while not self._audio_queue.empty():
-            try:
-                self._audio_queue.get_nowait()
             except:
                 break
         
@@ -269,84 +221,43 @@ class FFmpegPlayer(BasePlayer):
         
         # Stop current playback temporarily
         was_playing = self._is_playing
-        
-        # Stop decode thread completely before seeking
-        if self._decode_thread and self._decode_thread.is_alive():
-            self._stop_decode.set()
-            self._decode_thread.join(timeout=1.0)
-        
-        # Stop rendering
         if was_playing:
             self._is_playing = False
             self._render_timer.stop()
         
-        # Stop audio temporarily
-        if self._audio_sink:
-            self._audio_sink.stop()
-        
-        # Clear frame queues before seeking
-        while not self._decode_queue.empty():
-            try:
-                self._decode_queue.get_nowait()
-            except:
-                break
-        
-        while not self._audio_queue.empty():
-            try:
-                self._audio_queue.get_nowait()
-            except:
-                break
+        # CRITICAL: Stop decode thread before seeking
+        if self._decode_thread and self._decode_thread.is_alive():
+            self._stop_decode.set()
+            self._decode_thread.join(timeout=1.0)
         
         # Seek the container
         try:
-            # Check if we can use indexed seeking
-            if position_ms <= self._indexed_duration and self._keyframe_index:
-                # INDEXED SEEK - Use index to find exact keyframe
-                keyframe = self._find_nearest_keyframe(position_ms)
-                if keyframe:
-                    # Seek to exact keyframe PTS
-                    seek_target = int(keyframe['pts'])
-                    self._container.seek(seek_target, stream=self._video_stream, backward=False, any_frame=False)
-                else:
-                    # Fallback to blind seek
-                    seek_target = int(position_ms * 1000)
-                    self._container.seek(seek_target, backward=True, any_frame=False)
-            else:
-                # UNINDEXED SEEK - Blind seek
-                seek_target = int(position_ms * 1000)
-                self._container.seek(seek_target, backward=True, any_frame=False)
+            # Convert milliseconds to microseconds
+            seek_target = int(position_ms * 1000)
+            self._container.seek(seek_target, backward=True, any_frame=False)
             
-            # Update position to target (frames will decode naturally from keyframe)
+            # Clear decode queue (old frames before seek)
+            while not self._decode_queue.empty():
+                try:
+                    self._decode_queue.get_nowait()
+                except:
+                    break
+            
+            # Update position
             self._position = position_ms
             self._pause_time = position_ms
-            
-            # Reset start time for accurate playback timing
-            self._start_time = time.time() - (position_ms / 1000.0 / self._playback_rate)
-            
             self.positionChanged.emit(position_ms)
             
-            # Restart decode thread if was playing
+            # Restart decode thread - will decode from new position
+            self._stop_decode.clear()
+            self._decode_thread = threading.Thread(target=self._decode_loop, daemon=True)
+            self._decode_thread.start()
+            
+            # Resume if was playing
             if was_playing:
-                self._stop_decode.clear()
-                self._decode_thread = threading.Thread(target=self._decode_loop, daemon=True)
-                self._decode_thread.start()
-                
-                # Restart audio sink
-                if self._audio_sink and self._audio_io_device:
-                    self._audio_io_device = self._audio_sink.start()
-                
-                # Resume playback
                 self._start_time = time.time() - (position_ms / 1000.0)
                 self._is_playing = True
-                
-                # Restart rendering
-                frame_rate = 30
-                if self._video_stream and self._video_stream.average_rate:
-                    frame_rate = float(self._video_stream.average_rate)
-                
-                # Adjust for playback rate
-                interval_ms = int(1000 / (frame_rate * self._playback_rate))
-                self._render_timer.start(interval_ms)
+                self._render_timer.start(int(1000 / 30))
         
         except Exception as e:
             self._last_error = f"Seek failed: {str(e)}"
@@ -370,14 +281,6 @@ class FFmpegPlayer(BasePlayer):
         if self._is_playing:
             current_pos = self.position()
             self._start_time = time.time() - (current_pos / 1000.0)
-            
-            # Adjust render timer interval for new rate
-            frame_rate = 30
-            if self._video_stream and self._video_stream.average_rate:
-                frame_rate = float(self._video_stream.average_rate)
-            
-            interval_ms = int(1000 / (frame_rate * self._playback_rate))
-            self._render_timer.setInterval(interval_ms)
     
     def playback_rate(self):
         """Get current playback rate."""
@@ -446,11 +349,6 @@ class FFmpegPlayer(BasePlayer):
         """Clean up resources before switching players."""
         self.stop()
         
-        # Stop indexing thread
-        if self._indexing_thread and self._indexing_thread.is_alive():
-            self._stop_indexing.set()
-            self._indexing_thread.join(timeout=2.0)
-        
         if self._container:
             try:
                 self._container.close()
@@ -460,79 +358,38 @@ class FFmpegPlayer(BasePlayer):
         
         self._video_stream = None
         self._audio_stream = None
-        self._audio_resampler = None
-        self._keyframe_index = []
-        self._indexed_duration = 0
-        self._indexing_complete = False
     
     # ==================== Internal Methods ====================
     
     def _decode_loop(self):
-        """Background thread for decoding both video and audio."""
+        """Background thread for decoding frames."""
         try:
-            # Check if container is still valid
-            if not self._container:
-                return
-            
-            # Demux both video and audio streams
-            streams_to_demux = []
-            if self._video_stream:
-                streams_to_demux.append(self._video_stream)
-            if self._audio_stream:
-                streams_to_demux.append(self._audio_stream)
-            
-            if not streams_to_demux:
-                return
-            
-            for packet in self._container.demux(*streams_to_demux):
+            for packet in self._container.demux(self._video_stream):
                 if self._stop_decode.is_set():
                     break
                 
-                try:
-                    for frame in packet.decode():
-                        if self._stop_decode.is_set():
-                            break
-                        
-                        # Handle video frames
-                        if packet.stream.type == 'video':
-                            # Convert to RGB
-                            frame_rgb = frame.to_ndarray(format='rgb24')
-                            
-                            # Put in video queue
-                            try:
-                                self._decode_queue.put((frame_rgb, frame.width, frame.height), timeout=0.1)
-                            except queue.Full:
-                                continue  # Skip frame if queue is full
-                        
-                        # Handle audio frames
-                        elif packet.stream.type == 'audio' and self._audio_resampler:
-                            # Use pre-created resampler to avoid thread creation
-                            resampled_frames = self._audio_resampler.resample(frame)
-                            
-                            # Convert resampled frames to bytes
-                            for resampled in resampled_frames:
-                                audio_data = resampled.to_ndarray().tobytes()
-                                
-                                # Put in audio queue
-                                try:
-                                    self._audio_queue.put(audio_data, timeout=0.1)
-                                except queue.Full:
-                                    continue  # Skip if queue is full
-                
-                except Exception as decode_error:
-                    # Handle decode errors gracefully
-                    print(f"Decode error: {decode_error}")
-                    continue
+                for frame in packet.decode():
+                    if self._stop_decode.is_set():
+                        break
+                    
+                    # Convert to RGB
+                    frame_rgb = frame.to_ndarray(format='rgb24')
+                    
+                    # Put in queue (block if full)
+                    try:
+                        self._decode_queue.put((frame_rgb, frame.width, frame.height), timeout=1.0)
+                    except queue.Full:
+                        continue  # Skip frame if queue is full
         
         except Exception as e:
-            print(f"FFmpegPlayer decode loop error: {e}")
+            print(f"FFmpegPlayer decode error: {e}")
     
     def _render_frame(self):
-        """Render the next frame and output audio (called by timer)."""
+        """Render the next frame (called by timer)."""
         if not self._is_playing:
             return
         
-        # Get and render video frame
+        # Get frame from queue
         try:
             frame_data, width, height = self._decode_queue.get_nowait()
             
@@ -558,120 +415,3 @@ class FFmpegPlayer(BasePlayer):
         except queue.Empty:
             # No frame available, continue
             pass
-        
-        # Output audio data - only write amount corresponding to one video frame
-        if self._audio_io_device and self._audio_sink:
-            try:
-                # Calculate how much audio to write for one video frame
-                # At 48kHz stereo s16: 48000 samples/sec * 2 channels * 2 bytes = 192000 bytes/sec
-                frame_rate = 30
-                if self._video_stream and self._video_stream.average_rate:
-                    frame_rate = float(self._video_stream.average_rate)
-                
-                # Bytes per video frame at 48kHz stereo s16
-                bytes_per_frame = int((48000 * 2 * 2) / frame_rate)
-                
-                # Write only the audio for this frame duration
-                bytes_written = 0
-                while bytes_written < bytes_per_frame and not self._audio_queue.empty():
-                    try:
-                        audio_data = self._audio_queue.get_nowait()
-                        if self._audio_io_device.isOpen():
-                            written = self._audio_io_device.write(audio_data)
-                            bytes_written += len(audio_data)
-                    except queue.Empty:
-                        break
-            except Exception as e:
-                pass    
-    def _start_background_indexing(self):
-        """Start background thread to build keyframe index."""
-        # Reset indexing state
-        self._keyframe_index = []
-        self._indexed_duration = 0
-        self._indexing_complete = False
-        self._stop_indexing.clear()
-        
-        # Start indexing thread
-        self._indexing_thread = threading.Thread(target=self._build_keyframe_index, daemon=True)
-        self._indexing_thread.start()
-    
-    def _build_keyframe_index(self):
-        """Background thread: Scan file and build keyframe index."""
-        try:
-            # Need separate container for indexing (avoid conflicts with playback)
-            index_container = av.open(self._source, options={'buffer_size': str(4 * 1024 * 1024)})  # 4MB buffer
-            
-            video_stream = index_container.streams.video[0] if index_container.streams.video else None
-            if not video_stream:
-                return
-            
-            total_duration = self._duration if self._duration > 0 else 1
-            last_progress = -1
-            
-            # Scan only video packets (skip audio for speed)
-            for packet in index_container.demux(video_stream):
-                if self._stop_indexing.is_set():
-                    break
-                
-                # Record keyframes
-                if packet.is_keyframe and packet.pts is not None:
-                    keyframe_info = {
-                        'pts': int(packet.pts),  # Presentation timestamp
-                        'pts_ms': int(packet.pts * packet.stream.time_base * 1000),  # PTS in milliseconds
-                    }
-                    self._keyframe_index.append(keyframe_info)
-                    
-                    # Update indexed duration
-                    self._indexed_duration = keyframe_info['pts_ms']
-                    
-                    # Emit progress (throttle to every 1%)
-                    progress = int((self._indexed_duration / total_duration) * 100)
-                    if progress > last_progress:
-                        last_progress = progress
-                        self.indexingProgress.emit(progress)
-                        self.indexedDurationChanged.emit(self._indexed_duration)
-            
-            # Indexing complete
-            self._indexing_complete = True
-            self.indexingProgress.emit(100)
-            self.indexedDurationChanged.emit(self._duration)
-            
-            # Close index container
-            index_container.close()
-            
-            print(f"✅ Indexing complete: {len(self._keyframe_index)} keyframes indexed")
-            
-        except Exception as e:
-            print(f"❌ Indexing error: {e}")
-    
-    def _find_nearest_keyframe(self, target_ms):
-        """Find nearest keyframe at or before target position.
-        
-        Args:
-            target_ms: Target position in milliseconds
-            
-        Returns:
-            Keyframe dict or None if not found
-        """
-        if not self._keyframe_index:
-            return None
-        
-        # Binary search for keyframe at or before target
-        left, right = 0, len(self._keyframe_index) - 1
-        result = None
-        
-        while left <= right:
-            mid = (left + right) // 2
-            keyframe = self._keyframe_index[mid]
-            
-            if keyframe['pts_ms'] <= target_ms:
-                result = keyframe
-                left = mid + 1  # Try to find closer keyframe
-            else:
-                right = mid - 1
-        
-        return result
-    
-    def indexed_duration(self):
-        """Get the duration that has been indexed (in milliseconds)."""
-        return self._indexed_duration
