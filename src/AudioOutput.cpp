@@ -485,9 +485,10 @@ void AudioOutput::audioThreadFunc() {
                 // Delete stale frame (decoder will provide fresh frames from new position)
                 delete frame;
                 
-                // Fill with silence and release buffer, then break to exit loop
+                // Fill with silence and return
                 memset(floatBuffer, 0, numFramesAvailable * m_channels * sizeof(float));
-                break;  // Exit to release buffer at end
+                hr = m_renderClient->ReleaseBuffer(numFramesAvailable, 0);
+                continue;  // Skip to next iteration
             } else if (m_audioClock < 0.001 && frameOffset == 0) {
                 // Very first frame - initialize clock
                 m_audioClock = frame->pts;
@@ -501,7 +502,8 @@ void AudioOutput::audioThreadFunc() {
                 
                 // Fill with silence
                 memset(floatBuffer, 0, numFramesAvailable * m_channels * sizeof(float));
-                break;  // Exit to release buffer at end
+                hr = m_renderClient->ReleaseBuffer(numFramesAvailable, 0);
+                continue;
             }
             
             // Log first frame after flush completes
