@@ -11,12 +11,12 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation, QSize, QEasingCurve, QSequentialAnimationGroup, QParallelAnimationGroup
 from PyQt6.QtGui import QCursor, QAction
-from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
+from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput, QMediaMetaData
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 
 from constants import *
 from styles import *
-from widgets import SpeedIndicator, PlaylistPopover, SettingsPopover
+from widgets import SpeedIndicator, PlaylistPopover, SettingsPopover, InfoPopover
 
 
 class MediaPlayer(QMainWindow):
@@ -67,8 +67,15 @@ class MediaPlayer(QMainWindow):
         self.player.setVideoOutput(self.video_widget)
         layout.addWidget(self.video_widget)
         
-        # 2x speed indicator
-        self.speed_indicator = SpeedIndicator(self.video_widget)
+        # 2x speed indicator (top-level window to appear over video)
+        self.speed_indicator = SpeedIndicator(self)
+        self.speed_indicator.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint |
+            Qt.WindowType.WindowStaysOnTopHint |
+            Qt.WindowType.Tool
+        )
+        self.speed_indicator.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.speed_indicator.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
         self.speed_indicator.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         # Filename overlay label
@@ -313,20 +320,27 @@ class MediaPlayer(QMainWindow):
         self.volume_slider.setMaximumWidth(100)
         self.volume_slider.setStyleSheet(get_volume_slider_style())
         
-        # Speed indicator label
+        # Speed indicator label (clickable)
         self.speed_label = QLabel("1×")
         self.speed_label.setStyleSheet(f"""
-            color: white;
-            font-size: {FONT_SIZE_SMALL}px;
-            font-weight: 600;
-            padding: 3px 8px;
-            background-color: rgba(255, 255, 255, 10);
-            border-radius: 3px;
+            QLabel {{
+                color: white;
+                font-size: {FONT_SIZE_SMALL}px;
+                font-weight: 600;
+                padding: 3px 8px;
+                background-color: rgba(255, 255, 255, 10);
+                border-radius: 3px;
+            }}
+            QLabel:hover {{
+                background-color: rgba(255, 255, 255, 20);
+            }}
         """)
+        self.speed_label.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self.speed_label.mousePressEvent = lambda e: self._show_settings()
         
         # Tool buttons
         self.playlist_btn = self._create_icon_button('fa5s.folder-open', BUTTON_SIZE_SMALL, ICON_SIZE_TINY, "Playlist")
-        self.settings_btn = self._create_icon_button('fa5s.cog', BUTTON_SIZE_SMALL, ICON_SIZE_TINY, "Settings")
+        self.info_btn = self._create_icon_button('fa5s.info-circle', BUTTON_SIZE_SMALL, ICON_SIZE_TINY, "Video Info")
         self.fullscreen_btn = self._create_icon_button('fa5s.expand', BUTTON_SIZE_SMALL, ICON_SIZE_TINY, "Fullscreen (F11)")
         
         # Layout: play/pause | controls | current time | spacer | volume | speed | tools | fullscreen
@@ -342,7 +356,7 @@ class MediaPlayer(QMainWindow):
         bottom_layout.addSpacing(8)
         bottom_layout.addWidget(self.speed_label)
         bottom_layout.addWidget(self.playlist_btn)
-        bottom_layout.addWidget(self.settings_btn)
+        bottom_layout.addWidget(self.info_btn)
         bottom_layout.addSpacing(8)
         bottom_layout.addSpacing(4)
         bottom_layout.addWidget(self.fullscreen_btn)
@@ -372,13 +386,29 @@ class MediaPlayer(QMainWindow):
         btn.setIcon(qta.icon(icon_name, color=THEME_PRIMARY))
         btn.setIconSize(QSize(icon_size, icon_size))
         
-        # Add hover/press event handlers for icon color change only
+        # Add hover/press event handlers for icon color change and scale animation
         def on_enter(event):
             btn.setIcon(qta.icon(btn.icon_name, color='white'))
+            # Animate scale up
+            if not hasattr(btn, '_scale_anim'):
+                btn._scale_anim = QPropertyAnimation(btn, b"iconSize")
+            btn._scale_anim.setDuration(150)
+            btn._scale_anim.setStartValue(btn.iconSize())
+            btn._scale_anim.setEndValue(QSize(int(icon_size * 1.15), int(icon_size * 1.15)))
+            btn._scale_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+            btn._scale_anim.start()
             QPushButton.enterEvent(btn, event)
         
         def on_leave(event):
             btn.setIcon(qta.icon(btn.icon_name, color=THEME_PRIMARY))
+            # Animate scale down
+            if not hasattr(btn, '_scale_anim'):
+                btn._scale_anim = QPropertyAnimation(btn, b"iconSize")
+            btn._scale_anim.setDuration(150)
+            btn._scale_anim.setStartValue(btn.iconSize())
+            btn._scale_anim.setEndValue(QSize(icon_size, icon_size))
+            btn._scale_anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+            btn._scale_anim.start()
             QPushButton.leaveEvent(btn, event)
         
         btn.enterEvent = on_enter
@@ -457,6 +487,8 @@ class MediaPlayer(QMainWindow):
         self.settings_popover = SettingsPopover(self)
         self.settings_popover.media_player_ref = self
         
+        self.info_popover = InfoPopover(self)
+        
     def _connect_signals(self):
         """Connect all signals"""
         # Player signals
@@ -470,7 +502,7 @@ class MediaPlayer(QMainWindow):
         self.skip_back_btn.clicked.connect(lambda: self.seek_relative(-10000))
         self.skip_forward_btn.clicked.connect(lambda: self.seek_relative(10000))
         self.playlist_btn.clicked.connect(self._show_playlist)
-        self.settings_btn.clicked.connect(self._show_settings)
+        self.info_btn.clicked.connect(self._show_video_info)
         self.fullscreen_btn.clicked.connect(self.toggle_fullscreen)
         
         # Slider signals (FIX: Click to seek)
@@ -651,8 +683,44 @@ class MediaPlayer(QMainWindow):
             self.playlist_popover.show_at_button(self.playlist_btn)
             
     def _show_settings(self):
-        """Show settings popover"""
-        self.settings_popover.show_at_button(self.settings_btn)
+        """Show settings popover (speed selection)"""
+        self.settings_popover.show_at_button(self.speed_label)
+    
+    def _show_video_info(self):
+        """Show video info popover"""
+        if self.current_file:
+            import os
+            metadata = self.player.metaData()
+            
+            # Get resolution
+            resolution = metadata.value(QMediaMetaData.Key.Resolution)
+            resolution_str = f"{resolution.width()}×{resolution.height()}" if resolution else "—"
+            
+            # Get frame rate
+            frame_rate = metadata.value(QMediaMetaData.Key.VideoFrameRate)
+            frame_rate_str = f"{frame_rate:.2f} fps" if frame_rate else "—"
+            
+            # Get bit rate
+            bit_rate = metadata.value(QMediaMetaData.Key.VideoBitRate)
+            bit_rate_str = f"{bit_rate / 1000:.0f} kbps" if bit_rate else "—"
+            
+            # Get codecs
+            video_codec = metadata.value(QMediaMetaData.Key.VideoCodec)
+            audio_codec = metadata.value(QMediaMetaData.Key.AudioCodec)
+            
+            # Gather video information
+            info = {
+                'filename': os.path.basename(self.current_file),
+                'resolution': resolution_str,
+                'duration': self._format_time(self.player.duration()),
+                'video_codec': str(video_codec) if video_codec else '—',
+                'audio_codec': str(audio_codec) if audio_codec else '—',
+                'frame_rate': frame_rate_str,
+                'bit_rate': bit_rate_str,
+                'file_size': f"{os.path.getsize(self.current_file) / (1024*1024):.1f} MB" if os.path.exists(self.current_file) else '—',
+            }
+            self.info_popover.update_info(info)
+        self.info_popover.show_at_button(self.info_btn)
         
     def _update_ui(self):
         """Periodic UI updates"""
@@ -768,8 +836,19 @@ class MediaPlayer(QMainWindow):
         if self.player.playbackState() == QMediaPlayer.PlaybackState.PlayingState and not self.is_2x_speed:
             self.is_2x_speed = True
             self.player.setPlaybackRate(2.0)
+            
+            # Set up opacity effect if not already present
+            if not self.speed_indicator.graphicsEffect():
+                effect = QGraphicsOpacityEffect(self.speed_indicator)
+                effect.setOpacity(1.0)
+                self.speed_indicator.setGraphicsEffect(effect)
+            else:
+                # Reset opacity to full
+                self.speed_indicator.graphicsEffect().setOpacity(1.0)
+            
             self._position_speed_indicator()
             self.speed_indicator.show()
+            self.speed_indicator.raise_()  # Ensure it's on top
             
             # Start pulse animation
             self.speed_pulse_timer = QTimer(self)
@@ -786,30 +865,54 @@ class MediaPlayer(QMainWindow):
             if hasattr(self, 'speed_pulse_timer'):
                 self.speed_pulse_timer.stop()
             
-            # Fade out
-            anim = QPropertyAnimation(self.speed_indicator, b"opacity")
-            anim.setDuration(FADE_DURATION)
-            anim.setStartValue(1.0)
-            anim.setEndValue(0.0)
-            anim.finished.connect(self.speed_indicator.hide)
-            anim.start()
+            # Fade out using opacity effect
+            effect = self.speed_indicator.graphicsEffect()
+            if effect:
+                anim = QPropertyAnimation(effect, b"opacity")
+                anim.setDuration(FADE_DURATION)
+                anim.setStartValue(1.0)
+                anim.setEndValue(0.0)
+                anim.finished.connect(self.speed_indicator.hide)
+                anim.start()
+                # Store reference to prevent garbage collection
+                self.speed_fade_out = anim
+            else:
+                self.speed_indicator.hide()
             
     def _position_speed_indicator(self):
-        """Position speed indicator in center of video"""
+        """Position speed indicator in center of video (screen coordinates)"""
         video_rect = self.video_widget.geometry()
+        video_global_pos = self.video_widget.mapToGlobal(video_rect.topLeft())
+        
         indicator_width = self.speed_indicator.sizeHint().width()
         indicator_height = self.speed_indicator.sizeHint().height()
-        x = (video_rect.width() - indicator_width) // 2
-        y = (video_rect.height() - indicator_height) // 2
+        
+        # Center in video widget (global coordinates)
+        x = video_global_pos.x() + (video_rect.width() - indicator_width) // 2
+        y = video_global_pos.y() + (video_rect.height() - indicator_height) // 2
+        
         self.speed_indicator.move(x, y)
+        self.speed_indicator.resize(indicator_width, indicator_height)
     
     def _pulse_speed_indicator(self):
         """Create pulse animation for 2x speed indicator"""
-        # Subtle scale pulse: 1.0 → 1.05 → 1.0
-        original_size = self.speed_indicator.sizeHint()
-        # This is visual feedback, no actual size change needed in Qt
-        # The CSS handles this via font size variations
-        pass
+        if not self.speed_indicator.isVisible():
+            return
+            
+        # Create subtle opacity pulse: 1.0 → 0.7 → 1.0
+        pulse_anim = QPropertyAnimation(self.speed_indicator.graphicsEffect(), b"opacity")
+        pulse_anim.setDuration(400)
+        pulse_anim.setStartValue(1.0)
+        pulse_anim.setKeyValueAt(0.5, 0.7)
+        pulse_anim.setEndValue(1.0)
+        pulse_anim.setEasingCurve(QEasingCurve.Type.InOutCubic)
+        pulse_anim.start()
+        
+        # Store reference to prevent garbage collection
+        if not hasattr(self, '_pulse_anims'):
+            self._pulse_anims = []
+        self._pulse_anims.append(pulse_anim)
+        pulse_anim.finished.connect(lambda: self._pulse_anims.remove(pulse_anim) if pulse_anim in self._pulse_anims else None)
     
     def _show_play_pause_overlay(self, icon_text):
         """Show play/pause overlay animation (YouTube-style)"""

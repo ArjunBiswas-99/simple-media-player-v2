@@ -3,7 +3,6 @@ Speed Indicator Widget - 2x speed overlay
 """
 
 from PyQt6.QtWidgets import QLabel
-from PyQt6.QtCore import pyqtProperty
 from constants import THEME_PRIMARY
 
 
@@ -24,13 +23,3 @@ class SpeedIndicator(QLabel):
             }}
         """)
         self.hide()
-        self._opacity = 1.0
-        
-    def get_opacity(self):
-        return self._opacity
-    
-    def set_opacity(self, value):
-        self._opacity = value
-        self.setWindowOpacity(value)
-    
-    opacity = pyqtProperty(float, get_opacity, set_opacity)
