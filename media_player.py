@@ -296,25 +296,6 @@ class MediaPlayer(QMainWindow):
         layout.setContentsMargins(CONTROL_PADDING, CONTROL_PADDING, CONTROL_PADDING, CONTROL_PADDING_BOTTOM)
         layout.setSpacing(0)
         
-        # Indexing progress bar (for .ts files) - shown underneath timeline
-        self.indexing_progress_bar = QProgressBar()
-        self.indexing_progress_bar.setRange(0, 100)
-        self.indexing_progress_bar.setValue(0)
-        self.indexing_progress_bar.setTextVisible(False)
-        self.indexing_progress_bar.setFixedHeight(3)  # Thin bar underneath
-        self.indexing_progress_bar.setStyleSheet("""
-            QProgressBar {
-                background-color: transparent;
-                border: none;
-            }
-            QProgressBar::chunk {
-                background-color: rgba(255, 255, 255, 0.3);
-                border-radius: 1px;
-            }
-        """)
-        self.indexing_progress_bar.setVisible(False)  # Hidden by default
-        layout.addWidget(self.indexing_progress_bar)
-        
         # Timeline slider with click-to-seek support
         self.timeline = QSlider(Qt.Orientation.Horizontal)
         self.timeline.setRange(0, 0)
@@ -685,7 +666,6 @@ class MediaPlayer(QMainWindow):
         self.player.positionChanged.connect(self._on_position_changed)
         self.player.durationChanged.connect(self._on_duration_changed)
         self.player.playbackStateChanged.connect(self._on_state_changed)
-        self.player.indexingProgress.connect(self._on_indexing_progress)
         
         # Button signals
         self.play_pause_btn.clicked.connect(self.toggle_play_pause)
@@ -1040,16 +1020,6 @@ class MediaPlayer(QMainWindow):
         else:
             self.play_pause_btn.setIcon(qta.icon('fa5s.play', color=THEME_PRIMARY))
             self.play_pause_btn.icon_name = 'fa5s.play'
-    
-    def _on_indexing_progress(self, progress):
-        """Update indexing progress bar"""
-        self.indexing_progress_bar.setValue(progress)
-        if progress >= 100:
-            # Hide progress bar when indexing complete
-            self.indexing_progress_bar.setVisible(False)
-        else:
-            # Show progress bar while indexing
-            self.indexing_progress_bar.setVisible(True)
     
     def _format_time(self, ms):
         """Format milliseconds to H:MM:SS or MM:SS"""

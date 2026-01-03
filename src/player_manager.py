@@ -1,6 +1,6 @@
 """
 Player Manager
-Orchestrates switching between QtPlayer and FFmpegPlayer based on file type.
+Orchestrates switching between QtPlayer and future specialized players.
 Provides seamless player switching while preserving state and UI consistency.
 """
 import os
@@ -9,15 +9,14 @@ from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 from .base_player import BasePlayer
 from .qt_player import QtPlayer
-from .ffmpeg_player import FFmpegPlayer
 from .custom_video_widget import CustomVideoWidget
 
 
-# Feature flag for easy rollback
-ENABLE_FFMPEG_FOR_TS = True
+# Feature flag - currently only QtPlayer available
+ENABLE_MPV_FOR_TS = False  # Will be True after Phase 3
 
-# File extensions that should use FFmpegPlayer
-FFMPEG_EXTENSIONS = ['.ts', '.m2ts', '.mts']
+# File extensions that will use MpvPlayer (future)
+MPV_EXTENSIONS = ['.ts', '.m2ts', '.mts']
 
 
 class PlayerManager(QObject):
@@ -36,15 +35,14 @@ class PlayerManager(QObject):
     hasAudioChanged = pyqtSignal(bool)
     videoOutputChanged = pyqtSignal()
     bufferProgressChanged = pyqtSignal(float)
-    indexingProgress = pyqtSignal(int)  # Indexing progress for FFmpegPlayer
-    indexedDurationChanged = pyqtSignal(int)  # Indexed duration for FFmpegPlayer
     
     def __init__(self, parent=None):
         super().__init__(parent)
         
-        # Create both players
+        # Create Qt player (only player available currently)
         self._qt_player = QtPlayer(self)
-        self._ffmpeg_player = FFmpegPlayer(self)
+        # TODO: Add MpvPlayer in Phase 3
+        self._mpv_player = None
         
         # Current active player
         self._current_player: BasePlayer = self._qt_player
@@ -60,9 +58,9 @@ class PlayerManager(QObject):
         self._is_muted = False
         self._playback_rate = 1.0
         
-        # Connect signals from both players to manager
+        # Connect signals from Qt player
         self._connect_player_signals(self._qt_player)
-        self._connect_player_signals(self._ffmpeg_player)
+        # TODO Phase 3: Connect MpvPlayer signals when created
     
     def _connect_player_signals(self, player: BasePlayer):
         """Connect a player's signals to manager's signals."""
@@ -76,21 +74,19 @@ class PlayerManager(QObject):
         player.hasAudioChanged.connect(lambda has: self._forward_if_active(player, self.hasAudioChanged, has))
         player.videoOutputChanged.connect(lambda: self._forward_if_active(player, self.videoOutputChanged))
         player.bufferProgressChanged.connect(lambda prog: self._forward_if_active(player, self.bufferProgressChanged, prog))
-        player.indexingProgress.connect(lambda prog: self._forward_if_active(player, self.indexingProgress, prog))
-        player.indexedDurationChanged.connect(lambda dur: self._forward_if_active(player, self.indexedDurationChanged, dur))
     
     def _forward_if_active(self, player: BasePlayer, signal, *args):
         """Forward signal only if it came from the active player."""
         if player == self._current_player:
             signal.emit(*args)
     
-    def _should_use_ffmpeg(self, file_path: str) -> bool:
-        """Determine if file should use FFmpegPlayer."""
-        if not ENABLE_FFMPEG_FOR_TS:
+    def _should_use_mpv(self, file_path: str) -> bool:
+        """Determine if file should use MpvPlayer (future)."""
+        if not ENABLE_MPV_FOR_TS or not self._mpv_player:
             return False
         
         _, ext = os.path.splitext(file_path.lower())
-        return ext in FFMPEG_EXTENSIONS
+        return ext in MPV_EXTENSIONS
     
     def _switch_player(self, new_player: BasePlayer, file_path: str):
         """
@@ -282,8 +278,8 @@ class PlayerManager(QObject):
         return self._current_player.get_player_type()
     
     def isUsingFFmpegPlayer(self) -> bool:
-        """Check if currently using FFmpegPlayer."""
-        return isinstance(self._current_player, FFmpegPlayer)
+        """Check if currently using FFmpegPlayer (legacy - always False now)."""
+        return False  # FFmpegPlayer removed, will be replaced by MpvPlayer
     
     # ==================== Fallback Mechanism ====================
     
