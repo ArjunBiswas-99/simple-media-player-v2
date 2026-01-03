@@ -1,1 +1,8 @@
-aaa
+Fmpeg player for: 3 Murder in the Afternoon.ts
+Traceback (most recent call last):
+  File "C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\media_player.py", line 337, in timeline_mouse_press    
+    indexed_duration = self.player.indexed_duration()
+  File "C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2\src\player_manager.py", line 291, in indexed_duration  
+    return self._current_player.indexed_duration()
+AttributeError: 'FFmpegPlayer' object has no attribute 'indexed_duration'
+PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> 
