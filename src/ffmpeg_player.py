@@ -225,13 +225,18 @@ class FFmpegPlayer(BasePlayer):
             self._is_playing = False
             self._render_timer.stop()
         
+        # CRITICAL: Stop decode thread before seeking
+        if self._decode_thread and self._decode_thread.is_alive():
+            self._stop_decode.set()
+            self._decode_thread.join(timeout=1.0)
+        
         # Seek the container
         try:
-            # Convert milliseconds to stream time base
-            seek_target = int(position_ms * 1000)  # microseconds
-            self._container.seek(seek_target)
+            # Convert milliseconds to microseconds
+            seek_target = int(position_ms * 1000)
+            self._container.seek(seek_target, backward=True, any_frame=False)
             
-            # Clear decode queue
+            # Clear decode queue (old frames before seek)
             while not self._decode_queue.empty():
                 try:
                     self._decode_queue.get_nowait()
@@ -242,6 +247,11 @@ class FFmpegPlayer(BasePlayer):
             self._position = position_ms
             self._pause_time = position_ms
             self.positionChanged.emit(position_ms)
+            
+            # Restart decode thread - will decode from new position
+            self._stop_decode.clear()
+            self._decode_thread = threading.Thread(target=self._decode_loop, daemon=True)
+            self._decode_thread.start()
             
             # Resume if was playing
             if was_playing:
