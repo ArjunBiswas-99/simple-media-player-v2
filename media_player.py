@@ -7,7 +7,8 @@ import os
 import qtawesome as qta
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QStackedWidget,
-    QPushButton, QSlider, QLabel, QFileDialog, QMessageBox, QGraphicsOpacityEffect
+    QPushButton, QSlider, QLabel, QFileDialog, QMessageBox, QGraphicsOpacityEffect,
+    QProgressBar
 )
 from PyQt6.QtCore import Qt, QTimer, QUrl, QPropertyAnimation, QSize, QEasingCurve, QSequentialAnimationGroup, QParallelAnimationGroup, QPoint, QRect
 from PyQt6.QtGui import QCursor, QAction, QPainter, QColor, QActionGroup
@@ -1044,6 +1045,12 @@ class MediaPlayer(QMainWindow):
             self.play_pause_btn.icon_name = 'fa5s.pause'
         elif state == QMediaPlayer.PlaybackState.StoppedState:
             self.play_pause_btn.setIcon(qta.icon('fa5s.play', color=THEME_PRIMARY))
+            self.play_pause_btn.icon_name = 'fa5s.play'
+            # Disable video menus when stopped
+            self._disable_video_menus()
+        else:
+            self.play_pause_btn.setIcon(qta.icon('fa5s.play', color=THEME_PRIMARY))
+            self.play_pause_btn.icon_name = 'fa5s.play'
     
     def _on_indexing_progress(self, progress):
         """Update indexing progress bar"""
@@ -1059,12 +1066,6 @@ class MediaPlayer(QMainWindow):
         """Track indexed duration for seek blocking"""
         # Store indexed duration for later use in seek validation
         self.indexed_duration_ms = indexed_duration
-            self.play_pause_btn.icon_name = 'fa5s.play'
-            # Disable video menus when stopped
-            self._disable_video_menus()
-        else:
-            self.play_pause_btn.setIcon(qta.icon('fa5s.play', color=THEME_PRIMARY))
-            self.play_pause_btn.icon_name = 'fa5s.play'
             
     def _format_time(self, ms):
         """Format milliseconds to H:MM:SS or MM:SS"""
