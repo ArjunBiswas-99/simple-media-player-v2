@@ -103,6 +103,7 @@ private:
     std::atomic<bool> m_playing;
     std::atomic<bool> m_seeking;
     std::atomic<bool> m_stopRequested;
+    double m_seekTargetTime;  // Accurate seek target in seconds
     
     // Threading
     std::thread m_decodeThread;

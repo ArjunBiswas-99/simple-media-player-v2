@@ -418,9 +418,6 @@ void AudioOutput::audioThreadFunc() {
     std::cout << "[AUDIO THREAD] WASAPI buffer size: " << bufferFrameCount 
               << " frames (" << (double)bufferFrameCount / m_sampleRate << "s)" << std::endl;
     
-    static auto lastCallbackTime = std::chrono::high_resolution_clock::now();
-    static int callbackCount = 0;
-    
     while (!m_stopAudioThread) {
         // Wait for buffer event
         DWORD waitResult = WaitForSingleObject(m_audioEvent, 100);
@@ -439,17 +436,6 @@ void AudioOutput::audioThreadFunc() {
         // Calculate available frames
         UINT32 numFramesAvailable = bufferFrameCount - numFramesPadding;
         
-        // Log timing diagnostics every 10 callbacks
-        if (callbackCount++ % 10 == 0 && callbackCount > 1) {
-            auto now = std::chrono::high_resolution_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - lastCallbackTime).count();
-            double avgPerCallback = elapsed / 10.0;
-            std::cout << "[AUDIO TIMING] 10 callbacks took " << elapsed << "ms (avg " 
-                      << avgPerCallback << "ms/callback), numFramesAvailable=" 
-                      << numFramesAvailable << std::endl;
-            lastCallbackTime = now;
-        }
-        
         if (numFramesAvailable == 0) continue;
         
         // Get buffer
@@ -466,14 +452,6 @@ void AudioOutput::audioThreadFunc() {
             memset(floatBuffer, 0, numFramesAvailable * m_channels * sizeof(float));
             hr = m_renderClient->ReleaseBuffer(numFramesAvailable, 0);
             continue;
-        }
-        
-        // Log callback entry with flush flag state
-        static int entryLogCounter = 0;
-        if (entryLogCounter++ % 50 == 0) {
-            std::cout << "[CALLBACK] Entry #" << entryLogCounter 
-                      << " flushRequested=" << m_flushRequested.load() 
-                      << " clock=" << m_audioClock << std::endl;
         }
         
         while (framesFilled < numFramesAvailable) {
@@ -559,11 +537,6 @@ void AudioOutput::audioThreadFunc() {
             // If flush is pending, fill silence and wait
             if (m_flushRequested.load()) {
                 // Delete frame - it's from old position, decoder will provide fresh frames
-                static int silenceCounter = 0;
-                if (silenceCounter++ % 10 == 0) {
-                    std::cout << "[FLUSH] Waiting... deleted frame PTS=" << frame->pts 
-                              << " (filling silence)" << std::endl;
-                }
                 delete frame;
                 
                 // Fill with silence
@@ -578,10 +551,8 @@ void AudioOutput::audioThreadFunc() {
             bool currentFlushState = m_flushRequested.load();
             
             if (currentFlushState && !wasFlushRequested) {
-                std::cout << "[RESUME LOGIC] Flush flag detected as TRUE" << std::endl;
                 wasFlushRequested = true;
             } else if (!currentFlushState && wasFlushRequested) {
-                std::cout << "[RESUME LOGIC] Flush flag changed to FALSE - will log next frame" << std::endl;
                 logNextFrame = true;
                 wasFlushRequested = false;
             }
@@ -599,17 +570,6 @@ void AudioOutput::audioThreadFunc() {
             
             // Calculate how many samples we can copy from this frame
             UINT32 samplesToCopy = std::min(availableSamples, numFramesAvailable - framesFilled);
-            
-            // Log every frame being copied to WASAPI
-            static int copyLogCounter = 0;
-            if (copyLogCounter++ % 20 == 0) {
-                auto now = std::chrono::high_resolution_clock::now();
-                auto timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count();
-                std::cout << "[COPY] Frame PTS=" << frame->pts 
-                          << " offset=" << frameOffset << "/" << totalFrameSamples
-                          << " copying " << samplesToCopy << " samples"
-                          << " timestamp=" << timestamp << std::endl;
-            }
             
             // Copy audio data from the correct offset
             float* sourceData = (float*)frame->data + (frameOffset * m_channels);
@@ -657,26 +617,15 @@ void AudioOutput::checkAndFlushIfNeeded() {
         return;
     }
     
-    std::cout << "[FLUSH] Main thread executing Stop/Reset/Start..." << std::endl;
-    auto flushStartTime = std::chrono::high_resolution_clock::now();
+    std::cout << "[FLUSH] Executing Stop/Reset/Start..." << std::endl;
     
-    // Check buffer padding before flush
-    UINT32 paddingBefore = 0;
-    HRESULT hr = m_audioClient->GetCurrentPadding(&paddingBefore);
-    if (SUCCEEDED(hr)) {
-        double secondsInBuffer = (double)paddingBefore / m_sampleRate;
-        std::cout << "[FLUSH] BEFORE - Buffer has " << paddingBefore 
-                  << " frames (" << secondsInBuffer << "s of audio)" << std::endl;
-    }
-    
-    // Stop, reset, and restart audio client to flush buffer
-    hr = m_audioClient->Stop();
+    // Stop audio client
+    HRESULT hr = m_audioClient->Stop();
     if (FAILED(hr)) {
         std::cerr << "[FLUSH] Failed to stop audio client: " << std::hex << hr << std::endl;
         m_flushRequested.store(false);
         return;
     }
-    std::cout << "[FLUSH] Stop() completed" << std::endl;
     
     hr = m_audioClient->Reset();
     if (FAILED(hr)) {
@@ -685,15 +634,6 @@ void AudioOutput::checkAndFlushIfNeeded() {
         m_flushRequested.store(false);
         return;
     }
-    std::cout << "[FLUSH] Reset() completed" << std::endl;
-    
-    // Check buffer padding after reset
-    UINT32 paddingAfterReset = 0;
-    hr = m_audioClient->GetCurrentPadding(&paddingAfterReset);
-    if (SUCCEEDED(hr)) {
-        std::cout << "[FLUSH] AFTER Reset() - Buffer has " << paddingAfterReset 
-                  << " frames" << std::endl;
-    }
     
     hr = m_audioClient->Start();
     if (FAILED(hr)) {
@@ -701,23 +641,11 @@ void AudioOutput::checkAndFlushIfNeeded() {
         m_flushRequested.store(false);
         return;
     }
-    std::cout << "[FLUSH] Start() completed" << std::endl;
     
-    // Check buffer padding after start
-    UINT32 paddingAfterStart = 0;
-    hr = m_audioClient->GetCurrentPadding(&paddingAfterStart);
-    if (SUCCEEDED(hr)) {
-        std::cout << "[FLUSH] AFTER Start() - Buffer has " << paddingAfterStart 
-                  << " frames" << std::endl;
-    }
-    
-    auto flushEndTime = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(flushEndTime - flushStartTime).count();
-    std::cout << "[FLUSH] COMPLETE - took " << duration << "ms | Clearing flag" << std::endl;
+    std::cout << "[FLUSH] Complete - buffer cleared" << std::endl;
     
     // Clear the flush request flag - audio callback will resume normal operation
     m_flushRequested.store(false);
-    std::cout << "[FLUSH] Flag cleared - audio callback will resume normal operation" << std::endl;
 #endif
 }
 #endif
