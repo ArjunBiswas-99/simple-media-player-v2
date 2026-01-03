@@ -364,22 +364,59 @@ class FFmpegPlayer(BasePlayer):
     def _decode_loop(self):
         """Background thread for decoding frames."""
         try:
-            for packet in self._container.demux(self._video_stream):
+            # Demux both video and audio streams
+            streams = []
+            if self._video_stream:
+                streams.append(self._video_stream)
+            if self._audio_stream:
+                streams.append(self._audio_stream)
+            
+            # Start audio if available
+            audio_io = None
+            if self._audio_stream and self._audio_sink:
+                audio_io = self._audio_sink.start()
+            
+            for packet in self._container.demux(*streams):
                 if self._stop_decode.is_set():
                     break
                 
-                for frame in packet.decode():
-                    if self._stop_decode.is_set():
-                        break
-                    
-                    # Convert to RGB
-                    frame_rgb = frame.to_ndarray(format='rgb24')
-                    
-                    # Put in queue (block if full)
-                    try:
-                        self._decode_queue.put((frame_rgb, frame.width, frame.height), timeout=1.0)
-                    except queue.Full:
-                        continue  # Skip frame if queue is full
+                # Handle video packets
+                if packet.stream.type == 'video':
+                    for frame in packet.decode():
+                        if self._stop_decode.is_set():
+                            break
+                        
+                        # Convert to RGB
+                        frame_rgb = frame.to_ndarray(format='rgb24')
+                        
+                        # Put in queue (block if full)
+                        try:
+                            self._decode_queue.put((frame_rgb, frame.width, frame.height), timeout=1.0)
+                        except queue.Full:
+                            continue  # Skip frame if queue is full
+                
+                # Handle audio packets
+                elif packet.stream.type == 'audio' and audio_io:
+                    for frame in packet.decode():
+                        if self._stop_decode.is_set():
+                            break
+                        
+                        # Resample to s16 stereo 48kHz
+                        resampler = av.AudioResampler(
+                            format='s16',
+                            layout='stereo',
+                            rate=48000
+                        )
+                        resampled = resampler.resample(frame)
+                        
+                        # Write audio data
+                        if resampled:
+                            audio_data = resampled[0].to_ndarray().tobytes()
+                            audio_io.write(audio_data)
+            
+            # Stop audio
+            if audio_io:
+                self._audio_sink.stop()
         
         except Exception as e:
             print(f"FFmpegPlayer decode error: {e}")

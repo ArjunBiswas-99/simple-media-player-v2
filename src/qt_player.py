@@ -159,10 +159,6 @@ class QtPlayer(BasePlayer):
         """Get the audio output device."""
         return self._audio_output
     
-    def indexed_duration(self):
-        """Get indexed duration (Qt player is always fully indexed)."""
-        return self._player.duration()
-    
     def cleanup(self):
         """Clean up resources before switching players."""
         self.stop()

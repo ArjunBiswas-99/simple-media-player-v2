@@ -332,16 +332,6 @@ class MediaPlayer(QMainWindow):
                 # Set slider value based on percentage
                 new_value = int(self.timeline.minimum() + percentage * (self.timeline.maximum() - self.timeline.minimum()))
                 
-                # Check if seeking to unindexed region (for FFmpegPlayer only)
-                if self.player.isUsingFFmpegPlayer():
-                    indexed_duration = self.player.indexed_duration()
-                    if new_value > indexed_duration:
-                        # Block seek to unindexed region
-                        from PyQt6.QtWidgets import QToolTip
-                        global_pos = self.timeline.mapToGlobal(event.position().toPoint())
-                        QToolTip.showText(global_pos, "⏳ Indexing in progress... Please wait", self.timeline, self.timeline.rect(), 2000)
-                        return  # Don't seek
-                
                 self.timeline.setValue(new_value)
                 
                 # Seek to the position
@@ -696,7 +686,6 @@ class MediaPlayer(QMainWindow):
         self.player.durationChanged.connect(self._on_duration_changed)
         self.player.playbackStateChanged.connect(self._on_state_changed)
         self.player.indexingProgress.connect(self._on_indexing_progress)
-        self.player.indexedDurationChanged.connect(self._on_indexed_duration_changed)
         
         # Button signals
         self.play_pause_btn.clicked.connect(self.toggle_play_pause)
@@ -1062,11 +1051,6 @@ class MediaPlayer(QMainWindow):
             # Show progress bar while indexing
             self.indexing_progress_bar.setVisible(True)
     
-    def _on_indexed_duration_changed(self, indexed_duration):
-        """Track indexed duration for seek blocking"""
-        # Store indexed duration for later use in seek validation
-        self.indexed_duration_ms = indexed_duration
-            
     def _format_time(self, ms):
         """Format milliseconds to H:MM:SS or MM:SS"""
         seconds = ms // 1000

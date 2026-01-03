@@ -285,12 +285,6 @@ class PlayerManager(QObject):
         """Check if currently using FFmpegPlayer."""
         return isinstance(self._current_player, FFmpegPlayer)
     
-    def indexed_duration(self) -> int:
-        """Get indexed duration for FFmpegPlayer (in milliseconds)."""
-        if isinstance(self._current_player, FFmpegPlayer):
-            return self._current_player.indexed_duration()
-        return self._current_player.duration()  # Qt player is always "indexed"
-    
     # ==================== Fallback Mechanism ====================
     
     def fallbackToQtPlayer(self):
