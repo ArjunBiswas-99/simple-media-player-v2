@@ -1,6 +1,6 @@
 354...
 DEBUG: mpv creation with wid SUCCEEDED
-MpvPlayer loading file: D:/TV/Detective,Thriller/Murder She Wrote/Season 1/3 Deadly Lady.ts
+MpvPlayer loading file: D:/TV/Detective,Thriller/11321/Season 1/11321.ts
 DEBUG: File path type: <class 'str'>, length: 67
 DEBUG: File exists: True
 DEBUG: Attempting loadfile WITHOUT 'replace' parameter...
@@ -10,6 +10,6 @@ DEBUG: Attempting loadfile WITH 'replace' parameter...
 DEBUG: loadfile with 'replace' ALSO FAILED: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x00000207A5CC6340>, <mpv.LP_MpvNode object at 0x00000207A5CC6EC0>, <mpv.LP_MpvNode object at 0x00000207A5CC6E40>))
 ERROR: Failed to load file: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x00000207A5CC6340>, <mpv.LP_MpvNode object at 0x00000207A5CC6EC0>, <mpv.LP_MpvNode object at 0x00000207A5CC6E40>))
 ERROR: Full exception: ValueError('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x00000207A5CC6340>, <mpv.LP_MpvNode object at 0x00000207A5CC6EC0>, <mpv.LP_MpvNode object at 0x00000207A5CC6E40>))
-🎬 Using FFmpeg player for: 3 Deadly Lady.ts
+🎬 Using FFmpeg player for: 11321.ts
 MpvPlayer.play() called
 MpvPlayer playing
