@@ -1,7 +1,7 @@
 """
 Player Manager
-Orchestrates switching between QtPlayer and MpvPlayer based on file type.
-Provides seamless player switching while preserving state and UI consistency.
+Orchestrates media playback using QtPlayer.
+Provides unified interface matching QMediaPlayer API.
 """
 import os
 from PyQt6.QtCore import QObject, QUrl, pyqtSignal
@@ -9,20 +9,11 @@ from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 from .base_player import BasePlayer
 from .qt_player import QtPlayer
-from .mpv_player import MpvPlayer
-from .custom_video_widget import CustomVideoWidget
-
-
-# Feature flag - enable mpv for .ts files
-ENABLE_MPV_FOR_TS = True
-
-# File extensions that will use MpvPlayer
-MPV_EXTENSIONS = ['.ts', '.m2ts', '.mts']
 
 
 class PlayerManager(QObject):
     """
-    Manages switching between QtPlayer and FFmpegPlayer.
+    Manages media playback using QtPlayer.
     Provides unified interface matching QMediaPlayer API.
     """
     
@@ -40,27 +31,23 @@ class PlayerManager(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         
-        # Create both players
+        # Create Qt player
         self._qt_player = QtPlayer(self)
-        self._mpv_player = MpvPlayer(self)
         
         # Current active player
         self._current_player: BasePlayer = self._qt_player
-        self._last_player_type = "QtPlayer"
         
         # Shared resources
         self._audio_output = None
-        self._video_widget = None  # QVideoWidget for Qt player
-        self._custom_video_widget = None  # CustomVideoWidget for FFmpeg player
+        self._video_widget = None
         
         # State preservation
         self._volume = 1.0
         self._is_muted = False
         self._playback_rate = 1.0
         
-        # Connect signals from both players
+        # Connect signals
         self._connect_player_signals(self._qt_player)
-        self._connect_player_signals(self._mpv_player)
     
     def _connect_player_signals(self, player: BasePlayer):
         """Connect a player's signals to manager's signals."""
@@ -80,117 +67,29 @@ class PlayerManager(QObject):
         if player == self._current_player:
             signal.emit(*args)
     
-    def _should_use_mpv(self, file_path: str) -> bool:
-        """Determine if file should use MpvPlayer (future)."""
-        if not ENABLE_MPV_FOR_TS or not self._mpv_player:
-            return False
-        
-        _, ext = os.path.splitext(file_path.lower())
-        return ext in MPV_EXTENSIONS
-    
-    def _switch_player(self, new_player: BasePlayer, file_path: str):
-        """
-        Switch from current player to new player.
-        Preserves state and handles cleanup.
-        """
-        if new_player == self._current_player:
-            return  # Already using this player
-        
-        old_player = self._current_player
-        new_player_type = new_player.get_player_type()
-        
-        print(f"🔄 Switching player: {self._last_player_type} → {new_player_type} for {os.path.basename(file_path)}")
-        
-        # Save current state
-        saved_volume = self._volume
-        saved_mute = self._is_muted
-        saved_rate = self._playback_rate
-        
-        # Stop and cleanup old player
-        old_player.stop()
-        old_player.cleanup()
-        
-        # Switch active player
-        self._current_player = new_player
-        self._last_player_type = new_player_type
-        
-        # Setup new player with saved state
-        new_player.set_volume(saved_volume)
-        new_player.set_muted(saved_mute)
-        new_player.set_playback_rate(saved_rate)
-        
-        # Setup video output based on player type
-        if isinstance(new_player, QtPlayer):
-            # Qt player uses QVideoWidget
-            if self._video_widget:
-                new_player.set_video_output(self._video_widget)
-                self._video_widget.show()
-            if self._custom_video_widget:
-                self._custom_video_widget.hide()
-        else:
-            # MpvPlayer uses CustomVideoWidget
-            if self._custom_video_widget:
-                print(f"Setting up MpvPlayer with custom video widget")
-                new_player.set_video_output(self._custom_video_widget)
-                self._custom_video_widget.show()
-            else:
-                print(f"ERROR: No custom video widget available for MpvPlayer!")
-            if self._video_widget:
-                self._video_widget.hide()
-        
-        # Setup audio output
-        if self._audio_output:
-            new_player.set_audio_output(self._audio_output)
-    
     # ==================== Public API (matches QMediaPlayer) ====================
     
     def setAudioOutput(self, audio_output: QAudioOutput):
-        """Set audio output for both players."""
+        """Set audio output for player."""
         self._audio_output = audio_output
         self._qt_player.set_audio_output(audio_output)
-        self._mpv_player.set_audio_output(audio_output)
     
     def setVideoOutput(self, video_widget: QVideoWidget):
-        """Set video output widget (QVideoWidget for Qt player)."""
+        """Set video output widget."""
         self._video_widget = video_widget
-        # Qt player uses this by default
         self._qt_player.set_video_output(video_widget)
-    
-    def setCustomVideoOutput(self, custom_widget: CustomVideoWidget):
-        """Set custom video output widget (for mpv player)."""
-        self._custom_video_widget = custom_widget
-        self._mpv_player.set_video_output(custom_widget)
     
     def setSource(self, url):
         """
-        Set media source and automatically choose the right player.
-        Handles player switching transparently.
+        Set media source.
         """
-        print(f"PlayerManager.setSource called with: {url}")
-        
         # Get file path
         if isinstance(url, QUrl):
             file_path = url.toLocalFile()
         else:
             file_path = url
         
-        print(f"File path: {file_path}")
-        
-        # Determine which player to use
-        use_mpv = self._should_use_mpv(file_path)
-        target_player = self._mpv_player if use_mpv else self._qt_player
-        
-        print(f"Using {'mpv' if use_mpv else 'qt'} player for {os.path.basename(file_path)}")
-        
-        # Switch player if needed
-        if target_player != self._current_player:
-            print(f"Need to switch from {self._current_player.get_player_type()} to {target_player.get_player_type()}")
-            self._switch_player(target_player, file_path)
-        else:
-            print("Already using correct player, no switch needed")
-        
         # Load media
-        print(f"About to call set_source on {self._current_player.get_player_type()}")
         self._current_player.set_source(file_path)
     
     def play(self):
