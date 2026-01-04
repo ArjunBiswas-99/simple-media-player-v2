@@ -1,14 +1,24 @@
-e path: D:/TV/Detective,Thriller/1131/Season 1/111.ts
-Using mpv player for 111.ts
+e-media-player-v2> python .\main.py    
+qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.2 LGPL version 2.1 or later
+MpvPlayer: video widget registered, will create instance on first playback
+PlayerManager.setSource called with: PyQt6.QtCore.QUrl('file:///D:/TV/Detective,Thriller/1131/Season 1/11321.ts')
+File path: D:/TV/Detective,Thriller/1131/Season 1/11321.ts
+Using mpv player for 11321.ts
 Need to switch from QtPlayer to mpv
-🔄 Switching player: QtPlayer → mpv for 111.ts
+🔄 Switching player: QtPlayer → mpv for 11321.ts
 Setting up MpvPlayer with custom video widget
 MpvPlayer: video widget registered, will create instance on first playback
 About to call set_source on mpv
-MpvPlayer.set_source called with: D:/TV/Detective,Thriller/1131/Season 1/111.ts
+MpvPlayer.set_source called with: D:/TV/Detective,Thriller/1131/Season 1/11321.ts
 MpvPlayer: creating mpv instance now that playback is starting
-MpvPlayer loading file: D:/TV/Detective,Thriller/1131/Season 1/111.ts
-ERROR: Failed to load file: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x0000022C76BCC440>, <mpv.LP_MpvNode object at 0x0000022C76BCECC0>, <mpv.LP_MpvNode object at 0x0000022C76BCEC40>))
-🎬 Using FFmpeg player for: 111.ts
+DEBUG: Widget winId = 460482 (type: <class 'int'>)
+DEBUG: Attempting to create mpv WITHOUT wid parameter...
+DEBUG: mpv creation without wid SUCCEEDED
+DEBUG: Creating mpv WITH wid=460482...
+DEBUG: mpv creation with wid SUCCEEDED
+MpvPlayer loading file: D:/TV/Detective,Thriller/1131/Season 1/11321.ts
+ERROR: Failed to load file: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x000001CF1639E2C0>, <mpv.LP_MpvNode object at 0x000001CF1639DF40>, <mpv.LP_MpvNode object at 0x000001CF1639DFC0>))
+🎬 Using FFmpeg player for: 11321.ts
 MpvPlayer.play() called
-MpvPlayer pl
+MpvPlayer playing
+PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> 
