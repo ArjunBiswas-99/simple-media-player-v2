@@ -1,24 +1,15 @@
-e-media-player-v2> python .\main.py    
-qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.2 LGPL version 2.1 or later
-MpvPlayer: video widget registered, will create instance on first playback
-PlayerManager.setSource called with: PyQt6.QtCore.QUrl('file:///D:/TV/Detective,Thriller/1131/Season 1/11321.ts')
-File path: D:/TV/Detective,Thriller/1131/Season 1/11321.ts
-Using mpv player for 11321.ts
-Need to switch from QtPlayer to mpv
-🔄 Switching player: QtPlayer → mpv for 11321.ts
-Setting up MpvPlayer with custom video widget
-MpvPlayer: video widget registered, will create instance on first playback
-About to call set_source on mpv
-MpvPlayer.set_source called with: D:/TV/Detective,Thriller/1131/Season 1/11321.ts
-MpvPlayer: creating mpv instance now that playback is starting
-DEBUG: Widget winId = 460482 (type: <class 'int'>)
-DEBUG: Attempting to create mpv WITHOUT wid parameter...
-DEBUG: mpv creation without wid SUCCEEDED
-DEBUG: Creating mpv WITH wid=460482...
+354...
 DEBUG: mpv creation with wid SUCCEEDED
-MpvPlayer loading file: D:/TV/Detective,Thriller/1131/Season 1/11321.ts
-ERROR: Failed to load file: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x000001CF1639E2C0>, <mpv.LP_MpvNode object at 0x000001CF1639DF40>, <mpv.LP_MpvNode object at 0x000001CF1639DFC0>))
-🎬 Using FFmpeg player for: 11321.ts
+MpvPlayer loading file: D:/TV/Detective,Thriller/Murder She Wrote/Season 1/3 Deadly Lady.ts
+DEBUG: File path type: <class 'str'>, length: 67
+DEBUG: File exists: True
+DEBUG: Attempting loadfile WITHOUT 'replace' parameter...
+DEBUG: loadfile without 'replace' FAILED: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x00000207A5CC6340>, <mpv.LP_MpvNode object at 0x00000207A5CC6140>, <mpv.LP_MpvNode object at 0x00000207A5CC6240>))
+DEBUG: Exception type: <class 'ValueError'>
+DEBUG: Attempting loadfile WITH 'replace' parameter...
+DEBUG: loadfile with 'replace' ALSO FAILED: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x00000207A5CC6340>, <mpv.LP_MpvNode object at 0x00000207A5CC6EC0>, <mpv.LP_MpvNode object at 0x00000207A5CC6E40>))
+ERROR: Failed to load file: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x00000207A5CC6340>, <mpv.LP_MpvNode object at 0x00000207A5CC6EC0>, <mpv.LP_MpvNode object at 0x00000207A5CC6E40>))
+ERROR: Full exception: ValueError('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x00000207A5CC6340>, <mpv.LP_MpvNode object at 0x00000207A5CC6EC0>, <mpv.LP_MpvNode object at 0x00000207A5CC6E40>))
+🎬 Using FFmpeg player for: 3 Deadly Lady.ts
 MpvPlayer.play() called
 MpvPlayer playing
-PS C:\Users\arjun\OneDrive\Desktop\Test\simple-media-player-v2> 
