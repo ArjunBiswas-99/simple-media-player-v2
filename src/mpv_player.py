@@ -174,6 +174,11 @@ class MpvPlayer(BasePlayer):
             self._last_error = "Invalid video widget"
             return
         
+        # Only create mpv instance if not already created
+        if self._player:
+            print("MpvPlayer: mpv instance already exists, skipping recreation")
+            return
+        
         # Create mpv instance embedded in widget
         if not self._create_mpv_instance(video_widget):
             self.errorOccurred.emit(

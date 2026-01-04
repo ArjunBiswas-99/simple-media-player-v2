@@ -128,10 +128,13 @@ class PlayerManager(QObject):
             if self._custom_video_widget:
                 self._custom_video_widget.hide()
         else:
-            # FFmpeg player uses CustomVideoWidget
+            # MpvPlayer uses CustomVideoWidget
             if self._custom_video_widget:
+                print(f"Setting up MpvPlayer with custom video widget")
                 new_player.set_video_output(self._custom_video_widget)
                 self._custom_video_widget.show()
+            else:
+                print(f"ERROR: No custom video widget available for MpvPlayer!")
             if self._video_widget:
                 self._video_widget.hide()
         
@@ -163,21 +166,31 @@ class PlayerManager(QObject):
         Set media source and automatically choose the right player.
         Handles player switching transparently.
         """
+        print(f"PlayerManager.setSource called with: {url}")
+        
         # Get file path
         if isinstance(url, QUrl):
             file_path = url.toLocalFile()
         else:
             file_path = url
         
+        print(f"File path: {file_path}")
+        
         # Determine which player to use
         use_mpv = self._should_use_mpv(file_path)
         target_player = self._mpv_player if use_mpv else self._qt_player
         
+        print(f"Using {'mpv' if use_mpv else 'qt'} player for {os.path.basename(file_path)}")
+        
         # Switch player if needed
         if target_player != self._current_player:
+            print(f"Need to switch from {self._current_player.get_player_type()} to {target_player.get_player_type()}")
             self._switch_player(target_player, file_path)
+        else:
+            print("Already using correct player, no switch needed")
         
         # Load media
+        print(f"About to call set_source on {self._current_player.get_player_type()}")
         self._current_player.set_source(file_path)
     
     def play(self):
