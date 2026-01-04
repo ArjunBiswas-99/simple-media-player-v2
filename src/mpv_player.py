@@ -174,17 +174,9 @@ class MpvPlayer(BasePlayer):
             self._last_error = "Invalid video widget"
             return
         
-        # Only create mpv instance if not already created
-        if self._player:
-            print("MpvPlayer: mpv instance already exists, skipping recreation")
-            return
-        
-        # Create mpv instance embedded in widget
-        if not self._create_mpv_instance(video_widget):
-            self.errorOccurred.emit(
-                QMediaPlayer.Error.ResourceError,
-                self._last_error
-            )
+        # Don't create mpv instance here - delay until set_source()
+        # This ensures the widget is fully ready for video embedding
+        print("MpvPlayer: video widget registered, will create instance on first playback")
     
     def set_audio_output(self, audio_output):
         """Set the audio output device (mpv handles audio internally)."""
@@ -196,11 +188,20 @@ class MpvPlayer(BasePlayer):
         """Set the media source URL."""
         print(f"MpvPlayer.set_source called with: {url}")
         
+        # Create mpv instance on first playback if not already created
         if not self._player:
-            self._last_error = "mpv player not initialized"
-            print(f"ERROR: {self._last_error}")
-            self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
-            return
+            if not self._video_widget:
+                self._last_error = "No video widget set"
+                print(f"ERROR: {self._last_error}")
+                self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
+                return
+            
+            print("MpvPlayer: creating mpv instance now that playback is starting")
+            if not self._create_mpv_instance(self._video_widget):
+                self._last_error = f"Failed to create mpv instance: {self._last_error}"
+                print(f"ERROR: {self._last_error}")
+                self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
+                return
         
         # Stop current playback
         self.stop()
