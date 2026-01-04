@@ -235,10 +235,29 @@ class MpvPlayer(BasePlayer):
         self._source = url
         
         print(f"MpvPlayer loading file: {url}")
+        print(f"DEBUG: File path type: {type(url)}, length: {len(url)}")
+        print(f"DEBUG: File exists: {os.path.exists(url)}")
         
-        # Load file
+        # Load file - test different approaches
         try:
-            self._player.loadfile(url, 'replace')
+            # Test 1: Try without 'replace' parameter
+            print("DEBUG: Attempting loadfile WITHOUT 'replace' parameter...")
+            try:
+                self._player.loadfile(url)
+                print("DEBUG: loadfile without 'replace' SUCCEEDED")
+            except Exception as e1:
+                print(f"DEBUG: loadfile without 'replace' FAILED: {e1}")
+                print(f"DEBUG: Exception type: {type(e1)}")
+                
+                # Test 2: Try with 'replace' parameter
+                print("DEBUG: Attempting loadfile WITH 'replace' parameter...")
+                try:
+                    self._player.loadfile(url, 'replace')
+                    print("DEBUG: loadfile with 'replace' SUCCEEDED")
+                except Exception as e2:
+                    print(f"DEBUG: loadfile with 'replace' ALSO FAILED: {e2}")
+                    raise e2
+            
             print(f"MpvPlayer file loaded successfully")
             self._media_status = QMediaPlayer.MediaStatus.LoadedMedia
             self.mediaStatusChanged.emit(self._media_status)
@@ -251,6 +270,7 @@ class MpvPlayer(BasePlayer):
         except Exception as e:
             self._last_error = f"Failed to load file: {str(e)}"
             print(f"ERROR: {self._last_error}")
+            print(f"ERROR: Full exception: {repr(e)}")
             self.errorOccurred.emit(QMediaPlayer.Error.ResourceError, self._last_error)
             self._media_status = QMediaPlayer.MediaStatus.InvalidMedia
             self.mediaStatusChanged.emit(self._media_status)
