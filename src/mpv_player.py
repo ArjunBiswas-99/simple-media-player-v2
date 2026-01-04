@@ -136,15 +136,38 @@ class MpvPlayer(BasePlayer):
             widget.setAttribute(Qt.WidgetAttribute.WA_NativeWindow, True)
             widget.setAttribute(Qt.WidgetAttribute.WA_DontCreateNativeAncestors, False)
             
-            # Create mpv instance
+            # DEBUG: Print window ID
+            wid_value = int(widget.winId())
+            print(f"DEBUG: Widget winId = {wid_value} (type: {type(wid_value)})")
+            
+            # Try creating mpv WITHOUT wid first to test if wid is the problem
+            print("DEBUG: Attempting to create mpv WITHOUT wid parameter...")
+            try:
+                test_player = self._mpv_module.MPV(
+                    keep_open='yes',
+                    idle='yes',
+                    input_default_bindings=False,
+                    input_vo_keyboard=False,
+                    osc=False
+                )
+                test_player.terminate()
+                print("DEBUG: mpv creation without wid SUCCEEDED")
+            except Exception as e:
+                print(f"DEBUG: mpv creation without wid FAILED: {e}")
+                self._last_error = f"Failed to create mpv even without wid: {str(e)}"
+                return False
+            
+            # Now try with wid
+            print(f"DEBUG: Creating mpv WITH wid={wid_value}...")
             self._player = self._mpv_module.MPV(
-                wid=str(int(widget.winId())),
+                wid=str(wid_value),
                 keep_open='yes',
                 idle='yes',
                 input_default_bindings=False,
                 input_vo_keyboard=False,
                 osc=False
             )
+            print("DEBUG: mpv creation with wid SUCCEEDED")
             
             # Register event handlers
             @self._player.event_callback('end-file')
