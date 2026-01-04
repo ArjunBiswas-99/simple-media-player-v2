@@ -20,7 +20,6 @@ from styles import *
 from widgets import SpeedIndicator, PlaylistPopover, SettingsPopover, InfoPopover, TimelineTooltip, AnimatedButton
 from thumbnail_generator import ThumbnailGenerator
 from src.player_manager import PlayerManager
-from src.custom_video_widget import CustomVideoWidget
 
 
 class MediaPlayer(QMainWindow):
@@ -91,22 +90,10 @@ class MediaPlayer(QMainWindow):
         
         self.video_stack.addWidget(self.video_widget)
         
-        # Custom video widget (for FFmpeg player - .ts files)
-        self.custom_video_widget = CustomVideoWidget()
-        
-        # Add double-click fullscreen to custom video widget
-        def custom_video_double_click(event):
-            self.toggle_fullscreen()
-            CustomVideoWidget.mouseDoubleClickEvent(self.custom_video_widget, event)
-        self.custom_video_widget.mouseDoubleClickEvent = custom_video_double_click
-        
-        self.video_stack.addWidget(self.custom_video_widget)
-        
-        # Set up both video outputs in player manager
+        # Set up video output in player manager
         self.player.setVideoOutput(self.video_widget)
-        self.player.setCustomVideoOutput(self.custom_video_widget)
         
-        # Start with Qt video widget
+        # Use Qt video widget
         self.video_stack.setCurrentWidget(self.video_widget)
         
         # 2x speed indicator (top-level window to appear over video)
@@ -710,13 +697,6 @@ class MediaPlayer(QMainWindow):
         
         self.current_file = file_path
         self.player.setSource(QUrl.fromLocalFile(file_path))
-        
-        # Switch video widget based on player type
-        if self.player.isUsingFFmpegPlayer():
-            self.video_stack.setCurrentWidget(self.custom_video_widget)
-            print(f"🎬 Using FFmpeg player for: {os.path.basename(file_path)}")
-        else:
-            self.video_stack.setCurrentWidget(self.video_widget)
         
         self.player.play()
         
