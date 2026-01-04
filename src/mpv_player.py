@@ -256,6 +256,24 @@ class MpvPlayer(BasePlayer):
                     print("DEBUG: loadfile with 'replace' SUCCEEDED")
                 except Exception as e2:
                     print(f"DEBUG: loadfile with 'replace' ALSO FAILED: {e2}")
+                    
+                    # Test 3: Try loadfile with NEW mpv instance WITHOUT wid to isolate the problem
+                    print("DEBUG: Testing if wid is the problem - creating mpv WITHOUT wid...")
+                    try:
+                        test_player = self._mpv_module.MPV(
+                            keep_open='yes',
+                            idle='yes',
+                            input_default_bindings=False,
+                            input_vo_keyboard=False,
+                            osc=False
+                        )
+                        test_player.loadfile(url)
+                        print("DEBUG: ✓ loadfile WITHOUT wid SUCCEEDED - WID IS THE PROBLEM")
+                        test_player.terminate()
+                    except Exception as e3:
+                        print(f"DEBUG: ✗ loadfile WITHOUT wid ALSO FAILED: {e3}")
+                        print("DEBUG: Problem is NOT wid - file or mpv itself is broken")
+                    
                     raise e2
             
             print(f"MpvPlayer file loaded successfully")
