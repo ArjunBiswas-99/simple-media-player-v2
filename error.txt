@@ -1,1 +1,17 @@
-aa
+\Test\simple-media-player-v2> python .\main.py
+qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.2 LGPL version 2.1 or later
+PlayerManager.setSource called with: PyQt6.QtCore.QUrl('file:///D:/TV/Detective,Thriller111/Season 1/3 111.ts')
+File path: D:/TV/Detective,Thriller111/Season 1/3 111.ts
+Using mpv player for 3 111.ts
+Need to switch from QtPlayer to mpv
+🔄 Switching player: QtPlayer → mpv for 3 111.ts
+Setting up MpvPlayer with custom video widget
+MpvPlayer: mpv instance already exists, skipping recreation
+About to call set_source on mpv
+MpvPlayer.set_source called with: D:/TV/Detective,Thriller111/Season 1/3 111.ts
+MpvPlayer loading file: D:/TV/Detective,Thriller111/Season 1/3 111.ts
+ERROR: Failed to load file: ('Invalid value for mpv parameter', -4, (<MpvHandle object at 0x000002C20C8E8740>, <mpv.LP_MpvNode object at 0x000002C20C8EA840>, <mpv.LP_MpvNode object at 0x000002C20C8EA7C0>))
+🎬 Using FFmpeg player for: 3 111.ts
+MpvPlayer.play() called
+MpvPlayer playing
+PS C:\Users\arjun\OneDrive\Deskt
