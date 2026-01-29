@@ -890,22 +890,39 @@ namespace ArjunMediaPlayer
         private bool isSpeedIndicatorActive = false;
         private int clickCount = 0;
         private bool isHoldAction = false; // Track if this is a hold action
+        private bool wasPlayingBeforeHold = false; // Track if video was playing before hold
         private DispatcherTimer? clickTimer;
+        private DateTime lastClickTime = DateTime.MinValue; // Track time of last click for double-click detection
 
         private void MediaElement_MouseDown(object sender, MouseButtonEventArgs e)
         {
             if (e.ChangedButton == MouseButton.Left)
             {
-                System.Console.WriteLine($"[DEBUG] MouseDown - Click count: {clickCount}, Time: {DateTime.Now:HH:mm:ss.fff}");
+                DateTime currentTime = DateTime.Now;
+
+                System.Console.WriteLine($"[DEBUG] MouseDown - Click count: {clickCount}, Time: {currentTime:HH:mm:ss.fff}");
 
                 isMouseDown = true;
-                mouseDownTime = DateTime.Now;
+                mouseDownTime = currentTime;
                 isHoldAction = false; // Reset hold action flag
+                wasPlayingBeforeHold = isPlaying; // Remember the playback state before any potential hold
 
-                // Count clicks to detect double-click
-                clickCount++;
+                // Check if this is a double-click based on time since last click
+                if (lastClickTime != DateTime.MinValue &&
+                    (currentTime - lastClickTime).TotalMilliseconds < DOUBLE_CLICK_TIME_THRESHOLD)
+                {
+                    // This is a double-click
+                    clickCount = 2;
+                    lastClickTime = DateTime.MinValue; // Reset for next sequence
+                }
+                else
+                {
+                    // This is a single click - start tracking
+                    clickCount = 1;
+                    lastClickTime = currentTime;
+                }
 
-                System.Console.WriteLine($"[DEBUG] MouseDown - Incremented click count to: {clickCount}");
+                System.Console.WriteLine($"[DEBUG] MouseDown - Set click count to: {clickCount}");
 
                 if (clickCount == 1)
                 {
@@ -939,6 +956,8 @@ namespace ArjunMediaPlayer
                             {
                                 System.Console.WriteLine($"[DEBUG] Skipping single click - Click count: {clickCount}, IsHoldAction: {isHoldAction}");
                             }
+
+                            // Reset click tracking after processing
                             clickCount = 0;
                             clickTimer?.Stop();
                         };
@@ -950,8 +969,12 @@ namespace ArjunMediaPlayer
                     System.Console.WriteLine("[DEBUG] MouseDown - Second click detected, processing double-click");
                     // Double click detected
                     clickTimer?.Stop();
+                    holdTimer?.Stop(); // Stop hold timer to prevent hold action from triggering
                     ProcessDoubleClick();
+
+                    // Reset for next sequence
                     clickCount = 0;
+                    lastClickTime = DateTime.MinValue;
                 }
             }
         }
@@ -968,9 +991,23 @@ namespace ArjunMediaPlayer
                 {
                     System.Console.WriteLine("[DEBUG] MouseUp - Detected hold action, resetting speed to 1.0x");
                     mediaElement.SpeedRatio = 1.0; // Reset to normal speed
+
+                    // If the video was originally paused before the hold, pause it again after releasing
+                    if (!wasPlayingBeforeHold)
+                    {
+                        mediaElement.Pause();
+                        isPlaying = false;
+                        UpdatePlayPauseIcon();
+                    }
+
                     HideIndicator(); // Hide speed indicator
-                    isSpeedIndicatorActive = false;
+                    isSpeedIndicatorActive = false; // Reset for next hold
                     isHoldAction = true; // Mark this as a hold action so we don't process it as a click
+                }
+                else
+                {
+                    // Even if it wasn't a hold action, reset the flag to allow next hold to work
+                    isSpeedIndicatorActive = false;
                 }
 
                 holdTimer?.Stop();
@@ -1009,8 +1046,30 @@ namespace ArjunMediaPlayer
                     ShowIndicator("speed"); // Show speed indicator
                     isSpeedIndicatorActive = true;
                     isHoldAction = true; // Mark as hold action
+
+                    // If the video was paused, we should resume it during the hold so the 2x speed is noticeable
+                    if (!isPlaying)
+                    {
+                        mediaElement.Play();
+                        isPlaying = true;
+                        UpdatePlayPauseIcon();
+                    }
+
+                    // Stop the click timer since we're now in hold mode
+                    clickTimer?.Stop();
                 }
             }
+        }
+
+        // Clean up resources when closing the window
+        protected override void OnClosed(EventArgs e)
+        {
+            uiUpdateTimer?.Stop();
+            holdTimer?.Stop();
+            clickTimer?.Stop();
+            holdTimer = null;
+            clickTimer = null;
+            base.OnClosed(e);
         }
 
         #endregion
@@ -1055,17 +1114,12 @@ namespace ArjunMediaPlayer
         {
             // Hide the indicator immediately
             animationIndicator.Opacity = 0;
+
+            // Reset the animation so it can be shown again
+            animationIndicator.BeginAnimation(Border.OpacityProperty, null);
         }
 
         #endregion
-
-        protected override void OnClosed(EventArgs e)
-        {
-            uiUpdateTimer?.Stop();
-            holdTimer?.Stop();
-            holdTimer = null;
-            base.OnClosed(e);
-        }
     }
 
     // Simple dialog for URL input
