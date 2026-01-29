@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "XsioZtrnQoI=",
+  "dgSpecHash": "Pkf0bCAyx1c=",
   "success": true,
-  "projectFilePath": "C:\\Development\\simple-media-player-v2\\ArjunMediaPlayer\\ArjunMediaPlayer.csproj",
+  "projectFilePath": "c:\\Development\\simple-media-player-v2\\ArjunMediaPlayer\\ArjunMediaPlayer.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\arjun\\.nuget\\packages\\system.windows.extensions\\8.0.0\\system.windows.extensions.8.0.0.nupkg.sha512"
   ],
