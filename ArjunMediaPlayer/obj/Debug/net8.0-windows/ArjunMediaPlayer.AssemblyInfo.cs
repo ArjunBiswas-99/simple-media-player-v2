@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ArjunMediaPlayer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+55ffd355be3f93b18c5e6c12d2b488bd21d4f291")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+884f4fd33478a62b41f342a24af7f3cc9e75d656")]
 [assembly: System.Reflection.AssemblyProductAttribute("ArjunMediaPlayer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ArjunMediaPlayer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

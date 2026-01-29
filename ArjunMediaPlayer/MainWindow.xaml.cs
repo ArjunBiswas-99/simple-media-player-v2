@@ -9,6 +9,7 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Windows.Interop;
+using System.Windows.Media.Animation;
 
 // Alias the Path class to avoid ambiguity
 using ShapePath = System.Windows.Shapes.Path;
@@ -641,6 +642,12 @@ namespace ArjunMediaPlayer
                     }
                 }
             }
+
+            // Ensure the media continues playing after fullscreen toggle
+            if (isPlaying && mediaElement.Source != null)
+            {
+                mediaElement.Play();
+            }
         }
 
         // Methods to update icons
@@ -874,9 +881,189 @@ namespace ArjunMediaPlayer
             ShowControlBar();
         }
 
+        #region YouTube-like Video Controls
+
+        private bool isMouseDown = false;
+        private DateTime mouseDownTime;
+        private DispatcherTimer? holdTimer;
+        private const int DOUBLE_CLICK_TIME_THRESHOLD = 300; // 300ms for double-click detection
+        private bool isSpeedIndicatorActive = false;
+        private int clickCount = 0;
+        private bool isHoldAction = false; // Track if this is a hold action
+        private DispatcherTimer? clickTimer;
+
+        private void MediaElement_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                System.Console.WriteLine($"[DEBUG] MouseDown - Click count: {clickCount}, Time: {DateTime.Now:HH:mm:ss.fff}");
+
+                isMouseDown = true;
+                mouseDownTime = DateTime.Now;
+                isHoldAction = false; // Reset hold action flag
+
+                // Count clicks to detect double-click
+                clickCount++;
+
+                System.Console.WriteLine($"[DEBUG] MouseDown - Incremented click count to: {clickCount}");
+
+                if (clickCount == 1)
+                {
+                    System.Console.WriteLine("[DEBUG] MouseDown - First click, starting hold timer");
+
+                    // First click - start the hold timer
+                    if (holdTimer == null)
+                    {
+                        holdTimer = new DispatcherTimer();
+                        holdTimer.Interval = TimeSpan.FromMilliseconds(200); // 200ms threshold for hold
+                        holdTimer.Tick += HoldTimer_Tick;
+                    }
+                    holdTimer.Start();
+
+                    // Set up timer to handle single click if no second click comes
+                    if (clickTimer == null)
+                    {
+                        clickTimer = new DispatcherTimer();
+                        clickTimer.Interval = TimeSpan.FromMilliseconds(DOUBLE_CLICK_TIME_THRESHOLD);
+                        clickTimer.Tick += (s, args) =>
+                        {
+                            System.Console.WriteLine($"[DEBUG] ClickTimer_Tick - Click count: {clickCount}, IsHoldAction: {isHoldAction}");
+
+                            if (clickCount == 1 && !isHoldAction)
+                            {
+                                System.Console.WriteLine("[DEBUG] Processing single click");
+                                // Single click confirmed (only if not a hold action)
+                                ProcessSingleClick();
+                            }
+                            else
+                            {
+                                System.Console.WriteLine($"[DEBUG] Skipping single click - Click count: {clickCount}, IsHoldAction: {isHoldAction}");
+                            }
+                            clickCount = 0;
+                            clickTimer?.Stop();
+                        };
+                    }
+                    clickTimer?.Start();
+                }
+                else if (clickCount == 2)
+                {
+                    System.Console.WriteLine("[DEBUG] MouseDown - Second click detected, processing double-click");
+                    // Double click detected
+                    clickTimer?.Stop();
+                    ProcessDoubleClick();
+                    clickCount = 0;
+                }
+            }
+        }
+
+        private void MediaElement_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left && isMouseDown)
+            {
+                TimeSpan timeHeld = DateTime.Now - mouseDownTime;
+                System.Console.WriteLine($"[DEBUG] MouseUp - Time held: {timeHeld.TotalMilliseconds:F1}ms, IsHoldAction: {isHoldAction}");
+
+                // If held for more than 200ms, we were in 2x speed mode - reset to normal
+                if (timeHeld.TotalMilliseconds >= 200)
+                {
+                    System.Console.WriteLine("[DEBUG] MouseUp - Detected hold action, resetting speed to 1.0x");
+                    mediaElement.SpeedRatio = 1.0; // Reset to normal speed
+                    HideIndicator(); // Hide speed indicator
+                    isSpeedIndicatorActive = false;
+                    isHoldAction = true; // Mark this as a hold action so we don't process it as a click
+                }
+
+                holdTimer?.Stop();
+                isMouseDown = false;
+
+                System.Console.WriteLine($"[DEBUG] MouseUp - Finished, IsMouseDown: {isMouseDown}, ClickCount: {clickCount}");
+            }
+        }
+
+        private void ProcessSingleClick()
+        {
+            System.Console.WriteLine("[DEBUG] ProcessSingleClick - Toggling play/pause");
+            TogglePlayPause();
+            ShowIndicator("pause"); // Show pause/play indicator
+        }
+
+        private void ProcessDoubleClick()
+        {
+            System.Console.WriteLine("[DEBUG] ProcessDoubleClick - Toggling fullscreen");
+            ToggleFullscreen();
+            ShowIndicator("fullscreen");
+        }
+
+        private void HoldTimer_Tick(object? sender, EventArgs e)
+        {
+            if (isMouseDown)
+            {
+                TimeSpan timeHeld = DateTime.Now - mouseDownTime;
+
+                // If held for more than 200ms, activate 2x speed
+                if (timeHeld.TotalMilliseconds >= 200 && !isSpeedIndicatorActive)
+                {
+                    System.Console.WriteLine($"[DEBUG] HoldTimer_Tick - Activating 2x speed, Time held: {timeHeld.TotalMilliseconds:F1}ms");
+                    // Set playback speed to 2x
+                    mediaElement.SpeedRatio = 2.0;
+                    ShowIndicator("speed"); // Show speed indicator
+                    isSpeedIndicatorActive = true;
+                    isHoldAction = true; // Mark as hold action
+                }
+            }
+        }
+
+        #endregion
+
+        #region Animation Indicators
+
+        private void ShowIndicator(string type)
+        {
+            // Set the appropriate icon and text based on the type
+            switch (type)
+            {
+                case "speed":
+                    indicatorIcon.Data = (Geometry)this.FindResource("Forward10Icon"); // Using forward icon for speed
+                    indicatorText.Text = "2X";
+                    break;
+                case "pause":
+                    indicatorIcon.Data = (Geometry)this.FindResource("PauseIcon");
+                    indicatorText.Text = "";
+                    break;
+                case "fullscreen":
+                    indicatorIcon.Data = (Geometry)this.FindResource("FullscreenIcon");
+                    indicatorText.Text = "";
+                    break;
+            }
+
+            // Show the indicator
+            animationIndicator.Opacity = 1;
+
+            // For speed indicator, keep it visible during hold (no fade-out animation)
+            if (type != "speed")
+            {
+                // Create fade-out animation for pause and fullscreen indicators
+                var fadeOutAnimation = new DoubleAnimation(1, 0, TimeSpan.FromSeconds(1));
+                fadeOutAnimation.BeginTime = TimeSpan.FromMilliseconds(500); // Wait 0.5s before fading out
+                fadeOutAnimation.Completed += (s, e) => animationIndicator.Opacity = 0;
+
+                animationIndicator.BeginAnimation(Border.OpacityProperty, fadeOutAnimation);
+            }
+        }
+
+        private void HideIndicator()
+        {
+            // Hide the indicator immediately
+            animationIndicator.Opacity = 0;
+        }
+
+        #endregion
+
         protected override void OnClosed(EventArgs e)
         {
             uiUpdateTimer?.Stop();
+            holdTimer?.Stop();
+            holdTimer = null;
             base.OnClosed(e);
         }
     }

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "c:\\Development\\simple-media-player-v2\\ArjunMediaPlayer\\ArjunMediaPlayer.csproj": {}
+    "C:\\Development\\simple-media-player-v2\\ArjunMediaPlayer\\ArjunMediaPlayer.csproj": {}
   },
   "projects": {
-    "c:\\Development\\simple-media-player-v2\\ArjunMediaPlayer\\ArjunMediaPlayer.csproj": {
+    "C:\\Development\\simple-media-player-v2\\ArjunMediaPlayer\\ArjunMediaPlayer.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "c:\\Development\\simple-media-player-v2\\ArjunMediaPlayer\\ArjunMediaPlayer.csproj",
+        "projectUniqueName": "C:\\Development\\simple-media-player-v2\\ArjunMediaPlayer\\ArjunMediaPlayer.csproj",
         "projectName": "ArjunMediaPlayer",
-        "projectPath": "c:\\Development\\simple-media-player-v2\\ArjunMediaPlayer\\ArjunMediaPlayer.csproj",
+        "projectPath": "C:\\Development\\simple-media-player-v2\\ArjunMediaPlayer\\ArjunMediaPlayer.csproj",
         "packagesPath": "C:\\Users\\arjun\\.nuget\\packages\\",
-        "outputPath": "c:\\Development\\simple-media-player-v2\\ArjunMediaPlayer\\obj\\",
+        "outputPath": "C:\\Development\\simple-media-player-v2\\ArjunMediaPlayer\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\arjun\\AppData\\Roaming\\NuGet\\NuGet.Config"

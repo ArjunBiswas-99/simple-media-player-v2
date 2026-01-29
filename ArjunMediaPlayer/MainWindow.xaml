@@ -62,20 +62,40 @@
         <Grid Grid.Row="1" Background="Black" AllowDrop="True" Drop="Media_Drop" DragEnter="Media_DragEnter">
             <MediaElement x:Name="mediaElement" LoadedBehavior="Manual" UnloadedBehavior="Stop"
                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                          Stretch="Uniform"/>
-            
+                          Stretch="Uniform"
+                          MouseDown="MediaElement_MouseDown"
+                          MouseUp="MediaElement_MouseUp"/>
+
             <!-- Center Play Button -->
             <Button x:Name="centerPlayButton" Width="80" Height="80"
                     Background="Transparent" Foreground="White" BorderBrush="Transparent"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
                     Click="CenterPlay_Click" Visibility="Visible">
                 <Button.Content>
-                    <Path Data="{StaticResource PlayIcon}" 
-                          Fill="White" 
+                    <Path Data="{StaticResource PlayIcon}"
+                          Fill="White"
                           Width="40" Height="40"
                           Stretch="Uniform"/>
                 </Button.Content>
             </Button>
+
+            <!-- Animation Indicator (all animations appear at the same location) -->
+            <Border x:Name="animationIndicator" Background="#80000000"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Width="80" Height="80" CornerRadius="40"
+                    Opacity="0">
+                <Grid>
+                    <Path x:Name="indicatorIcon" Data="{StaticResource PauseIcon}"
+                          Fill="White"
+                          Width="40" Height="40"
+                          Stretch="Uniform"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="indicatorText" Text=""
+                               Foreground="White" FontSize="16" FontWeight="Bold"
+                               HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                               Margin="0,0,0,-10"/>
+                </Grid>
+            </Border>
             
             <!-- Drop Zone Message -->
             <Border x:Name="dropZone" Background="#4C0000" BorderBrush="Gray" BorderThickness="2"
