@@ -1,0 +1,587 @@
+using System;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows. Input;
+using Microsoft.Win32;
+using System.IO;
+using System.Windows.Media;
+using System.Windows.Shapes;
+using System.Windows.Threading;
+
+// Alias the Path class to avoid ambiguity
+using ShapePath = System.Windows.Shapes.Path;
+using IoPath = System.IO.Path;
+
+namespace ArjunMediaPlayer
+{
+    public partial class MainWindow : Window
+    {
+        private bool isPlaying = false;
+        private bool isMuted = false;
+        private bool isFullscreen = false;
+        private DispatcherTimer? uiUpdateTimer;
+        
+        public MainWindow()
+        {
+            InitializeComponent();
+            InitializeMediaElement();
+            SetupUIUpdateTimer();
+        }
+
+        private void InitializeMediaElement()
+        {
+            // Subscribe to media events
+            mediaElement.MediaOpened += MediaElement_MediaOpened;
+            mediaElement.MediaEnded += MediaElement_MediaEnded;
+            mediaElement.MediaFailed += MediaElement_MediaFailed;
+            
+            // Initially show the drop zone when no media is loaded
+            dropZone.Visibility = Visibility.Visible;
+            centerPlayButton.Visibility = Visibility.Collapsed;
+            
+            // Set initial button icons
+            UpdatePlayPauseIcon();
+            UpdateVolumeIcon();
+        }
+
+        private void SetupUIUpdateTimer()
+        {
+            uiUpdateTimer = new System.Windows.Threading.DispatcherTimer();
+            uiUpdateTimer.Interval = TimeSpan.FromMilliseconds(200); // Update more frequently for smoother experience
+            uiUpdateTimer.Tick += UIUpdateTimer_Tick;
+            uiUpdateTimer.Start();
+        }
+
+        private void MediaElement_MediaOpened(object sender, RoutedEventArgs e)
+        {
+            // Update UI when media is loaded
+            totalTimeText.Text = TimeSpan.FromSeconds(mediaElement.NaturalDuration.TimeSpan.TotalSeconds).ToString(@"hh\:mm\:ss");
+            timelineSlider.Maximum = mediaElement.NaturalDuration.TimeSpan.TotalSeconds;
+
+            // Hide drop zone and initially show play button
+            dropZone.Visibility = Visibility.Collapsed;
+            centerPlayButton.Visibility = Visibility.Visible;
+            isPlaying = false; // Initially not playing until user presses play
+            UpdatePlayPauseIcon(); // Use method to update icon
+
+            // Update file name display
+            string fileName = IoPath.GetFileName(mediaElement.Source.ToString());
+            fileNameText.Text = fileName;
+
+            // Show control bar briefly when media loads
+            ShowControlBar();
+        }
+
+        private void MediaElement_MediaEnded(object sender, RoutedEventArgs e)
+        {
+            // Reset play button when media ends
+            isPlaying = false;
+            UpdatePlayPauseIcon();
+        }
+
+        private void MediaElement_MediaFailed(object? sender, ExceptionRoutedEventArgs e)
+        {
+            MessageBox.Show("Error loading media file.", "Media Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+
+        // Menu Event Handlers
+        private void OpenFile_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Media Files|*.mp4;*.mov;*.avi;*.mpeg;*.wmv;*.ts;*.mkv;*.flv;*.m4v|" +
+                                   "Video Files|*.mp4;*.mov;*.avi;*.mpeg;*.wmv;*.ts|" +
+                                   "Audio Files|*.mp3;*.wav;*.wma;*.aac;*.flac|" +
+                                   "All Files|*.*";
+            
+            if (openFileDialog.ShowDialog() == true)
+            {
+                LoadMedia(openFileDialog.FileName);
+            }
+        }
+
+        private void OpenUrl_Click(object sender, RoutedEventArgs e)
+        {
+            // For now, just show a simple dialog to enter URL
+            var urlDialog = new UrlInputDialog();
+            if (urlDialog.ShowDialog() == true)
+            {
+                LoadMedia(urlDialog.Url);
+            }
+        }
+
+        private void Exit_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        private void Play_Click(object sender, RoutedEventArgs e)
+        {
+            if (mediaElement.Source != null)
+            {
+                mediaElement.Play();
+                isPlaying = true;
+                UpdatePlayPauseIcon();
+                ShowControlBar(); // Show controls when playing
+            }
+        }
+
+        private void Pause_Click(object sender, RoutedEventArgs e)
+        {
+            mediaElement.Pause();
+            isPlaying = false;
+            UpdatePlayPauseIcon();
+            ShowControlBar(); // Show controls when paused
+        }
+
+        private void Stop_Click(object sender, RoutedEventArgs e)
+        {
+            mediaElement.Stop();
+            isPlaying = false;
+            UpdatePlayPauseIcon();
+            ShowControlBar(); // Show controls when stopped
+        }
+
+        private void Previous_Click(object sender, RoutedEventArgs e)
+        {
+            // Navigate to previous position in media (30 seconds back)
+            mediaElement.Position = TimeSpan.FromSeconds(Math.Max(0, mediaElement.Position.TotalSeconds - 30));
+        }
+
+        private void Mute_Click(object sender, RoutedEventArgs e)
+        {
+            isMuted = !isMuted;
+            mediaElement.IsMuted = isMuted;
+            UpdateVolumeIcon();
+        }
+
+        private void AudioTracks_Click(object sender, RoutedEventArgs e)
+        {
+            // Placeholder for audio track selection - in a real implementation, this would show audio tracks
+            // For now, just show a message
+            if (mediaElement.Source != null)
+            {
+                // In a real implementation, we would enumerate audio tracks
+                // For now, just show a simple message
+                MessageBox.Show("Audio track selection would appear here.\nCurrently loaded media has audio tracks available.",
+                    "Audio Tracks", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("No media loaded. Please load a media file first.",
+                    "No Media", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void AspectRatio_Click(object sender, RoutedEventArgs e)
+        {
+            // Toggle aspect ratio between different modes
+            if (mediaElement.Stretch == Stretch.Uniform)
+            {
+                mediaElement.Stretch = Stretch.Fill;  // Fill the entire space
+            }
+            else if (mediaElement.Stretch == Stretch.Fill)
+            {
+                mediaElement.Stretch = Stretch.UniformToFill;  // Uniform but fill
+            }
+            else
+            {
+                mediaElement.Stretch = Stretch.Uniform;  // Back to default
+            }
+        }
+
+        private void Crop_Click(object sender, RoutedEventArgs e)
+        {
+            // Placeholder for crop options - in a real implementation, this would allow cropping
+            MessageBox.Show("Crop options would appear here.\nThis feature allows you to crop the video display area.",
+                "Crop", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void LoadSubtitle_Click(object sender, RoutedEventArgs e)
+        {
+            // Placeholder for subtitle loading
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Subtitle Files|*.srt;*.vtt;*.ass;*.ssa|" +
+                                   "All Files|*.*";
+
+            if (openFileDialog.ShowDialog() == true)
+            {
+                // In a real implementation, we would load the subtitle file
+                // For now, just show a message
+                MessageBox.Show($"Subtitle loaded: {IoPath.GetFileName(openFileDialog.FileName)}\nSubtitle functionality would be implemented in a full version.",
+                    "Subtitle Loaded", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void SubtitleTracks_Click(object sender, RoutedEventArgs e)
+        {
+            // Placeholder for subtitle track selection
+            if (mediaElement.Source != null)
+            {
+                // In a real implementation, we would enumerate subtitle tracks
+                MessageBox.Show("Subtitle track selection would appear here.\nCurrently loaded media has subtitle tracks available.",
+                    "Subtitles", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("No media loaded. Please load a media file first.",
+                    "No Media", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void Preferences_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Preferences dialog would appear here.\nThis would allow you to configure player settings.",
+                "Preferences", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void Fullscreen_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleFullscreen();
+        }
+
+        private void AlwaysOnTop_Click(object sender, RoutedEventArgs e)
+        {
+            Topmost = !Topmost;
+        }
+
+        private void About_Click(object sender, RoutedEventArgs e)
+        {
+            MessageBox.Show("Arjun Media Player\nVersion 1.0\nA Netflix-like media player with VLC features.", 
+                "About Arjun Media Player", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        // Main Controls Event Handlers
+        private void CenterPlay_Click(object sender, RoutedEventArgs e)
+        {
+            TogglePlayPause();
+        }
+
+        private void PlayPause_Click(object sender, RoutedEventArgs e)
+        {
+            TogglePlayPause();
+        }
+
+        private void TogglePlayPause()
+        {
+            if (mediaElement.Source == null)
+            {
+                OpenFile_Click(this, new RoutedEventArgs()); // If no media loaded, prompt to open
+                return;
+            }
+
+            if (isPlaying)
+            {
+                mediaElement.Pause();
+                isPlaying = false;
+            }
+            else
+            {
+                mediaElement.Play();
+                isPlaying = true;
+            }
+            UpdatePlayPauseIcon();
+            ShowControlBar(); // Show controls when toggling play/pause
+
+            // Force update the UI immediately after user action
+            if (isPlaying)
+            {
+                centerPlayButton.Visibility = Visibility.Collapsed;
+            }
+            else
+            {
+                centerPlayButton.Visibility = Visibility.Visible;
+            }
+        }
+
+        private void Info_Click(object sender, RoutedEventArgs e)
+        {
+            // Placeholder for info/about functionality
+            MessageBox.Show("Media information would appear here.", "Media Info", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void Next_Click(object sender, RoutedEventArgs e)
+        {
+            // Navigate to next position in media (30 seconds forward)
+            mediaElement.Position = TimeSpan.FromSeconds(
+                Math.Min(mediaElement.NaturalDuration.TimeSpan.TotalSeconds,
+                         mediaElement.Position.TotalSeconds + 30));
+        }
+
+        private void Folder_Click(object sender, RoutedEventArgs e)
+        {
+            // Placeholder for folder browsing functionality
+            MessageBox.Show("Folder browser would appear here.", "Browse Folder", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void Rewind_Click(object sender, RoutedEventArgs e)
+        {
+            // Rewind 10 seconds
+            mediaElement.Position = TimeSpan.FromSeconds(
+                Math.Max(0, mediaElement.Position.TotalSeconds - 10));
+            ShowControlBar(); // Show controls briefly
+        }
+
+        private void FastForward_Click(object sender, RoutedEventArgs e)
+        {
+            // Fast forward 10 seconds
+            mediaElement.Position = TimeSpan.FromSeconds(
+                Math.Min(mediaElement.NaturalDuration.TimeSpan.TotalSeconds, 
+                         mediaElement.Position.TotalSeconds + 10));
+            ShowControlBar(); // Show controls briefly
+        }
+
+        // Sliders Event Handlers
+        private void VolumeSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            mediaElement.Volume = volumeSlider.Value / 100.0;
+            UpdateVolumeIcon();
+        }
+
+        private bool isDraggingSlider = false;
+
+        private void TimelineSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            // Only update media position if user is dragging the slider (not during automatic updates)
+            if (isDraggingSlider)
+            {
+                mediaElement.Position = TimeSpan.FromSeconds(timelineSlider.Value);
+            }
+        }
+
+        private void TimelineSlider_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            isDraggingSlider = true;
+            // Pause the media during seeking for better UX
+            if (isPlaying)
+            {
+                mediaElement.Pause();
+            }
+        }
+
+        private void TimelineSlider_PreviewMouseUp(object sender, MouseButtonEventArgs e)
+        {
+            isDraggingSlider = false;
+            // Update position one final time when releasing the slider
+            mediaElement.Position = TimeSpan.FromSeconds(timelineSlider.Value);
+            // Resume playback if it was playing before seeking
+            if (isPlaying)
+            {
+                mediaElement.Play();
+            }
+        }
+
+        // Drag and Drop Support
+        private void Media_DragEnter(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effects = DragDropEffects.Copy;
+                ShowControlBar(); // Show controls when dragging
+            }
+            else
+            {
+                e.Effects = DragDropEffects.None;
+            }
+        }
+
+        private void Media_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files.Length > 0 && files[0] != null)
+                {
+                    LoadMedia(files[0]);
+                }
+            }
+        }
+
+        private void LoadMedia(string? path)
+        {
+            if (string.IsNullOrEmpty(path)) return;
+
+            try
+            {
+                mediaElement.Source = new Uri(path);
+                mediaElement.Play();
+                isPlaying = true;
+
+                // Update UI elements
+                centerPlayButton.Visibility = Visibility.Collapsed; // Hide when playing
+                dropZone.Visibility = Visibility.Collapsed;
+                UpdatePlayPauseIcon();
+                ShowControlBar(); // Show controls when media loads
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading media: {ex.Message}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void ToggleFullscreen()
+        {
+            if (!isFullscreen)
+            {
+                // Enter fullscreen
+                WindowStyle = WindowStyle.None;
+                WindowState = WindowState.Maximized;
+                Topmost = true;
+                isFullscreen = true;
+            }
+            else
+            {
+                // Exit fullscreen
+                WindowStyle = WindowStyle.SingleBorderWindow;
+                WindowState = WindowState.Normal;
+                Topmost = false;
+                isFullscreen = false;
+            }
+        }
+
+        // Methods to update icons
+        private void UpdatePlayPauseIcon()
+        {
+            // Update center play button icon
+            var centerPath = centerPlayButton.Content as ShapePath;
+            if (centerPath != null)
+            {
+                centerPath.Data = (Geometry)this.FindResource(isPlaying ? "PauseIcon" : "PlayIcon");
+            }
+
+            // Update play/pause button icon in control bar
+            var playPausePath = playPauseButton.Content as ShapePath;
+            if (playPausePath != null)
+            {
+                playPausePath.Data = (Geometry)this.FindResource(isPlaying ? "PauseIcon" : "PlayIcon");
+            }
+        }
+
+        private void UpdateVolumeIcon()
+        {
+            // The volume button is not defined in XAML, so we'll skip this for now
+            // In the XAML, there's only a volumeSlider but no associated volume button icon to update
+        }
+
+        // Method to show control bar temporarily
+        private async void ShowControlBar()
+        {
+            controlBar.Opacity = 1;
+            
+            // Hide the control bar after a delay if not in fullscreen
+            if (isFullscreen)
+            {
+                // In fullscreen mode, we might want to hide controls after a few seconds
+                await System.Threading.Tasks.Task.Delay(3000);
+                if (isFullscreen && !controlBar.IsMouseOver)
+                {
+                    controlBar.Opacity = 0.3; // Semi-transparent in fullscreen
+                }
+            }
+        }
+
+        // Timer to update current time and timeline slider
+        private void UIUpdateTimer_Tick(object? sender, EventArgs e)
+        {
+            if (mediaElement.Source != null && mediaElement.NaturalDuration.HasTimeSpan)
+            {
+                // Update timeline slider if it's not being dragged
+                if (!isDraggingSlider)
+                {
+                    timelineSlider.Value = mediaElement.Position.TotalSeconds;
+                }
+
+                // Update center play button visibility based on actual playback state
+                bool isActuallyPlaying = mediaElement.NaturalDuration.HasTimeSpan &&
+                                       mediaElement.Position < mediaElement.NaturalDuration.TimeSpan &&
+                                       mediaElement.Position.TotalSeconds > 0;
+
+                // Update UI based on actual state
+                if (isActuallyPlaying)
+                {
+                    centerPlayButton.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    centerPlayButton.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
+        protected override void OnMouseEnter(MouseEventArgs e)
+        {
+            base.OnMouseEnter(e);
+            if (isFullscreen)
+            {
+                ShowControlBar();
+            }
+        }
+
+        protected override void OnMouseLeave(MouseEventArgs e)
+        {
+            base.OnMouseLeave(e);
+            if (isFullscreen && !controlBar.IsMouseOver)
+            {
+                // In fullscreen mode, hide controls after a delay when mouse leaves
+                System.Threading.Tasks.Task.Delay(2000).ContinueWith(_ =>
+                {
+                    if (isFullscreen && !controlBar.IsMouseOver && !mediaElement.IsMouseOver)
+                    {
+                        this.Dispatcher.BeginInvoke(new Action(() =>
+                        {
+                            controlBar.Opacity = 0.3;
+                        }));
+                    }
+                });
+            }
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            uiUpdateTimer?.Stop();
+            base.OnClosed(e);
+        }
+    }
+
+    // Simple dialog for URL input
+    public partial class UrlInputDialog : Window
+    {
+        public string? Url { get; private set; }
+
+        public UrlInputDialog()
+        {
+            Title = "Enter Media URL";
+            Width = 400;
+            Height = 150;
+            WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+            StackPanel panel = new StackPanel { Margin = new Thickness(10) };
+
+            Label label = new Label { Content = "Enter media URL:", Margin = new Thickness(0, 0, 0, 10) };
+
+            TextBox textBox = new TextBox
+            {
+                Name = "urlTextBox",
+                Margin = new Thickness(0, 0, 0, 10),
+                Text = "http://"
+            };
+
+            StackPanel buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+
+            Button okButton = new Button { Content = "OK", Width = 80, Margin = new Thickness(0, 0, 10, 0) };
+            okButton.Click += (s, e) => { Url = textBox.Text; DialogResult = true; };
+
+            Button cancelButton = new Button { Content = "Cancel", Width = 80 };
+            cancelButton.Click += (s, e) => { DialogResult = false; };
+
+            buttonPanel.Children.Add(okButton);
+            buttonPanel.Children.Add(cancelButton);
+
+            panel.Children.Add(label);
+            panel.Children.Add(textBox);
+            panel.Children.Add(buttonPanel);
+
+            Content = panel;
+        }
+    }
+}

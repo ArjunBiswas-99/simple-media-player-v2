@@ -1,0 +1,314 @@
+<Window x:Class="ArjunMediaPlayer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Arjun Media Player" Height="600" Width="1000"
+        WindowState="Maximized" Background="{StaticResource NetflixDarker}">
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/> <!-- Menu Bar -->
+            <RowDefinition Height="*"/>   <!-- Main Content -->
+            <RowDefinition Height="Auto"/> <!-- Control Bar -->
+        </Grid.RowDefinitions>
+
+        <!-- Netflix-Style Menu Bar -->
+        <Menu Grid.Row="0" Style="{StaticResource CustomMenuStyle}">
+            <MenuItem x:Name="mediaMenuItem" Header="Media" Style="{StaticResource CustomMenuItemStyle}" Click="MainMenuMedia_Click" SubmenuOpened="MenuItem_SubmenuOpened" SubmenuClosed="MenuItem_SubmenuClosed">
+                <MenuItem Header="Open File..." Click="OpenFile_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+                <MenuItem Header="Open URL..." Click="OpenUrl_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+                <Separator/>
+                <MenuItem Header="Exit" Click="Exit_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+            </MenuItem>
+
+            <MenuItem x:Name="playbackMenuItem" Header="Playback" Style="{StaticResource CustomMenuItemStyle}" Click="MainMenuPlayback_Click" SubmenuOpened="MenuItem_SubmenuOpened" SubmenuClosed="MenuItem_SubmenuClosed">
+                <MenuItem Header="Play" Click="Play_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+                <MenuItem Header="Pause" Click="Pause_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+                <MenuItem Header="Stop" Click="Stop_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+                <Separator/>
+                <MenuItem Header="Previous" Click="Previous_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+                <MenuItem Header="Next" Click="Next_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+            </MenuItem>
+
+            <MenuItem x:Name="audioMenuItem" Header="Audio" Style="{StaticResource CustomMenuItemStyle}" Click="MainMenuAudio_Click" SubmenuOpened="MenuItem_SubmenuOpened" SubmenuClosed="MenuItem_SubmenuClosed">
+                <MenuItem Header="Mute" IsCheckable="True" Click="Mute_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+                <MenuItem Header="Audio Tracks" Click="AudioTracks_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+            </MenuItem>
+
+            <MenuItem x:Name="videoMenuItem" Header="Video" Style="{StaticResource CustomMenuItemStyle}" Click="MainMenuVideo_Click" SubmenuOpened="MenuItem_SubmenuOpened" SubmenuClosed="MenuItem_SubmenuClosed">
+                <MenuItem Header="Aspect Ratio" Click="AspectRatio_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+                <MenuItem Header="Crop" Click="Crop_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+            </MenuItem>
+
+            <MenuItem x:Name="subtitleMenuItem" Header="Subtitle" Style="{StaticResource CustomMenuItemStyle}" Click="MainMenuSubtitle_Click" SubmenuOpened="MenuItem_SubmenuOpened" SubmenuClosed="MenuItem_SubmenuClosed">
+                <MenuItem Header="Load Subtitle..." Click="LoadSubtitle_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+                <MenuItem Header="Subtitle Tracks" Click="SubtitleTracks_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+            </MenuItem>
+
+            <MenuItem x:Name="toolsMenuItem" Header="Tools" Style="{StaticResource CustomMenuItemStyle}" Click="MainMenuTools_Click" SubmenuOpened="MenuItem_SubmenuOpened" SubmenuClosed="MenuItem_SubmenuClosed">
+                <MenuItem Header="Preferences" Click="Preferences_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+            </MenuItem>
+
+            <MenuItem x:Name="viewMenuItem" Header="View" Style="{StaticResource CustomMenuItemStyle}" Click="MainMenuView_Click" SubmenuOpened="MenuItem_SubmenuOpened" SubmenuClosed="MenuItem_SubmenuClosed">
+                <MenuItem Header="Fullscreen" IsCheckable="True" Click="Fullscreen_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+                <MenuItem Header="Always on Top" IsCheckable="True" Click="AlwaysOnTop_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+            </MenuItem>
+
+            <MenuItem x:Name="helpMenuItem" Header="Help" Style="{StaticResource CustomMenuItemStyle}" Click="MainMenuHelp_Click" SubmenuOpened="MenuItem_SubmenuOpened" SubmenuClosed="MenuItem_SubmenuClosed">
+                <MenuItem Header="About" Click="About_Click" Style="{StaticResource CustomMenuItemSubmenuStyle}"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Main Content Area with Overlay Controls -->
+        <Grid Grid.Row="1" Background="Black" AllowDrop="True" Drop="Media_Drop" DragEnter="Media_DragEnter">
+            <MediaElement x:Name="mediaElement" LoadedBehavior="Manual" UnloadedBehavior="Stop"
+                          HorizontalAlignment="Center" VerticalAlignment="Center"
+                          Stretch="Uniform"/>
+            
+            <!-- Center Play Button -->
+            <Button x:Name="centerPlayButton" Width="80" Height="80"
+                    Background="Transparent" Foreground="White" BorderBrush="Transparent"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Click="CenterPlay_Click" Visibility="Visible">
+                <Button.Content>
+                    <Path Data="{StaticResource PlayIcon}" 
+                          Fill="White" 
+                          Width="40" Height="40"
+                          Stretch="Uniform"/>
+                </Button.Content>
+            </Button>
+            
+            <!-- Drop Zone Message -->
+            <Border x:Name="dropZone" Background="#4C0000" BorderBrush="Gray" BorderThickness="2"
+                    CornerRadius="10" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="ARJUN PLAYER" FontSize="24" Foreground="White" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                    <TextBlock Text="Drop media here" FontSize="18" Foreground="White" HorizontalAlignment="Center"/>
+                    <TextBlock Text="or" FontSize="16" Foreground="LightGray" HorizontalAlignment="Center" Margin="0,5,0,5"/>
+                    <Button Content="Click to Browse" FontSize="16" Padding="20,10" Margin="0,10,0,0"
+                            Click="OpenFile_Click" Background="{StaticResource NetflixRed}" Foreground="White"/>
+                </StackPanel>
+            </Border>
+            
+            <!-- Netflix-Style Overlay Controls (appears over video content) -->
+            <!-- Combined Controls: Timeline and Main Controls in one block -->
+            <Border x:Name="controlBar" Background="#80000000"
+                    HorizontalAlignment="Stretch" VerticalAlignment="Bottom"
+                    Height="90" Margin="20,0,20,20" Opacity="0">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Opacity" Value="0"/>
+                        <Style.Triggers>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <MultiTrigger.EnterActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             To="1" Duration="0:0:0.3"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </MultiTrigger.EnterActions>
+                                <MultiTrigger.ExitActions>
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             To="0" Duration="0:0:0.3"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </MultiTrigger.ExitActions>
+                            </MultiTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/> <!-- Timeline row -->
+                        <RowDefinition Height="*"/>    <!-- Main controls row -->
+                    </Grid.RowDefinitions>
+
+                    <!-- Timeline with time display -->
+                    <Grid Grid.Row="0" Margin="0,0,0,5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Slider x:Name="timelineSlider" Grid.Column="0" Minimum="0" Maximum="100"
+                                Value="0" Margin="0,0,10,0" ValueChanged="TimelineSlider_ValueChanged"
+                                PreviewMouseLeftButtonDown="TimelineSlider_PreviewMouseLeftButtonDown"
+                                PreviewMouseLeftButtonUp="TimelineSlider_PreviewMouseLeftButtonUp"
+                                MouseLeftButtonDown="TimelineSlider_MouseLeftButtonDown"
+                                Style="{StaticResource CustomSliderStyle}"/>
+                        <TextBlock x:Name="totalTimeText" Grid.Column="1" Text="00:00:00"
+                                   Foreground="White" VerticalAlignment="Center"/>
+                    </Grid>
+
+                    <!-- Main Controls -->
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left Controls (Play/Pause, Rewind, FF, Volume) -->
+                        <StackPanel x:Name="leftControls" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="playPauseButton" Style="{StaticResource NetflixButtonStyle}" Click="PlayPause_Click" Margin="0,0,10,0">
+                                <Button.Content>
+                                    <Path x:Name="playPauseIcon" Data="{StaticResource PlayArrowIcon}"
+                                          Fill="White"
+                                          Width="24" Height="24"
+                                          Stretch="Uniform">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Fill" Value="White"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource NetflixRed}"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </Button.Content>
+                            </Button>
+
+                            <Button x:Name="rewindButton" Style="{StaticResource NetflixButtonStyle}" Click="Rewind_Click" Margin="0,0,10,0">
+                                <Button.Content>
+                                    <Path Data="{StaticResource PreviousIcon}"
+                                          Fill="White"
+                                          Width="20" Height="20"
+                                          Stretch="Uniform">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Fill" Value="White"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource NetflixRed}"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </Button.Content>
+                            </Button>
+
+                            <Button x:Name="fastForwardButton" Style="{StaticResource NetflixButtonStyle}" Click="FastForward_Click" Margin="0,0,15,0">
+                                <Button.Content>
+                                    <Path Data="{StaticResource Forward10Icon}"
+                                          Fill="White"
+                                          Width="20" Height="20"
+                                          Stretch="Uniform">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Fill" Value="White"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource NetflixRed}"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </Button.Content>
+                            </Button>
+
+                            <Slider x:Name="volumeSlider" Minimum="0" Maximum="100" Value="80" Width="100"
+                                    Margin="0,0,15,0" ValueChanged="VolumeSlider_ValueChanged"
+                                    Style="{StaticResource CustomSliderStyle}"/>
+
+                            <TextBlock x:Name="fileNameText" Text="No file loaded"
+                                       Foreground="White" VerticalAlignment="Center"
+                                       FontSize="14" FontWeight="SemiBold" MaxWidth="200"
+                                       TextTrimming="CharacterEllipsis" Margin="0,0,15,0"/>
+                        </StackPanel>
+
+                        <!-- Right Controls (Info, Next, Folder, Fullscreen) -->
+                        <StackPanel x:Name="rightControls" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="infoButton" Style="{StaticResource NetflixButtonStyle}" Margin="0,0,10,0">
+                                <Button.Content>
+                                    <Path Data="{StaticResource InfoIcon}"
+                                          Fill="White"
+                                          Width="16" Height="16"
+                                          Stretch="Uniform">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Fill" Value="White"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource NetflixRed}"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </Button.Content>
+                            </Button>
+
+                            <Button x:Name="nextButton" Style="{StaticResource NetflixButtonStyle}" Click="Next_Click" Margin="0,0,10,0">
+                                <Button.Content>
+                                    <Path Data="{StaticResource SkipNextIcon}"
+                                          Fill="White"
+                                          Width="16" Height="16"
+                                          Stretch="Uniform">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Fill" Value="White"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource NetflixRed}"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </Button.Content>
+                            </Button>
+
+                            <Button x:Name="folderButton" Style="{StaticResource NetflixButtonStyle}" Click="Folder_Click" Margin="0,0,10,0">
+                                <Button.Content>
+                                    <Path Data="{StaticResource FolderIcon}"
+                                          Fill="White"
+                                          Width="16" Height="16"
+                                          Stretch="Uniform">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Fill" Value="White"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource NetflixRed}"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </Button.Content>
+                            </Button>
+
+                            <Button x:Name="fullscreenButton" Style="{StaticResource NetflixButtonStyle}" Click="Fullscreen_Click">
+                                <Button.Content>
+                                    <Path Data="{StaticResource FullscreenIcon}"
+                                          Fill="White"
+                                          Width="16" Height="16"
+                                          Stretch="Uniform">
+                                        <Path.Style>
+                                            <Style TargetType="Path">
+                                                <Setter Property="Fill" Value="White"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Fill" Value="{StaticResource NetflixRed}"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Path.Style>
+                                    </Path>
+                                </Button.Content>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>
