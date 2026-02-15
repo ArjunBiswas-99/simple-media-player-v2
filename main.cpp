@@ -1,45 +1,40 @@
-#include <QApplication>
-#include <QMainWindow>
-#include <QWidget>
+#include <QGuiApplication>
+#include <QQmlApplicationEngine>
 #include <QCoreApplication>
-ok so#include <QDir>
- 
+#include <QDir>
+#include <QUrl>
+#include <QDebug>
+
 int main(int argc, char* argv[]) {
+    QGuiApplication app(argc, argv);
+
     // Fix for "no Qt platform plugin" and "ASSERT: theme" errors.
     // We set the QT_PLUGIN_PATH environment variable to point explicitly to the vcpkg plugins folder.
     // This overrides any misconfiguration in qt.conf or default search paths.
-    
+
     QDir baseDir(QCoreApplication::applicationDirPath());
-    baseDir.cdUp(); // Go up from 'Debug' to 'build'
-    
-    // Construct the path to the plugins directory created by vcpkg
-    // Path: build/vcpkg_installed/x64-windows/debug/plugins
-    QString pluginsPath = baseDir.filePath("vcpkg_installed/x64-windows/debug/plugins");
-    
-    // If that doesn't exist (e.g. Release mode), try the release path
+    baseDir.cdUp(); // go up from build to project root when running from build/
+
+    // Construct the path to the plugins directory created by vcpkg (macOS paths)
+    QString pluginsPath = baseDir.filePath("vcpkg_installed/arm64-osx/plugins");
     if (!QDir(pluginsPath).exists()) {
-        pluginsPath = baseDir.filePath("vcpkg_installed/x64-windows/plugins");
+        pluginsPath = baseDir.filePath("vcpkg_installed/arm64-osx/debug/plugins");
+    }
+    if (!QDir(pluginsPath).exists()) {
+        pluginsPath = baseDir.filePath("build/vcpkg_installed/arm64-osx/plugins");
     }
 
-    // Set the environment variable. This is the most reliable way to force Qt to find plugins.
     qputenv("QT_PLUGIN_PATH", pluginsPath.toUtf8());
-    
-    // Also add to the library path for good measure
     QCoreApplication::addLibraryPath(pluginsPath);
 
-    QApplication app(argc, argv);
- 
-    QMainWindow window;
-    window.setWindowTitle("ArjunBiswasMediaPlayer");
- 
-    // Create a central widget to act as our main canvas
-    QWidget *centralWidget = new QWidget(&window);
-    // Set its background to black using a modern stylesheet approach
-    centralWidget->setStyleSheet("background-color: black;");
-    window.setCentralWidget(centralWidget);
+    QQmlApplicationEngine engine;
+    QString qmlFile = baseDir.filePath("qml/main.qml");
+    qDebug() << "Loading QML from:" << qmlFile << "pluginsPath:" << pluginsPath;
+    engine.load(QUrl::fromLocalFile(qmlFile));
 
-    window.resize(800, 600); // Optional: Set an initial size
-    window.show();
- 
+    if (engine.rootObjects().isEmpty()) {
+        return -1;
+    }
+
     return app.exec();
 }
