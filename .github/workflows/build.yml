@@ -73,7 +73,8 @@ jobs:
           fi
         shell: bash
 
-      - name: Configure Project
+      - name: Configure Project (macOS)
+        if: runner.os == 'macOS'
         run: |
           cmake -S . -B ${{ matrix.build_dir }} \
             -DCMAKE_TOOLCHAIN_FILE=${{ runner.temp }}/vcpkg/scripts/buildsystems/vcpkg.cmake \
@@ -81,11 +82,17 @@ jobs:
         env:
           VCPKG_FEATURE_FLAGS: manifests
 
+      - name: Configure Project (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          cmake -S . -B ${{ matrix.build_dir }} -DCMAKE_TOOLCHAIN_FILE="${{ runner.temp }}/vcpkg/scripts/buildsystems/vcpkg.cmake" ${{ matrix.cmake_args }}
+        env:
+          VCPKG_FEATURE_FLAGS: manifests
+        shell: cmd
+
       - name: Build Project
         run: |
           cmake --build ${{ matrix.build_dir }} --config Release --parallel
-
-      - name: Upload Artifact (macOS)
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
