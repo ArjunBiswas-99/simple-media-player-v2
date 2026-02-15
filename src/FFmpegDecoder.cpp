@@ -1,5 +1,6 @@
 #include "FFmpegDecoder.h"
 #include <QDebug>
+#include <libavutil/imgutils.h>
 
 FFmpegDecoder::FFmpegDecoder()
     : m_formatContext(nullptr), m_videoCodecContext(nullptr),
@@ -66,7 +67,7 @@ bool FFmpegDecoder::openFile(const QString &filePath) {
         m_videoCodecContext->width, m_videoCodecContext->height,
         m_videoCodecContext->pix_fmt,
         m_videoCodecContext->width, m_videoCodecContext->height,
-        AV_PIX_FMT_RGB32, SWS_BILINEAR, nullptr, nullptr, nullptr
+        AV_PIX_FMT_BGR0, SWS_BILINEAR, nullptr, nullptr, nullptr
     );
     
     if (!m_swsContext) {
@@ -98,26 +99,30 @@ bool FFmpegDecoder::seek(qint64 ms) {
 bool FFmpegDecoder::getNextFrame(QImage &frame) {
     if (!m_formatContext || !m_videoCodecContext) return false;
     
-    AVPacket packet;
+    AVPacket *packet = av_packet_alloc();
     AVFrame *pFrame = av_frame_alloc();
     AVFrame *pFrameRGB = av_frame_alloc();
     
-    if (!pFrame || !pFrameRGB) {
+    if (!pFrame || !pFrameRGB || !packet) {
         av_frame_free(&pFrame);
         av_frame_free(&pFrameRGB);
+        av_packet_free(&packet);
         return false;
     }
     
-    int buffer_size = av_image_get_buffer_size(AV_PIX_FMT_RGB32, m_videoCodecContext->width,
+    // Allocate buffer for RGB frame
+    int buffer_size = av_image_get_buffer_size(AV_PIX_FMT_BGR0, m_videoCodecContext->width,
                                                 m_videoCodecContext->height, 1);
-    uint8_t *buffer = new uint8_t[buffer_size];
-    av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, buffer, AV_PIX_FMT_RGB32,
+    uint8_t *buffer = (uint8_t *)av_malloc(buffer_size);
+    
+    // Fill arrays for RGB frame
+    av_image_fill_arrays(pFrameRGB->data, pFrameRGB->linesize, buffer, AV_PIX_FMT_BGR0,
                         m_videoCodecContext->width, m_videoCodecContext->height, 1);
     
     bool frameDecoded = false;
-    while (av_read_frame(m_formatContext, &packet) >= 0) {
-        if (packet.stream_index == m_videoStreamIndex) {
-            avcodec_send_packet(m_videoCodecContext, &packet);
+    while (av_read_frame(m_formatContext, packet) >= 0) {
+        if (packet->stream_index == m_videoStreamIndex) {
+            avcodec_send_packet(m_videoCodecContext, packet);
             
             if (avcodec_receive_frame(m_videoCodecContext, pFrame) == 0) {
                 sws_scale(m_swsContext, (uint8_t const * const *)pFrame->data,
@@ -127,16 +132,17 @@ bool FFmpegDecoder::getNextFrame(QImage &frame) {
                 frame = QImage(buffer, m_videoCodecContext->width, m_videoCodecContext->height,
                              QImage::Format_RGB32).copy();
                 frameDecoded = true;
-                av_packet_unref(&packet);
+                av_packet_unref(packet);
                 break;
             }
         }
-        av_packet_unref(&packet);
+        av_packet_unref(packet);
     }
     
     av_frame_free(&pFrame);
     av_frame_free(&pFrameRGB);
-    delete[] buffer;
+    av_packet_free(&packet);
+    av_freep(&buffer);
     
     return frameDecoded;
 }

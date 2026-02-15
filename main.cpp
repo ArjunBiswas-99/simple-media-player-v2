@@ -28,6 +28,12 @@ int main(int argc, char* argv[]) {
     QCoreApplication::addLibraryPath(pluginsPath);
 
     QQmlApplicationEngine engine;
+    
+    // Add QML import paths
+    QString qmlPath = baseDir.filePath("build");
+    engine.addImportPath(qmlPath);
+    qDebug() << "Added QML import path:" << qmlPath;
+    
     QString qmlFile = baseDir.filePath("qml/main.qml");
     qDebug() << "Loading QML from:" << qmlFile << "pluginsPath:" << pluginsPath;
     engine.load(QUrl::fromLocalFile(qmlFile));

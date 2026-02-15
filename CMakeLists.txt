@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.16)
 project(ArjunBiswasMediaPlayer LANGUAGES CXX)
 
 find_package(Qt6 COMPONENTS Quick Qml REQUIRED)
-find_package(ffmpeg CONFIG REQUIRED)
+find_package(FFMPEG REQUIRED)
 qt_standard_project_setup()
 
 # Add executable and register QML module files so CMake knows about them
-qt_add_executable(ArjunBiswasMediaPlayer main.cpp src/MediaPlayer.cpp src/MediaPlayer.h src/FFmpegDecoder.cpp src/FFmpegDecoder.h src/SubtitleManager.cpp src/SubtitleManager.h src/VideoFilter.h)
+qt_add_executable(MediaPlayer main.cpp src/MediaPlayer.cpp src/MediaPlayer.h src/FFmpegDecoder.cpp src/FFmpegDecoder.h src/SubtitleManager.cpp src/SubtitleManager.h src/VideoFilter.h)
 
 qt_add_qml_module(ArjunBiswasMediaPlayer
 	URI ArjunBiswasMediaPlayer
@@ -16,5 +16,5 @@ qt_add_qml_module(ArjunBiswasMediaPlayer
 		qml/Player.qml
 )
 
-target_include_directories(ArjunBiswasMediaPlayer PRIVATE src)
-target_link_libraries(ArjunBiswasMediaPlayer PRIVATE Qt6::Quick Qt6::Qml ffmpeg::ffmpeg)
+target_include_directories(MediaPlayer PRIVATE src ${FFMPEG_INCLUDE_DIRS})
+target_link_libraries(MediaPlayer PRIVATE Qt6::Quick Qt6::Qml ${FFMPEG_LIBRARIES})
