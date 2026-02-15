@@ -32,7 +32,7 @@ jobs:
 
         steps:
             - name: Checkout Code
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
             - name: Install CMake (macOS & Linux)
               if: runner.os != 'Windows'
@@ -53,7 +53,7 @@ jobs:
               uses: lukka/get-cmake@latest
 
             - name: Cache vcpkg
-              uses: actions/cache@v3
+              uses: actions/cache@v4
               with:
                   path: |
                       ${{ runner.temp }}/vcpkg_cache
@@ -92,7 +92,7 @@ jobs:
 
             - name: Upload Artifact (Linux)
               if: runner.os == 'Linux'
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: ArjunBiswasMediaPlayer-Linux
                   path: ${{ matrix.build_dir }}/ArjunBiswasMediaPlayer
@@ -100,7 +100,7 @@ jobs:
 
             - name: Upload Artifact (macOS)
               if: runner.os == 'macOS'
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: ArjunBiswasMediaPlayer-macOS
                   path: ${{ matrix.build_dir }}/ArjunBiswasMediaPlayer.app
@@ -108,7 +108,7 @@ jobs:
 
             - name: Upload Artifact (Windows)
               if: runner.os == 'Windows'
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: ArjunBiswasMediaPlayer-Windows
                   path: ${{ matrix.build_dir }}/Release/ArjunBiswasMediaPlayer.exe
@@ -121,7 +121,7 @@ jobs:
 
         steps:
             - name: Download all artifacts
-              uses: actions/download-artifact@v3
+              uses: actions/download-artifact@v4
 
             - name: Create Release
               uses: softprops/action-gh-release@v1
