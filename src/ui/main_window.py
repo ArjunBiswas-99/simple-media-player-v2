@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Optional
+import time
 
 import os
 from PySide6.QtCore import QTimer, Qt
@@ -47,7 +48,9 @@ class MainWindow(QMainWindow):
         self._was_playing_before_scrub = False
         self.controls.scrub_started.connect(self._on_scrub_started)
         self.controls.scrub_finished.connect(self._on_scrub_finished)
-        self.controls.volume_changed.connect(self.controller.set_volume)
+        self.controls.volume_changed.connect(self._on_volume_slider_changed)
+        self.controls.rewind_clicked.connect(self._skip_backward)
+        self.controls.fast_forward_clicked.connect(self._skip_forward)
 
         self.controls.fullscreen_btn.clicked.connect(self._toggle_fullscreen)
 
@@ -59,12 +62,23 @@ class MainWindow(QMainWindow):
         # Keyboard shortcuts
         QShortcut(QKeySequence(Qt.Key.Key_Space), self, activated=self.controller.toggle_play_pause)
         QShortcut(QKeySequence("F"), self, activated=self._toggle_fullscreen)
+        QShortcut(QKeySequence(Qt.Key.Key_Left), self, activated=self._skip_backward)
+        QShortcut(QKeySequence(Qt.Key.Key_Right), self, activated=self._skip_forward)
+        QShortcut(QKeySequence(Qt.Key.Key_Up), self, activated=self._volume_up)
+        QShortcut(QKeySequence(Qt.Key.Key_Down), self, activated=self._volume_down)
 
         self._is_playing = False
         self._pos_ms = 0
         self._dur_ms = 0
         self._volume = 80
         self._current_filename = ""
+
+        # Skip accumulator state (YouTube-like quick repeated taps).
+        self._skip_step_ms = 5000
+        self._skip_accum_window_s = 0.38
+        self._skip_last_dir = 0
+        self._skip_last_ts = 0.0
+        self._skip_steps = 0
 
         self._open_dialog: Optional[QFileDialog] = None
 
@@ -146,6 +160,57 @@ class MainWindow(QMainWindow):
         self.controller.seek_ms(int(pos_ms))
         if self._was_playing_before_scrub:
             self.controller.play()
+
+    def _skip_backward(self) -> None:
+        self._perform_skip(-1)
+
+    def _skip_forward(self) -> None:
+        self._perform_skip(+1)
+
+    def _perform_skip(self, direction: int) -> None:
+        now = time.monotonic()
+        if direction == self._skip_last_dir and (now - self._skip_last_ts) <= self._skip_accum_window_s:
+            self._skip_steps += 1
+        else:
+            self._skip_steps = 1
+        self._skip_last_dir = direction
+        self._skip_last_ts = now
+
+        total_delta_ms = self._skip_steps * self._skip_step_ms * direction
+        target = self._pos_ms + total_delta_ms
+        if self._dur_ms > 0:
+            target = max(0, min(target, self._dur_ms))
+        else:
+            target = max(0, target)
+
+        self.controller.seek_ms(int(target))
+        self.pane.show_skip_feedback(direction, self._skip_steps * (self._skip_step_ms // 1000))
+
+    def _on_volume_slider_changed(self, vol: int) -> None:
+        self._apply_volume(int(vol), show_hud=True)
+
+    def _volume_up(self) -> None:
+        self._change_volume_by(+5)
+
+    def _volume_down(self) -> None:
+        self._change_volume_by(-5)
+
+    def _change_volume_by(self, delta: int) -> None:
+        self._apply_volume(self._volume + int(delta), show_hud=True)
+
+    def _apply_volume(self, vol: int, *, show_hud: bool) -> None:
+        v = max(0, min(100, int(vol)))
+        self._volume = v
+        self.controller.set_volume(v)
+
+        # Keep slider in sync when volume changed from keyboard.
+        if self.controls.volume.value() != v:
+            self.controls.volume.blockSignals(True)
+            self.controls.volume.setValue(v)
+            self.controls.volume.blockSignals(False)
+
+        if show_hud:
+            self.pane.show_volume_feedback(v)
 
     def _build_menu_shell(self) -> None:
         bar = self.menuBar()
@@ -230,3 +295,18 @@ class MainWindow(QMainWindow):
     def mouseDoubleClickEvent(self, event) -> None:  # noqa: N802
         self._toggle_fullscreen()
         super().mouseDoubleClickEvent(event)
+
+    def wheelEvent(self, event) -> None:  # noqa: N802
+        # VLC-like: mouse wheel controls volume.
+        delta_y = int(event.angleDelta().y())
+        if delta_y == 0:
+            super().wheelEvent(event)
+            return
+
+        # 120 is one wheel notch in Qt; keep behavior predictable.
+        notches = int(delta_y / 120)
+        if notches == 0:
+            notches = 1 if delta_y > 0 else -1
+
+        self._change_volume_by(notches * 5)
+        event.accept()

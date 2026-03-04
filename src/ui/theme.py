@@ -32,14 +32,47 @@ def apply_dark_theme(app: QApplication) -> None:
         QMainWindow { background: #0b0d10; }
 
         /* Menus */
-        QMenuBar { background: #0b0d10; color: #f2f2f2; }
-        QMenuBar::item:selected { background: rgba(255,255,255,18); }
+        QMenuBar {
+            background: #0b0d10;
+            color: #f2f2f2;
+            border-bottom: 1px solid rgba(255,255,255,18);
+        }
+        QMenuBar::item {
+            padding: 6px 10px;
+            border-radius: 6px;
+            margin: 2px 4px;
+            background: transparent;
+        }
+        QMenuBar::item:selected {
+            color: #ffffff;
+            background: rgba(229, 9, 20, 46);
+            border: 1px solid rgba(229, 9, 20, 120);
+        }
+        QMenuBar::item:pressed {
+            background: rgba(229, 9, 20, 62);
+            border: 1px solid rgba(229, 9, 20, 160);
+        }
         QMenu {
             background: #000000;
             color: #ffffff;
             border: 1px solid rgba(255,255,255,32);
+            padding: 6px;
         }
-        QMenu::item:selected { background: rgba(255,255,255,22); }
+        QMenu::item {
+            padding: 8px 28px 8px 28px;
+            border-radius: 7px;
+            margin: 2px 4px;
+            border-left: 3px solid transparent;
+        }
+        QMenu::item:selected {
+            background: rgba(229, 9, 20, 50);
+            border-left: 3px solid #e50914;
+        }
+        QMenu::separator {
+            height: 1px;
+            margin: 8px 12px;
+            background: rgba(255,255,255,26);
+        }
 
         QPushButton {
             background: #171b21;

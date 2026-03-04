@@ -21,6 +21,7 @@ class AnimatedToolButton(QToolButton):
         self._base_icon = QSize(18, 18)
         self._hover_icon = QSize(20, 20)
         self._press_icon = QSize(17, 17)
+        self._pop_icon = QSize(22, 22)
 
         self._anim = QPropertyAnimation(self, b"animatedIconSize", self)
         self._anim.setDuration(120)
@@ -50,6 +51,9 @@ class AnimatedToolButton(QToolButton):
     def setPressIconSize(self, size: QSize) -> None:  # noqa: N802
         self._press_icon = size
 
+    def setPopIconSize(self, size: QSize) -> None:  # noqa: N802
+        self._pop_icon = size
+
     def setAnimatedIconSize(self, size: QSize) -> None:  # noqa: N802
         self._set_animated_icon_size(size)
 
@@ -63,18 +67,28 @@ class AnimatedToolButton(QToolButton):
 
     def mousePressEvent(self, event) -> None:  # noqa: N802
         super().mousePressEvent(event)
-        self._animate_to(self._press_icon)
+        self._animate_to(self._press_icon, duration=70)
 
     def mouseReleaseEvent(self, event) -> None:  # noqa: N802
         super().mouseReleaseEvent(event)
-        # If still under cursor, bounce back to hover size.
-        if self.underMouse():
-            self._animate_to(self._hover_icon)
-        else:
-            self._animate_to(self._base_icon)
+        # Netflix-like click feedback: quick expand then settle.
+        self._animate_click_bounce()
 
-    def _animate_to(self, size: QSize) -> None:
+    def _animate_to(self, size: QSize, duration: int = 120) -> None:
         self._anim.stop()
+        self._anim.setDuration(duration)
+        self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._anim.setKeyValues([])
         self._anim.setStartValue(self.iconSize())
         self._anim.setEndValue(size)
+        self._anim.start()
+
+    def _animate_click_bounce(self) -> None:
+        target = self._hover_icon if self.underMouse() else self._base_icon
+        self._anim.stop()
+        self._anim.setDuration(165)
+        self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._anim.setStartValue(self.iconSize())
+        self._anim.setKeyValueAt(0.42, self._pop_icon)
+        self._anim.setEndValue(target)
         self._anim.start()

@@ -42,6 +42,8 @@ def _format_ms(ms: int) -> str:
 
 class OverlayControls(QWidget):
     play_pause_clicked = Signal()
+    rewind_clicked = Signal()
+    fast_forward_clicked = Signal()
     open_clicked = Signal()
     seek_requested = Signal(int)  # position_ms
     scrub_started = Signal(int)  # position_ms
@@ -54,16 +56,60 @@ class OverlayControls(QWidget):
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setStyleSheet(
             """
-            OverlayControls { background: rgba(12, 14, 18, 120); }
-            QLabel { color: #e6e6e6; }
+            OverlayControls {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:0, y2:1,
+                    stop:0 rgba(18, 20, 26, 218),
+                    stop:1 rgba(10, 12, 16, 238)
+                );
+                border-top: 1px solid rgba(255,255,255,22);
+                border-left: 1px solid rgba(255,255,255,14);
+                border-right: 1px solid rgba(255,255,255,14);
+                border-top-left-radius: 16px;
+                border-top-right-radius: 16px;
+            }
+            QLabel { color: #f1f1f1; font-size: 12px; }
+            QLabel#fileLabel {
+                color: rgba(255,255,255,170);
+                padding-left: 8px;
+            }
             QToolButton {
-                background: transparent;
-                border: none;
+                background: rgba(255,255,255,7);
+                border: 1px solid rgba(255,255,255,20);
+                border-radius: 10px;
                 padding: 6px;
                 color: #f2f2f2;
             }
-            QToolButton:hover { background: rgba(255,255,255,18); border-radius: 10px; }
-            QToolButton:pressed { background: rgba(255,255,255,28); }
+            QToolButton:hover {
+                background: rgba(229, 9, 20, 42);
+                border: 1px solid rgba(229, 9, 20, 160);
+            }
+            QToolButton:pressed {
+                background: rgba(229, 9, 20, 72);
+                border: 1px solid rgba(229, 9, 20, 200);
+            }
+
+            QSlider::groove:horizontal {
+                height: 6px;
+                border-radius: 3px;
+                background: rgba(255,255,255,36);
+            }
+            QSlider::sub-page:horizontal {
+                background: qlineargradient(
+                    x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #c90a12,
+                    stop:1 #ff1f2d
+                );
+                border-radius: 3px;
+            }
+            QSlider::handle:horizontal {
+                background: #ffffff;
+                border: 2px solid #e50914;
+                width: 13px;
+                height: 13px;
+                margin: -5px 0;
+                border-radius: 8px;
+            }
             """
         )
         # NOTE: Avoid widget-level drop shadow here because it gets clipped
@@ -112,7 +158,7 @@ class OverlayControls(QWidget):
         self.volume.setFixedWidth(120)
 
         self.file_label = QLabel("")
-        self.file_label.setStyleSheet("color: #bdbdbd;")
+        self.file_label.setObjectName("fileLabel")
         self.file_label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.file_label.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
 
@@ -148,6 +194,10 @@ class OverlayControls(QWidget):
             self.fullscreen_btn,
         ):
             btn.setFixedSize(36, 36)
+            btn.setBaseIconSize(QSize(18, 18))
+            btn.setHoverIconSize(QSize(21, 21))
+            btn.setPressIconSize(QSize(16, 16))
+            btn.setPopIconSize(QSize(23, 23))
 
         row2 = QHBoxLayout()
         row2.setContentsMargins(16, 2, 16, 10)
@@ -156,7 +206,9 @@ class OverlayControls(QWidget):
         row2.addWidget(self.rewind_btn)
         row2.addWidget(self.ff_btn)
         row2.addSpacing(6)
-        row2.addWidget(QLabel("Vol"))
+        vol_lbl = QLabel("VOL")
+        vol_lbl.setStyleSheet("color: rgba(255,255,255,170); letter-spacing: 0.6px;")
+        row2.addWidget(vol_lbl)
         row2.addWidget(self.volume)
         row2.addSpacing(10)
         row2.addWidget(self.file_label, stretch=1)
@@ -176,6 +228,8 @@ class OverlayControls(QWidget):
         self._scrubbing = False
 
         self.play_btn.clicked.connect(self.play_pause_clicked.emit)
+        self.rewind_btn.clicked.connect(self.rewind_clicked.emit)
+        self.ff_btn.clicked.connect(self.fast_forward_clicked.emit)
         self.open_btn.clicked.connect(self.open_clicked.emit)
         self.timeline.sliderPressed.connect(self._on_scrub_start)
         self.timeline.sliderReleased.connect(self._on_scrub_end)
