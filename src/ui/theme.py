@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PySide6.QtGui import QPalette, QColor, QFont
+from PySide6.QtGui import QPalette, QColor, QFont, QFontDatabase
 from PySide6.QtWidgets import QApplication
 
 from ui.style_tokens import StyleTokens
@@ -9,8 +9,12 @@ from ui.style_tokens import StyleTokens
 def apply_dark_theme(app: QApplication) -> None:
     """Apply a minimal dark theme."""
 
-    # A simple modern font. (System-provided on Windows; later we can bundle one.)
-    app.setFont(QFont("Segoe UI", 10))
+    # Typography baseline: prefer Inter, fallback to Segoe UI.
+    families = {f.lower() for f in QFontDatabase.families()}
+    family = "Inter" if "inter" in families else "Segoe UI"
+    base_font = QFont(family, 10)
+    base_font.setWeight(QFont.Weight.DemiBold)
+    app.setFont(base_font)
 
     palette = QPalette()
     palette.setColor(QPalette.Window, QColor(StyleTokens.BG))
@@ -28,7 +32,7 @@ def apply_dark_theme(app: QApplication) -> None:
 
     app.setStyleSheet(
         """
-        QWidget { font-size: 12px; }
+        QWidget { font-size: 12px; font-family: 'Inter', 'Segoe UI'; }
         QMainWindow { background: #0b0d10; }
 
         /* Menus */

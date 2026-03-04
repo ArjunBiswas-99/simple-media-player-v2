@@ -59,55 +59,81 @@ class OverlayControls(QWidget):
             OverlayControls {
                 background: qlineargradient(
                     x1:0, y1:0, x2:0, y2:1,
-                    stop:0 rgba(18, 20, 26, 218),
-                    stop:1 rgba(10, 12, 16, 238)
+                    stop:0 rgba(24, 27, 34, 228),
+                    stop:0.45 rgba(16, 19, 25, 236),
+                    stop:1 rgba(9, 11, 15, 245)
                 );
-                border-top: 1px solid rgba(255,255,255,22);
-                border-left: 1px solid rgba(255,255,255,14);
-                border-right: 1px solid rgba(255,255,255,14);
-                border-top-left-radius: 16px;
-                border-top-right-radius: 16px;
+                border-top: 1px solid rgba(255,255,255,34);
+                border-left: 1px solid rgba(255,255,255,16);
+                border-right: 1px solid rgba(255,255,255,16);
+                border-top-left-radius: 18px;
+                border-top-right-radius: 18px;
             }
-            QLabel { color: #f1f1f1; font-size: 12px; }
+            QLabel { color: #f4f4f4; font-size: 13px; }
+            QLabel#timeChip {
+                color: #ffffff;
+                background: rgba(255,255,255,4);
+                border: 1px solid rgba(255,255,255,12);
+                border-radius: 8px;
+                font-size: 15px;
+                font-weight: 600;
+                font-family: 'Inter', 'Segoe UI';
+                padding: 1px 7px;
+            }
             QLabel#fileLabel {
-                color: rgba(255,255,255,170);
+                color: rgba(255,255,255,186);
                 padding-left: 8px;
+                font-size: 14px;
+                font-family: 'Inter', 'Segoe UI';
+            }
+            QLabel#volLabel {
+                color: rgba(255,255,255,182);
+                font-size: 12px;
+                font-weight: 600;
+                letter-spacing: 0.8px;
+                font-family: 'Inter', 'Segoe UI';
             }
             QToolButton {
-                background: rgba(255,255,255,7);
-                border: 1px solid rgba(255,255,255,20);
-                border-radius: 10px;
+                background: rgba(255,255,255,9);
+                border: 1px solid rgba(255,255,255,24);
+                border-radius: 12px;
                 padding: 6px;
                 color: #f2f2f2;
             }
             QToolButton:hover {
-                background: rgba(229, 9, 20, 42);
-                border: 1px solid rgba(229, 9, 20, 160);
+                background: rgba(229, 9, 20, 48);
+                border: 1px solid rgba(229, 9, 20, 170);
             }
             QToolButton:pressed {
-                background: rgba(229, 9, 20, 72);
+                background: rgba(229, 9, 20, 78);
                 border: 1px solid rgba(229, 9, 20, 200);
             }
 
             QSlider::groove:horizontal {
-                height: 6px;
-                border-radius: 3px;
-                background: rgba(255,255,255,36);
+                height: 7px;
+                border-radius: 4px;
+                background: rgba(255,255,255,30);
+                border: 1px solid rgba(255,255,255,16);
             }
             QSlider::sub-page:horizontal {
                 background: qlineargradient(
                     x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #c90a12,
-                    stop:1 #ff1f2d
+                    stop:0 #b80812,
+                    stop:1 #ff2735
                 );
-                border-radius: 3px;
+                border-radius: 4px;
             }
             QSlider::handle:horizontal {
-                background: #ffffff;
+                background: qradialgradient(
+                    cx:0.45, cy:0.35, radius:0.9,
+                    fx:0.35, fy:0.3,
+                    stop:0 #ffffff,
+                    stop:1 #f0f0f0
+                );
                 border: 2px solid #e50914;
-                width: 13px;
-                height: 13px;
-                margin: -5px 0;
+                width: 16px;
+                height: 16px;
+                margin: -4px 0;
                 border-radius: 8px;
             }
             """
@@ -122,12 +148,13 @@ class OverlayControls(QWidget):
         self.timeline.setSingleStep(1000)
         self.timeline.setPageStep(5000)
         self.time_label = QLabel("00:00 / 00:00")
-        self.time_label.setMinimumWidth(120)
+        self.time_label.setObjectName("timeChip")
+        self.time_label.setMinimumWidth(142)
         self.time_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         row1 = QHBoxLayout()
-        row1.setContentsMargins(16, 10, 16, 2)
-        row1.setSpacing(12)
+        row1.setContentsMargins(18, 8, 18, 2)
+        row1.setSpacing(10)
         row1.addWidget(self.timeline, stretch=1)
         row1.addWidget(self.time_label)
 
@@ -155,7 +182,8 @@ class OverlayControls(QWidget):
         self.volume = QSlider(Qt.Orientation.Horizontal)
         self.volume.setRange(0, 100)
         self.volume.setValue(80)
-        self.volume.setFixedWidth(120)
+        self.volume.setFixedWidth(132)
+        self.volume.setFixedHeight(22)
 
         self.file_label = QLabel("")
         self.file_label.setObjectName("fileLabel")
@@ -193,24 +221,24 @@ class OverlayControls(QWidget):
             self.folder_btn,
             self.fullscreen_btn,
         ):
-            btn.setFixedSize(36, 36)
-            btn.setBaseIconSize(QSize(18, 18))
-            btn.setHoverIconSize(QSize(21, 21))
-            btn.setPressIconSize(QSize(16, 16))
-            btn.setPopIconSize(QSize(23, 23))
+            btn.setFixedSize(42, 42)
+            btn.setBaseIconSize(QSize(20, 20))
+            btn.setHoverIconSize(QSize(23, 23))
+            btn.setPressIconSize(QSize(18, 18))
+            btn.setPopIconSize(QSize(25, 25))
 
         row2 = QHBoxLayout()
-        row2.setContentsMargins(16, 2, 16, 10)
+        row2.setContentsMargins(18, 2, 18, 12)
         row2.setSpacing(8)
         row2.addWidget(self.play_btn)
         row2.addWidget(self.rewind_btn)
         row2.addWidget(self.ff_btn)
-        row2.addSpacing(6)
+        row2.addSpacing(4)
         vol_lbl = QLabel("VOL")
-        vol_lbl.setStyleSheet("color: rgba(255,255,255,170); letter-spacing: 0.6px;")
+        vol_lbl.setObjectName("volLabel")
         row2.addWidget(vol_lbl)
         row2.addWidget(self.volume)
-        row2.addSpacing(10)
+        row2.addSpacing(8)
         row2.addWidget(self.file_label, stretch=1)
         row2.addWidget(self.info_btn)
         row2.addWidget(self.next_btn)
@@ -220,7 +248,7 @@ class OverlayControls(QWidget):
 
         content_layout = QVBoxLayout()
         content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.setSpacing(2)
+        content_layout.setSpacing(1)
         content_layout.addLayout(row1)
         content_layout.addLayout(row2)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)

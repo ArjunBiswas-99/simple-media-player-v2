@@ -150,7 +150,7 @@ class VideoPane(QWidget):
         self._vol_slide.setDuration(180)
         self._vol_slide.setEasingCurve(QEasingCurve.Type.OutCubic)
 
-        self._overlay_height = 176
+        self._overlay_height = 170
         self._overlay_offset = 18
         self._safe_bottom_inset = 10
 
