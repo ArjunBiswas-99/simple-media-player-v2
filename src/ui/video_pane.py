@@ -280,3 +280,9 @@ class VideoPane(QWidget):
         self._slide.setEndValue(end_pos)
         self._slide.start()
         self.controls.fade_out()
+
+    def force_controls_visible(self) -> None:
+        """Immediately restore overlay controls (used when leaving fullscreen)."""
+        self._slide.stop()
+        self._position_overlays()
+        self.controls.force_visible()

@@ -32,6 +32,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.pane, stretch=1)
         self.setCentralWidget(root)
 
+        self._act_fullscreen: Optional[QAction] = None
         self._build_menu_shell()
 
         self.controller = PlaybackController(self)
@@ -257,20 +258,38 @@ class MainWindow(QMainWindow):
         add_placeholder_menu("Video", ["Track", "Aspect Ratio", "Crop", "Rotate", "Filters"])
         add_placeholder_menu("Subtitle", ["Track", "Load External...", "Delay"])
         add_placeholder_menu("Tools", ["Media Info", "Diagnostics"])
-        add_placeholder_menu("View", ["Fullscreen", "Always on Top"])
+
+        # View menu with a real fullscreen action.
+        view = bar.addMenu("View")
+        self._act_fullscreen = QAction("Fullscreen", self)
+        self._act_fullscreen.setCheckable(True)
+        self._act_fullscreen.setShortcut(QKeySequence("F"))
+        self._act_fullscreen.triggered.connect(self._toggle_fullscreen)
+        view.addAction(self._act_fullscreen)
+
+        act_top = QAction("Always on Top", self)
+        act_top.setEnabled(False)
+        view.addAction(act_top)
+
         add_placeholder_menu("Help", ["About", "Shortcuts"])
 
     def _toggle_fullscreen(self) -> None:
         if self.isFullScreen():
             self.showNormal()
             self.menuBar().setVisible(True)
-            self.controls.force_visible()
+            self.pane.force_controls_visible()
             self._hide_timer.stop()
         else:
             self.showFullScreen()
             self.menuBar().setVisible(False)
             self.pane.animate_show()
             self._hide_timer.start()
+
+        # Keep menu action state synchronized.
+        if self._act_fullscreen is not None:
+            self._act_fullscreen.blockSignals(True)
+            self._act_fullscreen.setChecked(self.isFullScreen())
+            self._act_fullscreen.blockSignals(False)
 
     def _on_hide_timeout(self) -> None:
         if self.isFullScreen():
@@ -293,7 +312,8 @@ class MainWindow(QMainWindow):
             self._hide_timer.start()
 
     def mouseDoubleClickEvent(self, event) -> None:  # noqa: N802
-        self._toggle_fullscreen()
+        # Double-click toggle is handled by VideoPane to avoid duplicate toggles
+        # from overlapping event paths.
         super().mouseDoubleClickEvent(event)
 
     def wheelEvent(self, event) -> None:  # noqa: N802
