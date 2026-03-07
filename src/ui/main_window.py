@@ -39,6 +39,26 @@ class MainWindow(QMainWindow):
         self.video = self.pane.video
         self.controls = self.pane.controls
 
+        # ---------------- Video view + track state (must exist before menus) ----------------
+        self._video_tracks = []
+        self._video_track_index = 0
+
+        # View transform defaults.
+        self._video_fit_to_window = True
+        self._video_zoom = 1.0
+        self._video_aspect_override: Optional[float] = None
+        self._video_crop_ratio: Optional[float] = None
+
+        try:
+            self.video.set_view_transform(
+                fit_to_window=self._video_fit_to_window,
+                zoom=self._video_zoom,
+                aspect_override=self._video_aspect_override,
+                crop_ratio=self._video_crop_ratio,
+            )
+        except Exception:
+            pass
+
         root = QWidget()
         layout = QVBoxLayout(root)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -130,6 +150,9 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence(Qt.Key.Key_Right), self, activated=self._skip_forward)
         QShortcut(QKeySequence(Qt.Key.Key_Up), self, activated=self._volume_up)
         QShortcut(QKeySequence(Qt.Key.Key_Down), self, activated=self._volume_down)
+        QShortcut(QKeySequence("Z"), self, activated=self._cycle_video_zoom)
+        QShortcut(QKeySequence("A"), self, activated=self._cycle_video_aspect)
+        QShortcut(QKeySequence("C"), self, activated=self._cycle_video_crop)
 
         self._is_playing = False
         self._playback_rate = 1.0
@@ -156,6 +179,7 @@ class MainWindow(QMainWindow):
 
         # Track list updates for Audio menu.
         self.controller.audio_tracks_changed.connect(self._on_audio_tracks)
+        self.controller.video_tracks_changed.connect(self._on_video_tracks)
 
 
 
@@ -403,6 +427,181 @@ class MainWindow(QMainWindow):
             self._audio_tracks = []
         if self._audio_track_index >= len(self._audio_tracks):
             self._audio_track_index = 0
+
+    def _on_video_tracks(self, tracks) -> None:
+        try:
+            self._video_tracks = list(tracks) if tracks is not None else []
+        except Exception:
+            self._video_tracks = []
+        if self._video_track_index >= len(self._video_tracks):
+            self._video_track_index = 0
+
+    def _select_video_track(self, index: int) -> None:
+        self._video_track_index = int(max(0, index))
+        self.controller.select_video_track(self._video_track_index)
+
+    # --------------------- Video view modes ---------------------
+
+    @staticmethod
+    def _ratio_label(r: Optional[float]) -> str:
+        if r is None:
+            return "Auto"
+        return f"{r:.3f}".rstrip("0").rstrip(".")
+
+    def _apply_video_view(self, *, osd: str) -> None:
+        try:
+            self.video.set_view_transform(
+                fit_to_window=bool(self._video_fit_to_window),
+                zoom=float(self._video_zoom),
+                aspect_override=self._video_aspect_override,
+                crop_ratio=self._video_crop_ratio,
+            )
+        except Exception:
+            pass
+
+        try:
+            self.pane.show_video_osd(osd)
+        except Exception:
+            pass
+
+        try:
+            self._sync_video_menu_checks()
+        except Exception:
+            pass
+
+    def _set_video_fit_to_window(self, fit: bool) -> None:
+        self._video_fit_to_window = bool(fit)
+        self._apply_video_view(osd=("Fit: Window" if self._video_fit_to_window else "Fit: Fill"))
+
+    def _set_video_zoom(self, zoom: float) -> None:
+        self._video_zoom = float(zoom)
+        pct = int(round(float(self._video_zoom) * 100.0))
+        self._apply_video_view(osd=f"Zoom: {pct}%")
+
+    def _set_video_aspect(self, ratio: Optional[float]) -> None:
+        self._video_aspect_override = ratio
+        label = "Auto" if ratio is None else self._format_ratio(ratio)
+        self._apply_video_view(osd=f"Aspect Ratio: {label}")
+
+    def _set_video_crop(self, ratio: Optional[float]) -> None:
+        self._video_crop_ratio = ratio
+        label = "Off" if ratio is None else self._format_ratio(ratio)
+        self._apply_video_view(osd=f"Crop: {label}")
+
+    @staticmethod
+    def _format_ratio(r: float) -> str:
+        # Prefer common display format.
+        try:
+            rr = float(r)
+        except Exception:
+            return ""
+        # Map exact-ish values back to nicer strings.
+        presets = {
+            16 / 9: "16:9",
+            4 / 3: "4:3",
+            1.0: "1:1",
+            21 / 9: "21:9",
+            2.35: "2.35:1",
+        }
+        for k, v in presets.items():
+            if abs(float(rr) - float(k)) < 1e-3:
+                return v
+        return f"{rr:.3f}:1".rstrip("0").rstrip(".")
+
+    def _take_snapshot(self) -> None:
+        img = None
+        try:
+            img = self.video.grab_current_image()
+        except Exception:
+            img = None
+        if img is None:
+            self.pane.show_video_osd("Snapshot: no frame")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save snapshot",
+            str(Path.home() / "snapshot.png"),
+            "PNG Image (*.png);;JPEG Image (*.jpg *.jpeg);;All Files (*.*)",
+        )
+        if not file_path:
+            return
+        ok = False
+        try:
+            ok = bool(img.save(str(file_path)))
+        except Exception:
+            ok = False
+        self.pane.show_video_osd("Snapshot saved" if ok else "Snapshot failed")
+
+    def _set_wallpaper_from_frame(self) -> None:
+        # Best-effort Windows-only. Save a temporary BMP and call SPI.
+        img = None
+        try:
+            img = self.video.grab_current_image()
+        except Exception:
+            img = None
+        if img is None:
+            self.pane.show_video_osd("Wallpaper: no frame")
+            return
+
+        try:
+            import tempfile
+            import ctypes
+
+            tmp = Path(tempfile.gettempdir()) / "arjun_player_wallpaper.bmp"
+            img.save(str(tmp), "BMP")
+
+            SPI_SETDESKWALLPAPER = 20
+            SPIF_UPDATEINIFILE = 0x01
+            SPIF_SENDWININICHANGE = 0x02
+            r = ctypes.windll.user32.SystemParametersInfoW(
+                SPI_SETDESKWALLPAPER,
+                0,
+                str(tmp),
+                SPIF_UPDATEINIFILE | SPIF_SENDWININICHANGE,
+            )
+            self.pane.show_video_osd("Wallpaper set" if r else "Wallpaper failed")
+        except Exception:
+            self.pane.show_video_osd("Wallpaper failed")
+
+    def _cycle_video_zoom(self) -> None:
+        presets = [0.5, 1.0, 1.25, 1.5, 2.0, 3.0]
+        current = float(self._video_zoom)
+        idx = 0
+        for i, z in enumerate(presets):
+            if abs(float(z) - float(current)) < 1e-6:
+                idx = i
+                break
+        nxt = presets[(idx + 1) % len(presets)]
+        self._set_video_zoom(float(nxt))
+
+    def _cycle_video_aspect(self) -> None:
+        presets: list[Optional[float]] = [None, 16 / 9, 4 / 3, 1.0, 21 / 9, 2.35]
+        cur = self._video_aspect_override
+        idx = 0
+        for i, r in enumerate(presets):
+            if r is None and cur is None:
+                idx = i
+                break
+            if r is not None and cur is not None and abs(float(r) - float(cur)) < 1e-6:
+                idx = i
+                break
+        nxt = presets[(idx + 1) % len(presets)]
+        self._set_video_aspect(nxt)
+
+    def _cycle_video_crop(self) -> None:
+        presets: list[Optional[float]] = [None, 16 / 9, 4 / 3, 1.0, 21 / 9, 2.35]
+        cur = self._video_crop_ratio
+        idx = 0
+        for i, r in enumerate(presets):
+            if r is None and cur is None:
+                idx = i
+                break
+            if r is not None and cur is not None and abs(float(r) - float(cur)) < 1e-6:
+                idx = i
+                break
+        nxt = presets[(idx + 1) % len(presets)]
+        self._set_video_crop(nxt)
 
     def _on_position(self, pos_ms: int) -> None:
         self._pos_ms = int(pos_ms)
@@ -932,7 +1131,97 @@ class MainWindow(QMainWindow):
                 act.setEnabled(False)
                 menu.addAction(act)
 
-        add_placeholder_menu("Video", ["Track", "Aspect Ratio", "Crop", "Rotate", "Filters"])
+        # Video menu (real actions).
+        video = bar.addMenu("Video")
+
+        # Video Track submenu.
+        self._video_track_menu = video.addMenu("Video Track")
+        self._video_track_menu.aboutToShow.connect(lambda: self._populate_video_tracks_menu(self._video_track_menu))
+
+        video.addSeparator()
+
+        act_fs2 = QAction("Fullscreen", self)
+        act_fs2.setShortcut(QKeySequence("F"))
+        act_fs2.triggered.connect(self._toggle_fullscreen_with_feedback)
+        video.addAction(act_fs2)
+
+        act_wall = QAction("Set as Wallpaper", self)
+        act_wall.triggered.connect(self._set_wallpaper_from_frame)
+        video.addAction(act_wall)
+
+        self._act_fit_window = QAction("Always Fit Window", self)
+        self._act_fit_window.setCheckable(True)
+        self._act_fit_window.setChecked(True)
+        self._act_fit_window.triggered.connect(lambda checked=False: self._set_video_fit_to_window(bool(checked)))
+        video.addAction(self._act_fit_window)
+
+        video.addSeparator()
+
+        # Zoom submenu.
+        zoom_menu = video.addMenu("Zoom")
+        self._zoom_group = QActionGroup(self)
+        self._zoom_group.setExclusive(True)
+        self._zoom_actions = {}
+        for z in (0.5, 1.0, 1.25, 1.5, 2.0, 3.0):
+            a = QAction(f"{z:g}×", self)
+            a.setCheckable(True)
+            self._zoom_group.addAction(a)
+            self._zoom_actions[float(z)] = a
+            a.triggered.connect(lambda _checked=False, zz=z: self._set_video_zoom(float(zz)))
+            zoom_menu.addAction(a)
+
+        # Aspect Ratio submenu.
+        aspect_menu = video.addMenu("Aspect Ratio")
+        self._aspect_group = QActionGroup(self)
+        self._aspect_group.setExclusive(True)
+        self._aspect_actions = {}
+        aspect_presets = [
+            (None, "Auto"),
+            (16 / 9, "16:9"),
+            (4 / 3, "4:3"),
+            (1.0, "1:1"),
+            (21 / 9, "21:9"),
+            (2.35, "2.35:1"),
+        ]
+        for r, label in aspect_presets:
+            a = QAction(label, self)
+            a.setCheckable(True)
+            self._aspect_group.addAction(a)
+            self._aspect_actions[r if r is None else float(r)] = a
+            a.triggered.connect(lambda _checked=False, rr=r: self._set_video_aspect(rr))
+            aspect_menu.addAction(a)
+
+        # Crop submenu.
+        crop_menu = video.addMenu("Crop")
+        self._crop_group = QActionGroup(self)
+        self._crop_group.setExclusive(True)
+        self._crop_actions = {}
+        crop_presets = [
+            (None, "Off"),
+            (16 / 9, "16:9"),
+            (4 / 3, "4:3"),
+            (1.0, "1:1"),
+            (21 / 9, "21:9"),
+            (2.35, "2.35:1"),
+        ]
+        for r, label in crop_presets:
+            a = QAction(label, self)
+            a.setCheckable(True)
+            self._crop_group.addAction(a)
+            self._crop_actions[r if r is None else float(r)] = a
+            a.triggered.connect(lambda _checked=False, rr=r: self._set_video_crop(rr))
+            crop_menu.addAction(a)
+
+        video.addSeparator()
+        act_snap = QAction("Take Snapshot…", self)
+        act_snap.triggered.connect(self._take_snapshot)
+        video.addAction(act_snap)
+
+        # Init checks.
+        try:
+            self._sync_video_menu_checks()
+        except Exception:
+            pass
         add_placeholder_menu("Subtitle", ["Track", "Load External...", "Delay"])
         add_placeholder_menu("Tools", ["Media Info", "Diagnostics"])
 
@@ -949,6 +1238,77 @@ class MainWindow(QMainWindow):
         view.addAction(act_top)
 
         add_placeholder_menu("Help", ["About", "Shortcuts"])
+
+    def _populate_video_tracks_menu(self, menu: QMenu) -> None:
+        menu.clear()
+        tracks = self._video_tracks or []
+        if not tracks:
+            a = QAction("No video tracks", self)
+            a.setEnabled(False)
+            menu.addAction(a)
+            return
+
+        group = QActionGroup(self)
+        group.setExclusive(True)
+        for t in tracks:
+            try:
+                idx = int(getattr(t, "index", 0))
+                label = str(getattr(t, "label", f"Track {idx+1}"))
+            except Exception:
+                idx = 0
+                label = "Track"
+            a = QAction(label, self)
+            a.setCheckable(True)
+            a.setChecked(int(idx) == int(self._video_track_index))
+            group.addAction(a)
+            a.triggered.connect(lambda _checked=False, i=idx: self._select_video_track(i))
+            menu.addAction(a)
+
+    def _sync_video_menu_checks(self) -> None:
+        # Fit
+        try:
+            if hasattr(self, "_act_fit_window"):
+                self._act_fit_window.blockSignals(True)
+                self._act_fit_window.setChecked(bool(self._video_fit_to_window))
+                self._act_fit_window.blockSignals(False)
+        except Exception:
+            pass
+
+        # Zoom
+        try:
+            if hasattr(self, "_zoom_actions"):
+                for z, act in getattr(self, "_zoom_actions").items():
+                    act.setChecked(abs(float(z) - float(self._video_zoom)) < 1e-6)
+        except Exception:
+            pass
+
+        # Aspect
+        try:
+            if hasattr(self, "_aspect_actions"):
+                key = None if self._video_aspect_override is None else float(self._video_aspect_override)
+                for k, act in getattr(self, "_aspect_actions").items():
+                    if k is None and key is None:
+                        act.setChecked(True)
+                    elif k is not None and key is not None and abs(float(k) - float(key)) < 1e-6:
+                        act.setChecked(True)
+                    else:
+                        act.setChecked(False)
+        except Exception:
+            pass
+
+        # Crop
+        try:
+            if hasattr(self, "_crop_actions"):
+                key = None if self._video_crop_ratio is None else float(self._video_crop_ratio)
+                for k, act in getattr(self, "_crop_actions").items():
+                    if k is None and key is None:
+                        act.setChecked(True)
+                    elif k is not None and key is not None and abs(float(k) - float(key)) < 1e-6:
+                        act.setChecked(True)
+                    else:
+                        act.setChecked(False)
+        except Exception:
+            pass
 
     def _toggle_fullscreen(self) -> None:
         if self.isFullScreen():

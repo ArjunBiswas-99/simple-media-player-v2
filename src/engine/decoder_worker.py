@@ -26,6 +26,12 @@ class AudioTrackInfo:
     label: str
 
 
+@dataclass(frozen=True)
+class VideoTrackInfo:
+    index: int
+    label: str
+
+
 class DecoderWorker(QObject):
     """Decode engine running in a dedicated thread (UI-agnostic).
 
@@ -43,6 +49,7 @@ class DecoderWorker(QObject):
 
     media_opened = Signal(float, object)  # duration_seconds, StreamConfig
     audio_tracks_changed = Signal(object)  # list[AudioTrackInfo]
+    video_tracks_changed = Signal(object)  # list[VideoTrackInfo]
     error = Signal(str)
     eof_reached = Signal()
 
@@ -68,6 +75,8 @@ class DecoderWorker(QObject):
         self._astream: Optional[av.audio.stream.AudioStream] = None
         self._audio_streams: list[av.audio.stream.AudioStream] = []
         self._audio_track_index: int = 0
+        self._video_streams: list[av.video.stream.VideoStream] = []
+        self._video_track_index: int = 0
         self._audio_resampler: Optional[av.audio.resampler.AudioResampler] = None
 
         # Desired output PCM config (what we will feed to Qt audio sink).
@@ -157,6 +166,23 @@ class DecoderWorker(QObject):
                 # Flush audio to avoid mixing.
                 self._audio_q.clear()
 
+    @Slot(int)
+    def select_video_track(self, index: int) -> None:
+        """Select video track by index (0-based within discovered video streams)."""
+        idx = int(index)
+        if idx < 0:
+            idx = 0
+        with self._lock:
+            self._video_track_index = idx
+            if self._container is not None:
+                if self._video_streams and 0 <= idx < len(self._video_streams):
+                    self._vstream = self._video_streams[idx]
+                elif self._video_streams:
+                    self._vstream = self._video_streams[0]
+                    self._video_track_index = 0
+                # Flush video to avoid mixing.
+                self._video_q.clear()
+
     def _apply_open(self, path: str) -> None:
         try:
             if self._container is not None:
@@ -167,10 +193,10 @@ class DecoderWorker(QObject):
 
             self._container = av.open(path)
 
-            # Prefer a normal video stream over attached-picture/cover-art stream.
-            vstreams = [s for s in self._container.streams if s.type == "video"]
-            self._vstream = None
-            for s in vstreams:
+            # Enumerate video streams (exclude attached_pic/cover-art where possible).
+            all_vstreams = [s for s in self._container.streams if s.type == "video"]
+            vstreams: list[av.video.stream.VideoStream] = []
+            for s in all_vstreams:
                 disp = getattr(s, "disposition", None)
                 is_attached = False
                 try:
@@ -179,10 +205,61 @@ class DecoderWorker(QObject):
                 except Exception:
                     is_attached = False
                 if not is_attached:
-                    self._vstream = s
-                    break
-            if self._vstream is None:
-                self._vstream = vstreams[0] if vstreams else None
+                    vstreams.append(s)
+
+            # If every video stream was attached_pic, fall back to them.
+            if not vstreams:
+                vstreams = list(all_vstreams)
+
+            self._video_streams = list(vstreams)
+            with self._lock:
+                vidx = int(self._video_track_index)
+            if self._video_streams:
+                if vidx < 0 or vidx >= len(self._video_streams):
+                    vidx = 0
+                self._vstream = self._video_streams[vidx]
+                self._video_track_index = vidx
+            else:
+                self._vstream = None
+
+            # Emit video track list for UI.
+            vtracks: list[VideoTrackInfo] = []
+            for i, s in enumerate(self._video_streams):
+                title = ""
+                lang = ""
+                try:
+                    md = getattr(s, "metadata", None) or {}
+                    title = str(md.get("title", "") or "").strip()
+                    lang = str(md.get("language", "") or "").strip()
+                except Exception:
+                    title = ""
+                    lang = ""
+                codec = ""
+                try:
+                    codec = str(getattr(getattr(s, "codec_context", None), "name", "") or "").strip()
+                except Exception:
+                    codec = ""
+                dims = ""
+                try:
+                    w = int(getattr(getattr(s, "codec_context", None), "width", 0) or 0)
+                    h = int(getattr(getattr(s, "codec_context", None), "height", 0) or 0)
+                    if w > 0 and h > 0:
+                        dims = f"{w}x{h}"
+                except Exception:
+                    dims = ""
+
+                parts = []
+                if title:
+                    parts.append(title)
+                if lang:
+                    parts.append(lang.upper())
+                if codec:
+                    parts.append(codec)
+                if dims:
+                    parts.append(dims)
+                label = " • ".join(parts) if parts else f"Track {i+1}"
+                vtracks.append(VideoTrackInfo(index=i, label=label))
+            self.video_tracks_changed.emit(vtracks)
 
             self._astream = next((s for s in self._container.streams if s.type == "audio"), None)
 

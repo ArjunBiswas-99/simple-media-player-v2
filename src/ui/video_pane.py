@@ -230,6 +230,37 @@ class VideoPane(QWidget):
         self.volume_hud.setFixedWidth(62)
         self.volume_hud.hide()
 
+        # VLC-like OSD at top-right for video modes (zoom/aspect/crop/fit).
+        self.video_osd = QLabel("", self)
+        self.video_osd.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.video_osd.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.video_osd.setStyleSheet(
+            """
+            QLabel {
+                color: #ffffff;
+                background: rgba(8, 8, 10, 172);
+                border: 1px solid rgba(255,255,255,28);
+                border-radius: 12px;
+                padding: 8px 12px;
+                font-size: 14px;
+                font-weight: 900;
+                letter-spacing: 0.3px;
+            }
+            """
+        )
+        self.video_osd.hide()
+
+        self._vosd_opacity = QGraphicsOpacityEffect(self.video_osd)
+        self._vosd_opacity.setOpacity(0.0)
+        self.video_osd.setGraphicsEffect(self._vosd_opacity)
+
+        self._vosd_fade = QPropertyAnimation(self._vosd_opacity, b"opacity", self)
+        self._vosd_fade.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self._vosd_hold_timer = QTimer(self)
+        self._vosd_hold_timer.setSingleShot(True)
+        self._vosd_hold_timer.timeout.connect(self._start_vosd_fade_out)
+
         self._vol_opacity = QGraphicsOpacityEffect(self.volume_hud)
         self._vol_opacity.setOpacity(0.0)
         self.volume_hud.setGraphicsEffect(self._vol_opacity)
@@ -291,6 +322,8 @@ class VideoPane(QWidget):
             self._position_speed_hud()
         if self.volume_hud.isVisible():
             self._position_volume_hud()
+        if self.video_osd.isVisible():
+            self._position_video_osd()
 
     def _position_skip_hud(self) -> None:
         self.skip_hud.adjustSize()
@@ -422,6 +455,37 @@ class VideoPane(QWidget):
         x = max(0, self.width() - self.volume_hud.width() - 24)
         y = max(0, (self.height() - self.volume_hud.height()) // 2)
         self.volume_hud.move(x, y)
+
+    def _position_video_osd(self) -> None:
+        self.video_osd.adjustSize()
+        x = max(0, self.width() - self.video_osd.width() - 18)
+        y = 18
+        self.video_osd.move(x, y)
+
+    def show_video_osd(self, text: str) -> None:
+        t = str(text or "").strip()
+        if not t:
+            return
+        self.video_osd.setText(t)
+        self._position_video_osd()
+        self.video_osd.show()
+        self.video_osd.raise_()
+
+        self._vosd_hold_timer.stop()
+        self._vosd_fade.stop()
+        self._vosd_opacity.setOpacity(0.0)
+        self._vosd_fade.setDuration(120)
+        self._vosd_fade.setStartValue(0.0)
+        self._vosd_fade.setEndValue(1.0)
+        self._vosd_fade.start()
+        self._vosd_hold_timer.start(700)
+
+    def _start_vosd_fade_out(self) -> None:
+        self._vosd_fade.stop()
+        self._vosd_fade.setDuration(420)
+        self._vosd_fade.setStartValue(self._vosd_opacity.opacity())
+        self._vosd_fade.setEndValue(0.0)
+        self._vosd_fade.start()
 
     def show_volume_feedback(self, volume: int) -> None:
         v = max(0, min(100, int(volume)))

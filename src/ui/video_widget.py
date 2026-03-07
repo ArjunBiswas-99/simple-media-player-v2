@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Optional
 import time
 
-from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtCore import Qt, Signal, QTimer, QRect
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QImage, QPainter
 from PySide6.QtWidgets import QWidget
@@ -64,6 +64,16 @@ class VideoWidget(QWidget):
         self._cache_target_size = None  # (w, h)
         self._cache_scaled: Optional[QImage] = None
 
+        # View transform (VLC-like): fit/fill, zoom, aspect override, crop.
+        self._fit_to_window = True  # True=Fit (letterbox), False=Fill (crop-to-fill)
+        self._zoom = 1.0
+        self._aspect_override: Optional[float] = None  # width/height
+        self._crop_ratio: Optional[float] = None  # width/height
+
+        # Cache key includes transform + current frame identity.
+        self._cache_frame_key: Optional[int] = None
+        self._cache_src_rect: Optional[tuple[int, int, int, int]] = None
+
         # Suppress an immediate "click" after a context menu closes.
         # (On Windows, Qt can replay the mouse event that dismissed the menu.)
         self._suppress_click_until_ts = 0.0
@@ -79,7 +89,61 @@ class VideoWidget(QWidget):
         self._frame = frame
         # Invalidate scaled cache; new source image.
         self._cache_src_size = None
+        self._cache_frame_key = None
         self.update()
+
+    def set_view_transform(
+        self,
+        *,
+        fit_to_window: bool,
+        zoom: float,
+        aspect_override: Optional[float],
+        crop_ratio: Optional[float],
+    ) -> None:
+        """Set VLC-like view transform parameters.
+
+        aspect_override/crop_ratio are width/height floats (e.g. 16/9).
+        Use None for Auto/Off.
+        """
+        self._fit_to_window = bool(fit_to_window)
+        try:
+            z = float(zoom)
+        except Exception:
+            z = 1.0
+        if z <= 0:
+            z = 1.0
+        self._zoom = max(0.1, min(8.0, float(z)))
+
+        def _clean_ratio(r: Optional[float]) -> Optional[float]:
+            if r is None:
+                return None
+            try:
+                rr = float(r)
+            except Exception:
+                return None
+            if rr <= 0.0 or rr != rr:
+                return None
+            return max(0.05, min(20.0, rr))
+
+        self._aspect_override = _clean_ratio(aspect_override)
+        self._crop_ratio = _clean_ratio(crop_ratio)
+
+        # Invalidate cache.
+        self._cache_src_size = None
+        self._cache_target_size = None
+        self._cache_scaled = None
+        self._cache_frame_key = None
+        self._cache_src_rect = None
+        self.update()
+
+    def grab_current_image(self) -> Optional[QImage]:
+        """Return a copy of the current decoded frame image (for snapshot/wallpaper)."""
+        try:
+            if self._frame is None or self._frame.image.isNull():
+                return None
+            return self._frame.image.copy()
+        except Exception:
+            return None
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         # Invalidate scaled cache; target size changed.
@@ -97,21 +161,104 @@ class VideoWidget(QWidget):
         img = self._frame.image
         target = self.rect()
 
-        src_size = (img.width(), img.height())
-        tgt_size = (target.width(), target.height())
-        if self._cache_scaled is None or self._cache_src_size != src_size or self._cache_target_size != tgt_size:
-            self._cache_scaled = img.scaled(
-                target.size(),
-                Qt.AspectRatioMode.KeepAspectRatio,
-                # Smooth looks nicer but is expensive; caching makes it OK.
+        # Compute crop source rect.
+        src_w = int(img.width())
+        src_h = int(img.height())
+        if src_w <= 0 or src_h <= 0:
+            painter.end()
+            return
+
+        crop_x = 0
+        crop_y = 0
+        crop_w = src_w
+        crop_h = src_h
+        if self._crop_ratio is not None:
+            r = float(self._crop_ratio)
+            if r > 0:
+                src_r = float(src_w) / float(src_h)
+                if src_r > r:
+                    # Too wide: crop width.
+                    crop_w = int(round(float(src_h) * r))
+                    crop_w = max(1, min(crop_w, src_w))
+                    crop_x = int((src_w - crop_w) // 2)
+                else:
+                    # Too tall: crop height.
+                    crop_h = int(round(float(src_w) / r))
+                    crop_h = max(1, min(crop_h, src_h))
+                    crop_y = int((src_h - crop_h) // 2)
+
+        src_rect = QRect(int(crop_x), int(crop_y), int(crop_w), int(crop_h))
+
+        # Presentation aspect ratio.
+        if self._aspect_override is not None:
+            aspect = float(self._aspect_override)
+        else:
+            aspect = float(crop_w) / float(crop_h)
+        if aspect <= 0:
+            aspect = 1.0
+
+        # Compute draw rect size using fit/fill + zoom.
+        tw = max(1, int(target.width()))
+        th = max(1, int(target.height()))
+        target_r = float(tw) / float(th)
+
+        if self._fit_to_window:
+            # Fit (letterbox): take largest rect that fits inside widget.
+            if target_r >= aspect:
+                draw_h = float(th)
+                draw_w = draw_h * aspect
+            else:
+                draw_w = float(tw)
+                draw_h = draw_w / aspect
+        else:
+            # Fill (crop-to-fill): take smallest rect that covers widget.
+            if target_r >= aspect:
+                draw_w = float(tw)
+                draw_h = draw_w / aspect
+            else:
+                draw_h = float(th)
+                draw_w = draw_h * aspect
+
+        z = float(self._zoom) if self._zoom else 1.0
+        draw_w *= z
+        draw_h *= z
+
+        draw_w_i = max(1, int(round(draw_w)))
+        draw_h_i = max(1, int(round(draw_h)))
+
+        # Scale/crop image into draw size.
+        src_size = (src_w, src_h)
+        tgt_size = (draw_w_i, draw_h_i)
+        frame_key = None
+        try:
+            frame_key = int(img.cacheKey())
+        except Exception:
+            frame_key = None
+        src_rect_key = (int(src_rect.x()), int(src_rect.y()), int(src_rect.width()), int(src_rect.height()))
+
+        if (
+            self._cache_scaled is None
+            or self._cache_src_size != src_size
+            or self._cache_target_size != tgt_size
+            or self._cache_frame_key != frame_key
+            or self._cache_src_rect != src_rect_key
+        ):
+            # NOTE: copy() is required; QImage views over temporary bytes can get invalid.
+            cropped = img.copy(src_rect)
+            self._cache_scaled = cropped.scaled(
+                draw_w_i,
+                draw_h_i,
+                Qt.AspectRatioMode.IgnoreAspectRatio,
                 Qt.TransformationMode.SmoothTransformation,
             )
             self._cache_src_size = src_size
             self._cache_target_size = tgt_size
+            self._cache_frame_key = frame_key
+            self._cache_src_rect = src_rect_key
 
         scaled = self._cache_scaled
-        x = (target.width() - scaled.width()) // 2
-        y = (target.height() - scaled.height()) // 2
+        x = int((tw - scaled.width()) // 2)
+        y = int((th - scaled.height()) // 2)
         painter.drawImage(x, y, scaled)
         painter.end()
 
