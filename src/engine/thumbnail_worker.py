@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from collections import OrderedDict
+from collections import OrderedDict, deque
 from dataclasses import dataclass
 from typing import Optional
 
@@ -66,12 +66,30 @@ class ThumbnailWorker(QObject):
         self._fine_lru: OrderedDict[int, tuple[QImage, float]] = OrderedDict()
 
         # Coarse build state
-        self._coarse_next_index = 0
         self._coarse_total = 0
+        self._coarse_anchor_mid = 0
+        self._coarse_rr = 0
+        self._coarse_done = False
+
+        # Coarse scheduler cursors
+        # Each cursor is an index; ranges are defined by step/bounds.
+        self._a_fwd = 0
+        self._b_left = 0
+        self._b_right = 0
+        self._c_left = 0
+
+        # Priority coarse work injected from UI hover.
+        self._coarse_priority: deque[int] = deque()
 
         # Fine request state (latest only)
         self._pending_fine_bucket_ms: Optional[int] = None
         self._pending_fine_req_id = 0
+
+        # While user is actively hovering/scrubbing, we want fine thumbnails to
+        # feel instant. Coarse prebuild seeks can interfere (seek thrash + long
+        # GOP decode). We therefore pause coarse work for a short window after
+        # any fine activity.
+        self._fine_activity_until_wall: float = 0.0
 
     # ------------------------- lifecycle -------------------------
 
@@ -136,7 +154,10 @@ class ThumbnailWorker(QObject):
         if changed:
             self._reset_for_new_media()
 
+        prev_total = int(self._coarse_total)
         self._recompute_coarse_total()
+        if int(self._coarse_total) != prev_total:
+            self._reset_coarse_schedule()
         log_event("thumb", f"open_media changed={changed} dur={self._duration_s:.3f}s")
 
     @Slot(int)
@@ -153,6 +174,36 @@ class ThumbnailWorker(QObject):
 
         self._pending_fine_bucket_ms = bucket_ms
         self._pending_fine_req_id += 1
+
+        # Pause coarse work for a bit.
+        try:
+            self._fine_activity_until_wall = max(float(self._fine_activity_until_wall), float(time.monotonic()) + 0.75)
+        except Exception:
+            pass
+
+    @Slot(int)
+    def prioritize_time(self, time_ms: int) -> None:
+        """Hint from UI: user is hovering around time_ms.
+
+        We enqueue the coarse bucket for that time (plus neighbors) so the
+        placeholder is less likely to be shown even before the sequential build
+        reaches that region.
+        """
+        if self._coarse_total <= 0:
+            return
+        step_ms = int(max(1, self._cfg.coarse_interval_s * 1000.0))
+        idx = int(max(0, int(time_ms)) // step_ms)
+        idx = max(0, min(idx, int(self._coarse_total) - 1))
+        # Add center + near buckets.
+        for j in (idx - 1, idx, idx + 1):
+            if 0 <= j < int(self._coarse_total):
+                self._coarse_priority.append(int(j))
+
+        # Also count as activity so coarse doesn't steal cycles during hover.
+        try:
+            self._fine_activity_until_wall = max(float(self._fine_activity_until_wall), float(time.monotonic()) + 0.30)
+        except Exception:
+            pass
 
     def get_coarse(self, time_ms: int) -> Optional[QImage]:
         cfg = self._cfg
@@ -175,8 +226,8 @@ class ThumbnailWorker(QObject):
         self._video_tb = 0.0
         self._coarse.clear()
         self._fine_lru.clear()
-        self._coarse_next_index = 0
         self._coarse_total = 0
+        self._reset_coarse_schedule()
         self._pending_fine_bucket_ms = None
         self._pending_fine_req_id += 1
 
@@ -186,6 +237,95 @@ class ThumbnailWorker(QObject):
             self._coarse_total = 0
             return
         self._coarse_total = int(self._duration_s // float(cfg.coarse_interval_s)) + 1
+
+    def _reset_coarse_schedule(self) -> None:
+        # Scheduler reset; does not clear already-built coarse cache (that is
+        # handled by _reset_for_new_media).
+        n = int(self._coarse_total)
+        self._coarse_done = False
+        self._coarse_rr = 0
+        self._coarse_priority.clear()
+
+        if n <= 0:
+            self._coarse_anchor_mid = 0
+            self._a_fwd = 0
+            self._b_left = 0
+            self._b_right = 0
+            self._c_left = 0
+            return
+
+        self._coarse_anchor_mid = int(n // 2)
+        self._a_fwd = 0
+        self._b_left = int(self._coarse_anchor_mid)
+        self._b_right = int(self._coarse_anchor_mid)
+        self._c_left = int(n - 1)
+
+    def _next_coarse_index(self) -> Optional[int]:
+        """Return next coarse bucket index to generate.
+
+        Strategy:
+        1) Serve any hover-priority indices first.
+        2) Otherwise, round-robin across 4 expanding fronts:
+           - start -> mid
+           - mid -> start
+           - mid -> end
+           - end -> mid
+        """
+        n = int(self._coarse_total)
+        if n <= 0 or self._coarse_done:
+            return None
+
+        # 1) Priority queue.
+        while self._coarse_priority:
+            idx = int(self._coarse_priority.popleft())
+            if idx < 0 or idx >= n:
+                continue
+            bucket_ms = int(idx * self._cfg.coarse_interval_s * 1000.0)
+            if bucket_ms in self._coarse:
+                continue
+            return idx
+
+        # 2) Round-robin across cursors.
+        order = ("a_fwd", "b_left", "b_right", "c_left")
+        tried = 0
+        while tried < len(order):
+            name = order[int(self._coarse_rr) % len(order)]
+            self._coarse_rr = (int(self._coarse_rr) + 1) % len(order)
+            tried += 1
+
+            idx = None
+            if name == "a_fwd":
+                if self._a_fwd <= int(self._coarse_anchor_mid):
+                    idx = int(self._a_fwd)
+                    self._a_fwd += 1
+            elif name == "b_left":
+                if self._b_left >= 0:
+                    idx = int(self._b_left)
+                    self._b_left -= 1
+            elif name == "b_right":
+                if self._b_right <= (n - 1):
+                    idx = int(self._b_right)
+                    self._b_right += 1
+            elif name == "c_left":
+                if self._c_left >= int(self._coarse_anchor_mid):
+                    idx = int(self._c_left)
+                    self._c_left -= 1
+
+            if idx is None:
+                continue
+            if idx < 0 or idx >= n:
+                continue
+
+            bucket_ms = int(idx * self._cfg.coarse_interval_s * 1000.0)
+            if bucket_ms in self._coarse:
+                # Keep searching.
+                continue
+            return idx
+
+        # If none found in this cycle, we might be complete.
+        if len(self._coarse) >= n:
+            self._coarse_done = True
+        return None
 
     def _ensure_container(self) -> bool:
         if not self._path:
@@ -236,7 +376,11 @@ class ThumbnailWorker(QObject):
             req_id = int(self._pending_fine_req_id)
             # Clear pending so repeated ticks don't redo if decode is slow.
             self._pending_fine_bucket_ms = None
-            img, pts = self._decode_near_time(float(bucket_ms) / 1000.0)
+            img, pts = self._decode_near_time(
+                float(bucket_ms) / 1000.0,
+                any_frame=True,
+                max_frames=180,
+            )
             if img is not None and req_id == self._pending_fine_req_id:
                 self._fine_lru[bucket_ms] = (img, float(pts))
                 self._fine_lru.move_to_end(bucket_ms)
@@ -248,21 +392,29 @@ class ThumbnailWorker(QObject):
         if self._coarse_total <= 0:
             return
 
-        step_s = float(self._cfg.coarse_interval_s)
+        # If there was recent fine activity, don't do coarse work.
+        try:
+            if float(time.monotonic()) < float(self._fine_activity_until_wall):
+                return
+        except Exception:
+            pass
+
         per_tick = int(max(1, self._cfg.coarse_per_tick))
         done_before = len(self._coarse)
 
         for _ in range(per_tick):
-            if self._coarse_next_index >= self._coarse_total:
+            idx = self._next_coarse_index()
+            if idx is None:
                 break
-            t = float(self._coarse_next_index) * step_s
+
+            t = float(idx) * float(self._cfg.coarse_interval_s)
             bucket_ms = int(t * 1000.0)
-            self._coarse_next_index += 1
 
-            if bucket_ms in self._coarse:
-                continue
-
-            img, _pts = self._decode_near_time(t)
+            img, _pts = self._decode_near_time(
+                float(t),
+                any_frame=False,
+                max_frames=90,
+            )
             if img is None:
                 continue
             self._coarse[bucket_ms] = img
@@ -274,14 +426,16 @@ class ThumbnailWorker(QObject):
         except Exception:
             pass
 
-    def _decode_near_time(self, time_s: float) -> tuple[Optional[QImage], float]:
+    def _decode_near_time(self, time_s: float, *, any_frame: bool, max_frames: int) -> tuple[Optional[QImage], float]:
         if self._container is None or self._vstream is None:
             return None, 0.0
 
         target = float(max(0.0, time_s))
         try:
-            # Seek to closest keyframe before target.
-            self._container.seek(int(target * 1_000_000), any_frame=False, backward=True)
+            # Seek near target.
+            # any_frame=True is usually faster for interactive preview because it
+            # can seek closer than keyframe-only, reducing decode work.
+            self._container.seek(int(target * 1_000_000), any_frame=bool(any_frame), backward=True)
 
             chosen = None
             chosen_pts = 0.0
@@ -289,7 +443,7 @@ class ThumbnailWorker(QObject):
             last_pts = 0.0
 
             # Bound decode effort.
-            max_frames = 600
+            max_frames = int(max(1, max_frames))
             decoded = 0
             for packet in self._container.demux((self._vstream,)):
                 for frame in packet.decode():

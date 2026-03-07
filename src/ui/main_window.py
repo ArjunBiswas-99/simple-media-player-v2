@@ -72,10 +72,11 @@ class MainWindow(QMainWindow):
         self._thumb_popup = ThumbnailPopup(self)
         self._thumb_popup.set_thumbnail_size(160, 90)
         self._thumb_last_hover_ms: int = 0
-        self._thumb_debounce = QTimer(self)
-        self._thumb_debounce.setSingleShot(True)
-        self._thumb_debounce.setInterval(90)
-        self._thumb_debounce.timeout.connect(self._request_fine_thumbnail)
+        # Fine thumbnail requests: throttle (not debounce) so moving hover still
+        # produces images quickly even if coarse cache isn't ready.
+        self._thumb_last_fine_bucket_ms: int = -1
+        self._thumb_last_fine_req_wall: float = 0.0
+        self._thumb_fine_min_interval_s: float = 0.12
 
         # Thumb worker thread (completely separate from playback).
         self._thumb_worker = ThumbnailWorker()
@@ -236,6 +237,17 @@ class MainWindow(QMainWindow):
 
         self._thumb_popup.set_preview(coarse, v)
 
+        # Hint the worker to prioritize coarse buckets around hover.
+        try:
+            QMetaObject.invokeMethod(
+                self._thumb_worker,
+                "prioritize_time",
+                Qt.ConnectionType.QueuedConnection,
+                Q_ARG(int, int(v)),
+            )
+        except Exception:
+            pass
+
         # Position above the timeline (global coordinates).
         try:
             g = self.controls.timeline.mapToGlobal(self.controls.timeline.rect().topLeft())
@@ -247,14 +259,32 @@ class MainWindow(QMainWindow):
             # Best effort
             self._thumb_popup.show()
 
-        # Debounce refine requests.
-        self._thumb_debounce.stop()
-        self._thumb_debounce.start()
+        # Throttled fine requests (bucketed to 1s).
+        self._maybe_request_fine_thumbnail(v)
 
     def _on_timeline_preview_left(self) -> None:
-        self._thumb_debounce.stop()
         try:
             self._thumb_popup.hide()
+        except Exception:
+            pass
+
+    def _maybe_request_fine_thumbnail(self, hover_ms: int) -> None:
+        # Only request if user moved to a new bucket or enough time elapsed.
+        try:
+            bucket_ms = int((int(hover_ms) // 1000) * 1000)
+            now = float(time.monotonic())
+            # If the bucket changed, request immediately (best UX).
+            if bucket_ms != int(self._thumb_last_fine_bucket_ms):
+                self._thumb_last_fine_bucket_ms = int(bucket_ms)
+                self._thumb_last_fine_req_wall = float(now)
+                self._request_fine_thumbnail()
+                return
+
+            # Otherwise (same bucket), throttle repeated requests.
+            if (now - float(self._thumb_last_fine_req_wall)) < float(self._thumb_fine_min_interval_s):
+                return
+            self._thumb_last_fine_req_wall = float(now)
+            self._request_fine_thumbnail()
         except Exception:
             pass
 
