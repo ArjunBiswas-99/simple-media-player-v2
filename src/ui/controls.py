@@ -78,7 +78,7 @@ class OverlayControls(QWidget):
                 font-size: 15px;
                 font-weight: 600;
                 font-family: 'Inter', 'Segoe UI';
-                padding: 1px 7px;
+                padding: 1px 6px;
             }
             QLabel#fileLabel {
                 color: rgba(255,255,255,186);
@@ -149,7 +149,8 @@ class OverlayControls(QWidget):
         self.timeline.setPageStep(5000)
         self.time_label = QLabel("00:00 / 00:00")
         self.time_label.setObjectName("timeChip")
-        self.time_label.setMinimumWidth(142)
+        # Keep this compact; the text itself will size it.
+        self.time_label.setMinimumWidth(0)
         self.time_label.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
 
         row1 = QHBoxLayout()

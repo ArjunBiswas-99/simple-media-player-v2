@@ -237,6 +237,17 @@ class MainWindow(QMainWindow):
         self.controller.seek_ms(0)
         # If you want we can show a HUD later; for now keep it consistent.
 
+    def _set_speed_with_feedback(self, rate: float) -> None:
+        r = float(rate)
+        self.controller.set_playback_rate(r)
+        # Brief HUD feedback like YouTube.
+        if abs(r - 1.0) < 1e-3:
+            self.pane.hide_speed_feedback()
+        else:
+            # Use × glyph for polish.
+            label = f"{r:g}×"
+            self.pane.show_speed_feedback(label)
+
     def _on_video_context_menu(self, global_pos) -> None:
         menu = QMenu(self)
 
@@ -245,25 +256,26 @@ class MainWindow(QMainWindow):
         menu.setStyleSheet(
             """
             QMenu {
-                background: rgba(0, 0, 0, 210);
+                background: rgba(10, 10, 12, 200);
                 color: #ffffff;
-                border: 1px solid rgba(255,255,255,32);
-                padding: 6px;
+                border: 1px solid rgba(255,255,255,38);
+                border-radius: 12px;
+                padding: 8px;
             }
             QMenu::item {
-                padding: 8px 28px 8px 28px;
-                border-radius: 7px;
-                margin: 2px 4px;
+                padding: 9px 34px 9px 30px;
+                border-radius: 10px;
+                margin: 3px 4px;
                 border-left: 3px solid transparent;
             }
             QMenu::item:selected {
-                background: rgba(229, 9, 20, 50);
-                border-left: 3px solid #e50914;
+                background: rgba(229, 9, 20, 46);
+                border-left: 3px solid rgba(229, 9, 20, 255);
             }
             QMenu::separator {
                 height: 1px;
-                margin: 8px 12px;
-                background: rgba(255,255,255,26);
+                margin: 8px 14px;
+                background: rgba(255,255,255,20);
             }
             """
         )
@@ -393,6 +405,49 @@ class MainWindow(QMainWindow):
         act_exit.triggered.connect(self.close)
         media.addAction(act_exit)
 
+        # Playback menu (real actions).
+        playback = bar.addMenu("Playback")
+
+        act_play_pause = QAction("Play/Pause", self)
+        act_play_pause.setShortcut(QKeySequence(Qt.Key.Key_Space))
+        act_play_pause.triggered.connect(self._toggle_play_pause_with_feedback)
+        playback.addAction(act_play_pause)
+
+        act_stop = QAction("Stop", self)
+        act_stop.triggered.connect(self._stop_with_feedback)
+        playback.addAction(act_stop)
+
+        playback.addSeparator()
+
+        # Phase 1: no playlist yet, so Previous/Next map to skip back/forward.
+        act_prev = QAction("Previous", self)
+        act_prev.setShortcut(QKeySequence(Qt.Key.Key_Left))
+        act_prev.triggered.connect(self._skip_backward)
+        playback.addAction(act_prev)
+
+        act_next = QAction("Next", self)
+        act_next.setShortcut(QKeySequence(Qt.Key.Key_Right))
+        act_next.triggered.connect(self._skip_forward)
+        playback.addAction(act_next)
+
+        playback.addSeparator()
+
+        act_jump_back = QAction("Jump Backward", self)
+        act_jump_back.triggered.connect(self._skip_backward)
+        playback.addAction(act_jump_back)
+
+        act_jump_fwd = QAction("Jump Forward", self)
+        act_jump_fwd.triggered.connect(self._skip_forward)
+        playback.addAction(act_jump_fwd)
+
+        # Speed submenu.
+        speed = playback.addMenu("Speed")
+        for rate in (0.5, 1.0, 1.5, 2.0):
+            a = QAction(f"{rate:g}×", self)
+            # Mark current speed as checkable later (when we track rate in UI).
+            a.triggered.connect(lambda _checked=False, r=rate: self._set_speed_with_feedback(r))
+            speed.addAction(a)
+
         # Other menus are placeholders for later phases.
         def add_placeholder_menu(name: str, items: list[str]) -> None:
             menu = bar.addMenu(name)
@@ -401,18 +456,6 @@ class MainWindow(QMainWindow):
                 act.setEnabled(False)
                 menu.addAction(act)
 
-        add_placeholder_menu(
-            "Playback",
-            [
-                "Play/Pause",
-                "Stop",
-                "Next",
-                "Previous",
-                "Jump Forward",
-                "Jump Backward",
-                "Speed",
-            ],
-        )
         add_placeholder_menu("Audio", ["Track", "Mute", "Volume", "Delay"])
         add_placeholder_menu("Video", ["Track", "Aspect Ratio", "Crop", "Rotate", "Filters"])
         add_placeholder_menu("Subtitle", ["Track", "Load External...", "Delay"])
