@@ -245,46 +245,62 @@ class PlaybackController(QObject):
             throttle_seconds=0.25,
         )
 
-        # Present at most one frame per tick.
-        v = self._pending_video
-        if v is None:
-            # If we don't already have a pending early frame, pull from queue.
-            for _ in range(3):
-                v = self._video_q.get_nowait()
-                if v is None:
-                    return
+        # Frame pacing:
+        # Prefer *smooth* catch-up over bursty multi-present. When we're behind,
+        # drain queued frames up to (<= media_clock), then present the latest.
 
-                if self._drop_video_until is not None and v.pts_seconds < self._drop_video_until:
-                    continue
-                if self._drop_video_until is not None and v.pts_seconds >= self._drop_video_until:
-                    self._drop_video_until = None
+        latest_eligible: Optional[DecodedVideo] = None
+
+        # Start with pending, if any.
+        if self._pending_video is not None:
+            v = self._pending_video
+            if v.pts_seconds > media_clock:
+                # Still early.
+                log_event("controller", f"pending pts={v.pts_seconds:.3f} mc={media_clock:.3f}", throttle_key="pending", throttle_seconds=0.15)
+                return
+
+            # Pending is eligible.
+            self._pending_video = None
+            latest_eligible = v
+
+        # Drain a few frames from the queue.
+        for _ in range(6):
+            v = self._video_q.get_nowait()
+            if v is None:
                 break
 
-        if v is None:
+            if self._drop_video_until is not None and v.pts_seconds < self._drop_video_until:
+                continue
+            if self._drop_video_until is not None and v.pts_seconds >= self._drop_video_until:
+                self._drop_video_until = None
+
+            if self._scheduler.should_drop(v.pts_seconds, media_clock):
+                log_event("controller", f"drop pts={v.pts_seconds:.3f} mc={media_clock:.3f}", throttle_key="drop", throttle_seconds=0.15)
+                continue
+
+            if v.pts_seconds > media_clock:
+                # Keep the first early frame for next tick.
+                self._pending_video = v
+                break
+
+            latest_eligible = v
+
+        if latest_eligible is None:
             return
 
-        # Drop if video is too far behind audio.
-        if self._scheduler.should_drop(v.pts_seconds, media_clock):
-            self._pending_video = None
-            log_event("controller", f"drop pts={v.pts_seconds:.3f} mc={media_clock:.3f}", throttle_key="drop", throttle_seconds=0.15)
-            return
-
-        # If frame is early, keep it pending until next tick.
-        if v.pts_seconds > media_clock:
-            self._pending_video = v
-            log_event("controller", f"pending pts={v.pts_seconds:.3f} mc={media_clock:.3f}", throttle_key="pending", throttle_seconds=0.15)
-            return
-
-        self._pending_video = None
-
-        # QImage must own its memory => copy().
+        # Present the latest eligible frame (smooth catch-up).
         img = QImage(
-            v.rgb_bytes,
-            v.width,
-            v.height,
-            v.bytes_per_line,
+            latest_eligible.rgb_bytes,
+            latest_eligible.width,
+            latest_eligible.height,
+            latest_eligible.bytes_per_line,
             QImage.Format.Format_RGB888,
         ).copy()
-        self.video_frame_ready.emit(VideoFrame(image=img, pts_seconds=v.pts_seconds))
-        log_event("controller", f"present pts={v.pts_seconds:.3f} mc={media_clock:.3f}", throttle_key="present", throttle_seconds=0.15)
+        self.video_frame_ready.emit(VideoFrame(image=img, pts_seconds=latest_eligible.pts_seconds))
+        log_event(
+            "controller",
+            f"present pts={latest_eligible.pts_seconds:.3f} mc={media_clock:.3f}",
+            throttle_key="present",
+            throttle_seconds=0.15,
+        )
         return

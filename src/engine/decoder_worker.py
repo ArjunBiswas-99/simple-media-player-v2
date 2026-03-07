@@ -324,7 +324,10 @@ class DecoderWorker(QObject):
                 with self._lock:
                     self._playback_rate = float(pending_rate)
 
-                self._video_q.clear()
+                # Clearing audio is necessary because the tempo filter changes,
+                # but clearing video causes a visible rebuffer/jitter window.
+                # Video timing is controlled by the controller clock, so we can
+                # keep already-decoded frames.
                 self._audio_q.clear()
 
                 # Rebuild filter graph if we have an open stream.

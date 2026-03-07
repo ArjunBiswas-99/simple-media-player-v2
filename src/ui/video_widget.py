@@ -57,6 +57,11 @@ class VideoWidget(QWidget):
         # Single click is emitted only after the double-click window.
         self._single_click_delay_ms = int(self._double_click_window_ms)
 
+        # Render cache: scaling every paint is expensive.
+        self._cache_src_size = None  # (w, h)
+        self._cache_target_size = None  # (w, h)
+        self._cache_scaled: Optional[QImage] = None
+
     user_activity = Signal()
     single_clicked = Signal()
     double_clicked = Signal()
@@ -65,7 +70,14 @@ class VideoWidget(QWidget):
 
     def set_frame(self, frame: Optional[VideoFrame]) -> None:
         self._frame = frame
+        # Invalidate scaled cache; new source image.
+        self._cache_src_size = None
         self.update()
+
+    def resizeEvent(self, event) -> None:  # noqa: N802
+        # Invalidate scaled cache; target size changed.
+        self._cache_target_size = None
+        super().resizeEvent(event)
 
     def paintEvent(self, event) -> None:  # noqa: N802
         painter = QPainter(self)
@@ -77,11 +89,20 @@ class VideoWidget(QWidget):
 
         img = self._frame.image
         target = self.rect()
-        scaled = img.scaled(
-            target.size(),
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation,
-        )
+
+        src_size = (img.width(), img.height())
+        tgt_size = (target.width(), target.height())
+        if self._cache_scaled is None or self._cache_src_size != src_size or self._cache_target_size != tgt_size:
+            self._cache_scaled = img.scaled(
+                target.size(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                # Smooth looks nicer but is expensive; caching makes it OK.
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            self._cache_src_size = src_size
+            self._cache_target_size = tgt_size
+
+        scaled = self._cache_scaled
         x = (target.width() - scaled.width()) // 2
         y = (target.height() - scaled.height()) // 2
         painter.drawImage(x, y, scaled)
