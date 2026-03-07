@@ -15,6 +15,7 @@ from playback.controller import PlaybackController
 from ui.controls import ControlsState
 from ui.icons import ICONS, IconSpec
 from ui.video_pane import VideoPane
+from util.debug_log import log_event
 
 
 class MainWindow(QMainWindow):
@@ -60,6 +61,7 @@ class MainWindow(QMainWindow):
         self.controls.scrub_started.connect(self._on_scrub_started)
         self.controls.scrub_finished.connect(self._on_scrub_finished)
         self.controls.volume_changed.connect(self._on_volume_slider_changed)
+        self.controls.mute_clicked.connect(self._toggle_mute)
         self.controls.rewind_clicked.connect(self._skip_backward)
         self.controls.fast_forward_clicked.connect(self._skip_forward)
 
@@ -99,6 +101,10 @@ class MainWindow(QMainWindow):
         self._skip_last_dir = 0
         self._skip_last_ts = 0.0
         self._skip_steps = 0
+
+        # Hold-to-2x diagnostics: measure effective speed (media seconds per wall second).
+        self._hold_ff_wall_start: Optional[float] = None
+        self._hold_ff_media_start_s: Optional[float] = None
 
         # Track list updates for Audio menu.
         self.controller.audio_tracks_changed.connect(self._on_audio_tracks)
@@ -223,6 +229,7 @@ class MainWindow(QMainWindow):
     def _toggle_play_pause_with_feedback(self) -> None:
         # Determine what the *next* state will be.
         next_playing = not self._is_playing
+        log_event("ui", f"action:toggle_play_pause next={next_playing}")
         self.controller.toggle_play_pause()
 
         # YouTube-like center HUD.
@@ -243,11 +250,42 @@ class MainWindow(QMainWindow):
     def _on_video_hold_fast_forward_start(self) -> None:
         # Switch to true 2x mode (rate-aware clock + audio tempo).
         self._playback_rate = 2.0
+        log_event("ui", "gesture:hold_fast_forward_start set_rate=2.0")
+
+        try:
+            self._hold_ff_wall_start = float(time.monotonic())
+            self._hold_ff_media_start_s = float(self._pos_ms) / 1000.0
+        except Exception:
+            self._hold_ff_wall_start = None
+            self._hold_ff_media_start_s = None
+
         self.controller.set_playback_rate(self._playback_rate)
         self.pane.show_speed_feedback("2×")
 
     def _on_video_hold_fast_forward_end(self) -> None:
         self._playback_rate = 1.0
+        log_event("ui", "gesture:hold_fast_forward_end set_rate=1.0")
+
+        # Diagnostics: compute effective rate during the hold.
+        try:
+            t0 = self._hold_ff_wall_start
+            m0 = self._hold_ff_media_start_s
+            t1 = float(time.monotonic())
+            m1 = float(self._pos_ms) / 1000.0
+            if t0 is not None and m0 is not None:
+                wall = max(1e-6, (t1 - float(t0)))
+                media = float(m1 - float(m0))
+                eff = media / wall
+                log_event(
+                    "ui",
+                    f"diag:hold_2x wall_s={wall:.3f} media_s={media:.3f} effective_rate={eff:.3f}",
+                )
+        except Exception:
+            pass
+        finally:
+            self._hold_ff_wall_start = None
+            self._hold_ff_media_start_s = None
+
         self.controller.set_playback_rate(self._playback_rate)
         self.pane.hide_speed_feedback()
 
@@ -260,6 +298,7 @@ class MainWindow(QMainWindow):
     def _set_speed_with_feedback(self, rate: float) -> None:
         r = float(rate)
         self._playback_rate = r
+        log_event("ui", f"menu:speed_set rate={r:.2f}")
         self.controller.set_playback_rate(r)
         # Brief HUD feedback like YouTube.
         if abs(r - 1.0) < 1e-3:
@@ -286,6 +325,7 @@ class MainWindow(QMainWindow):
                 pass
 
     def _toggle_mute(self) -> None:
+        log_event("ui", f"action:toggle_mute current_volume={self._volume}")
         if self._volume > 0:
             self._mute_restore_volume = int(self._volume)
             self._apply_volume(0, show_hud=True)
@@ -511,6 +551,7 @@ class MainWindow(QMainWindow):
 
     def _toggle_fullscreen_with_feedback(self) -> None:
         entering = not self.isFullScreen()
+        log_event("ui", f"action:toggle_fullscreen entering={entering}")
         self._toggle_fullscreen()
         self.pane.show_fullscreen_feedback(entering)
         try:

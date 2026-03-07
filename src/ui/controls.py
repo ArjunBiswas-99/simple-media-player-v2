@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
 
 from ui.icons import ICONS, IconSpec
 from ui.animated_button import AnimatedToolButton
+from util.debug_log import log_event
 
 
 @dataclass
@@ -49,11 +50,17 @@ class OverlayControls(QWidget):
     scrub_started = Signal(int)  # position_ms
     scrub_finished = Signal(int)  # position_ms
     volume_changed = Signal(int)  # 0-100
+    mute_clicked = Signal()
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        # IMPORTANT: Do not rely only on the global app QSS for sliders.
+        # Qt can briefly "repolish" widgets on click/focus and you might see
+        # a 1-frame fallback to the app-wide QSlider handle.
+        # We keep high-level styling here, but we apply slider-specific QSS
+        # directly on the slider widgets (see below) to prevent flicker.
         self.setStyleSheet(
             """
             OverlayControls {
@@ -71,14 +78,15 @@ class OverlayControls(QWidget):
             }
             QLabel { color: #f4f4f4; font-size: 13px; }
             QLabel#timeChip {
-                color: #ffffff;
-                background: rgba(255,255,255,4);
-                border: 1px solid rgba(255,255,255,12);
-                border-radius: 8px;
-                font-size: 15px;
+                /* Minimal YouTube/Netflix-like time text (no heavy chip) */
+                color: rgba(255,255,255,220);
+                background: transparent;
+                border: none;
+                border-radius: 0px;
+                font-size: 14px;
                 font-weight: 600;
                 font-family: 'Inter', 'Segoe UI';
-                padding: 1px 6px;
+                padding: 0px;
             }
             QLabel#fileLabel {
                 color: rgba(255,255,255,186);
@@ -109,34 +117,60 @@ class OverlayControls(QWidget):
                 border: 1px solid rgba(229, 9, 20, 200);
             }
 
-            QSlider::groove:horizontal {
-                height: 7px;
-                border-radius: 4px;
-                background: rgba(255,255,255,30);
-                border: 1px solid rgba(255,255,255,16);
-            }
-            QSlider::sub-page:horizontal {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #b80812,
-                    stop:1 #ff2735
-                );
-                border-radius: 4px;
-            }
-            QSlider::handle:horizontal {
-                background: qradialgradient(
-                    cx:0.45, cy:0.35, radius:0.9,
-                    fx:0.35, fy:0.3,
-                    stop:0 #ffffff,
-                    stop:1 #f0f0f0
-                );
-                border: 2px solid #e50914;
-                width: 16px;
-                height: 16px;
-                margin: -4px 0;
-                border-radius: 8px;
-            }
             """
+        )
+
+        self._timeline_slider_qss = (
+            "QSlider::groove:horizontal {"
+            "  height: 6px; border-radius: 3px;"
+            "  background: rgba(255,255,255,22); border: 1px solid rgba(255,255,255,12);"
+            "}"
+            "QSlider::sub-page:horizontal {"
+            "  background: qlineargradient(x1:0, y1:0, x2:1, y2:0,"
+            "    stop:0 rgba(229, 9, 20, 210),"
+            "    stop:1 rgba(255, 39, 53, 255)"
+            "  );"
+            "  border-radius: 3px;"
+            "}"
+            "QSlider::add-page:horizontal {"
+            "  background: rgba(255,255,255,22); border-radius: 3px;"
+            "}"
+            "QSlider::handle:horizontal {"
+            "  background: #ffffff;"
+            "  border: 2px solid rgba(229, 9, 20, 255);"
+            "  width: 10px; height: 10px; margin: -4px 0; border-radius: 6px;"
+            "}"
+            "QSlider::handle:horizontal:hover {"
+            "  width: 14px; height: 14px; margin: -6px 0; border-radius: 8px;"
+            "}"
+            "QSlider::handle:horizontal:pressed {"
+            "  width: 16px; height: 16px; margin: -7px 0; border-radius: 9px;"
+            "  background: #ffffff;"
+            "}"
+        )
+
+        self._volume_slider_qss = (
+            "QSlider::groove:horizontal {"
+            "  height: 5px; border-radius: 3px;"
+            "  background: rgba(255,255,255,18); border: 1px solid rgba(255,255,255,12);"
+            "}"
+            "QSlider::sub-page:horizontal {"
+            "  background: rgba(255,255,255,200); border-radius: 3px;"
+            "}"
+            "QSlider::add-page:horizontal {"
+            "  background: rgba(255,255,255,18); border-radius: 3px;"
+            "}"
+            "QSlider::handle:horizontal {"
+            "  background: #ffffff;"
+            "  border: 1px solid rgba(255,255,255,90);"
+            "  width: 10px; height: 10px; margin: -4px 0; border-radius: 6px;"
+            "}"
+            "QSlider::handle:horizontal:hover {"
+            "  width: 12px; height: 12px; margin: -5px 0; border-radius: 7px;"
+            "}"
+            "QSlider::handle:horizontal:pressed {"
+            "  width: 14px; height: 14px; margin: -6px 0; border-radius: 8px;"
+            "}"
         )
         # NOTE: Avoid widget-level drop shadow here because it gets clipped
         # by the pane/window edges. The cinematic scrim + translucent surface
@@ -144,6 +178,8 @@ class OverlayControls(QWidget):
 
         # Row 1: timeline + timer
         self.timeline = QSlider(Qt.Orientation.Horizontal)
+        self.timeline.setObjectName("timelineSlider")
+        self.timeline.setStyleSheet(self._timeline_slider_qss)
         self.timeline.setRange(0, 0)
         self.timeline.setSingleStep(1000)
         self.timeline.setPageStep(5000)
@@ -181,10 +217,17 @@ class OverlayControls(QWidget):
         self.open_btn.setIconSize(QSize(18, 18))
 
         self.volume = QSlider(Qt.Orientation.Horizontal)
+        self.volume.setObjectName("volumeSlider")
+        self.volume.setStyleSheet(self._volume_slider_qss)
         self.volume.setRange(0, 100)
         self.volume.setValue(80)
         self.volume.setFixedWidth(132)
         self.volume.setFixedHeight(22)
+
+        self.mute_btn = AnimatedToolButton()
+        self.mute_btn.setIcon(ICONS.icon(IconSpec("fa5s.volume-up")))
+        self.mute_btn.setToolTip("Mute")
+        self.mute_btn.setIconSize(QSize(18, 18))
 
         self.file_label = QLabel("")
         self.file_label.setObjectName("fileLabel")
@@ -217,6 +260,7 @@ class OverlayControls(QWidget):
             self.rewind_btn,
             self.ff_btn,
             self.open_btn,
+            self.mute_btn,
             self.info_btn,
             self.next_btn,
             self.folder_btn,
@@ -235,9 +279,7 @@ class OverlayControls(QWidget):
         row2.addWidget(self.rewind_btn)
         row2.addWidget(self.ff_btn)
         row2.addSpacing(4)
-        vol_lbl = QLabel("VOL")
-        vol_lbl.setObjectName("volLabel")
-        row2.addWidget(vol_lbl)
+        row2.addWidget(self.mute_btn)
         row2.addWidget(self.volume)
         row2.addSpacing(8)
         row2.addWidget(self.file_label, stretch=1)
@@ -256,6 +298,13 @@ class OverlayControls(QWidget):
 
         self._scrubbing = False
 
+        # Logging: keep user-action logs lightweight and non-spammy.
+        self.play_btn.clicked.connect(lambda: log_event("ui", "btn:play_pause"))
+        self.rewind_btn.clicked.connect(lambda: log_event("ui", "btn:rewind"))
+        self.ff_btn.clicked.connect(lambda: log_event("ui", "btn:fast_forward"))
+        self.open_btn.clicked.connect(lambda: log_event("ui", "btn:open"))
+        self.mute_btn.clicked.connect(lambda: log_event("ui", "btn:mute"))
+
         self.play_btn.clicked.connect(self.play_pause_clicked.emit)
         self.rewind_btn.clicked.connect(self.rewind_clicked.emit)
         self.ff_btn.clicked.connect(self.fast_forward_clicked.emit)
@@ -264,6 +313,20 @@ class OverlayControls(QWidget):
         self.timeline.sliderReleased.connect(self._on_scrub_end)
         self.timeline.sliderMoved.connect(self._on_scrub_move)
         self.volume.valueChanged.connect(self.volume_changed.emit)
+        self.mute_btn.clicked.connect(self.mute_clicked.emit)
+
+        self.timeline.sliderPressed.connect(lambda: log_event("ui", f"timeline:scrub_start value={int(self.timeline.value())}"))
+        self.timeline.sliderReleased.connect(lambda: log_event("ui", f"timeline:scrub_end value={int(self.timeline.value())}"))
+        self.volume.sliderPressed.connect(lambda: log_event("ui", f"volume:scrub_start value={int(self.volume.value())}"))
+        self.volume.sliderReleased.connect(lambda: log_event("ui", f"volume:scrub_end value={int(self.volume.value())}"))
+        self.volume.valueChanged.connect(
+            lambda v: log_event(
+                "ui",
+                f"volume:changed value={int(v)}",
+                throttle_key="volume_changed",
+                throttle_seconds=0.25,
+            )
+        )
 
         # Fade animation support (works for child widgets via opacity effect)
         # Chain effects: apply opacity to a child container instead of self.
@@ -298,6 +361,17 @@ class OverlayControls(QWidget):
             self.timeline.setValue(max(0, min(state.position_ms, state.duration_ms)))
 
         self.time_label.setText(f"{_format_ms(state.position_ms)} / {_format_ms(state.duration_ms)}")
+
+        # Update mute icon based on volume.
+        try:
+            if int(state.volume) <= 0:
+                self.mute_btn.setIcon(ICONS.icon(IconSpec("fa5s.volume-mute")))
+            elif int(state.volume) < 35:
+                self.mute_btn.setIcon(ICONS.icon(IconSpec("fa5s.volume-down")))
+            else:
+                self.mute_btn.setIcon(ICONS.icon(IconSpec("fa5s.volume-up")))
+        except Exception:
+            pass
 
         if self.volume.value() != state.volume:
             self.volume.blockSignals(True)

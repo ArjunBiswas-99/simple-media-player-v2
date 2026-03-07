@@ -63,6 +63,22 @@ class PlaybackController(QObject):
         # prevents fast-forward playback.
         self._pending_video: Optional[DecodedVideo] = None
 
+        # When paused, freeze the media clock here so UI doesn't advance.
+        self._paused_media_s: Optional[float] = None
+
+        # Frames that are extremely far ahead of the current media clock after a seek
+        # are almost certainly stale (from the pre-seek decode). We drop them.
+        self._stale_frame_threshold_s = 12.0
+
+        # Video pacing policy.
+        # Normal playback: allow a small lag so motion is smooth.
+        # Fast playback (>1x): drop more aggressively so the motion *feels* faster
+        # (YouTube-style hold-to-2x).
+        self._max_video_lag_normal_s = 0.150
+        self._max_video_lag_fast_s = 0.050
+        self._fast_mode_rate_threshold = 1.05
+        self._fast_mode_allow_ahead_s = 0.030
+
         # Decode thread
         self._worker = DecoderWorker(self._video_q, self._audio_q)
         # Tell decoder what PCM format to produce.
@@ -118,6 +134,11 @@ class PlaybackController(QObject):
             r = 1.0
         r = max(0.5, min(2.0, r))
 
+        log_event(
+            "controller",
+            f"set_playback_rate req={float(rate):.3f} clamped={r:.3f} current={self._playback_rate:.3f}",
+        )
+
         # Compute current media time before switching.
         audio_clock = self._audio.clock_seconds()
         current_media = self._rate_anchor_media_s + (audio_clock - self._rate_anchor_audio_s) * float(self._playback_rate)
@@ -145,6 +166,19 @@ class PlaybackController(QObject):
 
     def play(self) -> None:
         log_event("controller", "play")
+
+        # If we were paused, re-anchor the media clock so resume doesn't jump.
+        if self._paused_media_s is not None:
+            try:
+                paused_media = float(self._paused_media_s)
+            except Exception:
+                paused_media = 0.0
+            self._rate_anchor_media_s = max(0.0, paused_media)
+            self._rate_anchor_audio_s = float(self._audio.clock_seconds())
+            self._drop_video_until = self._rate_anchor_media_s
+            self._pending_video = None
+            self._paused_media_s = None
+
         self._is_playing = True
         self._audio.resume()
         self._worker.set_playing(True)
@@ -152,6 +186,17 @@ class PlaybackController(QObject):
 
     def pause(self) -> None:
         log_event("controller", "pause")
+
+        # Freeze current media time so UI doesn't keep ticking.
+        try:
+            audio_clock = float(self._audio.clock_seconds())
+            media_clock = self._rate_anchor_media_s + (audio_clock - self._rate_anchor_audio_s) * float(self._playback_rate)
+            self._paused_media_s = max(0.0, float(media_clock))
+        except Exception:
+            # Fallback: keep previous paused value.
+            if self._paused_media_s is None:
+                self._paused_media_s = float(self._rate_anchor_media_s)
+
         self._is_playing = False
         self._worker.set_playing(False)
         self._audio.pause()
@@ -175,6 +220,13 @@ class PlaybackController(QObject):
 
         self._drop_video_until = pos_s
         self._pending_video = None
+        self._paused_media_s = None
+
+        # Clear queues immediately on the UI thread so we cannot accidentally
+        # consume stale far-ahead frames before the worker processes the seek.
+        self._video_q.clear()
+        self._audio_q.clear()
+
         self._worker.seek(pos_s)
         self.position_changed.emit(int(position_ms))
 
@@ -274,6 +326,12 @@ class PlaybackController(QObject):
                 break
             self._audio.push_pcm(chunk)
 
+        if not self._is_playing:
+            # Freeze UI time on pause.
+            mc = float(self._paused_media_s) if self._paused_media_s is not None else float(self._rate_anchor_media_s)
+            self.position_changed.emit(int(mc * 1000.0))
+            return
+
         audio_clock = self._audio.clock_seconds()
         media_clock = self._rate_anchor_media_s + (audio_clock - self._rate_anchor_audio_s) * float(self._playback_rate)
         self.position_changed.emit(int(media_clock * 1000.0))
@@ -290,10 +348,31 @@ class PlaybackController(QObject):
 
         latest_eligible: Optional[DecodedVideo] = None
 
+        fast_mode = float(self._playback_rate) >= float(self._fast_mode_rate_threshold)
+        max_lag = float(self._max_video_lag_fast_s if fast_mode else self._max_video_lag_normal_s)
+        allow_ahead = float(self._fast_mode_allow_ahead_s if fast_mode else 0.0)
+
         # Start with pending, if any.
         if self._pending_video is not None:
             v = self._pending_video
-            if v.pts_seconds > media_clock:
+            # If pending is absurdly far ahead, it's stale; drop it.
+            try:
+                if float(v.pts_seconds) - float(media_clock) > float(self._stale_frame_threshold_s):
+                    log_event(
+                        "controller",
+                        f"drop_stale_pending pts={v.pts_seconds:.3f} mc={media_clock:.3f}",
+                        throttle_key="drop_stale_pending",
+                        throttle_seconds=0.25,
+                    )
+                    self._pending_video = None
+                    v = None
+            except Exception:
+                pass
+
+            if v is None:
+                return
+
+            if v.pts_seconds > media_clock and (v.pts_seconds - media_clock) > allow_ahead:
                 # Still early.
                 log_event("controller", f"pending pts={v.pts_seconds:.3f} mc={media_clock:.3f}", throttle_key="pending", throttle_seconds=0.15)
                 return
@@ -302,22 +381,43 @@ class PlaybackController(QObject):
             self._pending_video = None
             latest_eligible = v
 
-        # Drain a few frames from the queue.
-        for _ in range(6):
+        # Drain frames from the queue.
+        # In fast mode we drain more per tick so we can skip ahead more clearly.
+        drain_limit = 6 if not fast_mode else 18
+        for _ in range(int(drain_limit)):
             v = self._video_q.get_nowait()
             if v is None:
                 break
+
+            # Drop stale far-ahead frames (happens after seeking backwards).
+            try:
+                if float(v.pts_seconds) - float(media_clock) > float(self._stale_frame_threshold_s):
+                    log_event(
+                        "controller",
+                        f"drop_stale pts={v.pts_seconds:.3f} mc={media_clock:.3f}",
+                        throttle_key="drop_stale",
+                        throttle_seconds=0.25,
+                    )
+                    continue
+            except Exception:
+                pass
 
             if self._drop_video_until is not None and v.pts_seconds < self._drop_video_until:
                 continue
             if self._drop_video_until is not None and v.pts_seconds >= self._drop_video_until:
                 self._drop_video_until = None
 
-            if self._scheduler.should_drop(v.pts_seconds, media_clock):
-                log_event("controller", f"drop pts={v.pts_seconds:.3f} mc={media_clock:.3f}", throttle_key="drop", throttle_seconds=0.15)
+            # Drop if video is too far behind the media clock.
+            if (float(media_clock) - float(v.pts_seconds)) > float(max_lag):
+                log_event(
+                    "controller",
+                    f"drop pts={v.pts_seconds:.3f} mc={media_clock:.3f} lag={(media_clock - v.pts_seconds):.3f} max_lag={max_lag:.3f}",
+                    throttle_key="drop",
+                    throttle_seconds=0.15,
+                )
                 continue
 
-            if v.pts_seconds > media_clock:
+            if v.pts_seconds > media_clock and (v.pts_seconds - media_clock) > allow_ahead:
                 # Keep the first early frame for next tick.
                 self._pending_video = v
                 break

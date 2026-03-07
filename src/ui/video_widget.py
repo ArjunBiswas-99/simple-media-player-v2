@@ -9,6 +9,8 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QImage, QPainter
 from PySide6.QtWidgets import QWidget
 
+from util.debug_log import log_event
+
 
 @dataclass(frozen=True)
 class VideoFrame:
@@ -128,6 +130,7 @@ class VideoWidget(QWidget):
                 pass
 
             self._pressed = True
+            log_event("pane", "mouse:left_press")
             self._hold_consumed = False
             self._hold_active = False
             self._hold_timer.stop()
@@ -146,9 +149,12 @@ class VideoWidget(QWidget):
             self._pressed = False
             self._hold_timer.stop()
 
+            log_event("pane", f"mouse:left_release hold_active={self._hold_active} hold_consumed={self._hold_consumed}")
+
             if self._hold_active:
                 # End hold gesture (used for "2x while held" behaviors).
                 self._hold_active = False
+                log_event("pane", "gesture:hold_fast_forward_end")
                 self.hold_fast_forward_ended.emit()
 
             if suppress:
@@ -183,6 +189,7 @@ class VideoWidget(QWidget):
                         self._single_click_timer.stop()
                         self._click_count = 0
                         self._click_pos = None
+                        log_event("pane", "gesture:double_click")
                         self.double_clicked.emit()
                     else:
                         # Too slow / far: treat as a new first click.
@@ -202,6 +209,7 @@ class VideoWidget(QWidget):
     def contextMenuEvent(self, event) -> None:  # noqa: N802
         # Right-click context menu request.
         try:
+            log_event("pane", "gesture:context_menu")
             self.context_menu_requested.emit(event.globalPos())
             # Prevent the menu-dismiss click from toggling playback.
             self._suppress_click_until_ts = time.monotonic() + 0.25
@@ -219,6 +227,7 @@ class VideoWidget(QWidget):
         self._click_count = 0
         self._click_pos = None
         self._single_click_timer.stop()
+        log_event("pane", "gesture:hold_fast_forward_start")
         self.hold_fast_forward_started.emit()
 
     def _emit_single_click(self) -> None:
@@ -227,4 +236,5 @@ class VideoWidget(QWidget):
             return
         self._click_count = 0
         self._click_pos = None
+        log_event("pane", "gesture:single_click")
         self.single_clicked.emit()
