@@ -5,7 +5,7 @@ from typing import Optional
 import time
 
 import os
-from PySide6.QtCore import QTimer, Qt
+from PySide6.QtCore import QTimer, Qt, QThread, QObject, QMetaObject, Q_ARG
 from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtGui import QIcon
 from PySide6.QtGui import QKeySequence, QShortcut
@@ -15,7 +15,10 @@ from playback.controller import PlaybackController
 from ui.controls import ControlsState
 from ui.icons import ICONS, IconSpec
 from ui.video_pane import VideoPane
+from ui.thumbnail_popup import ThumbnailPopup
+from engine.thumbnail_worker import ThumbnailWorker, ThumbnailConfig
 from util.debug_log import log_event
+from PySide6.QtGui import QImage
 
 
 class MainWindow(QMainWindow):
@@ -64,6 +67,50 @@ class MainWindow(QMainWindow):
         self.controls.mute_clicked.connect(self._toggle_mute)
         self.controls.rewind_clicked.connect(self._skip_backward)
         self.controls.fast_forward_clicked.connect(self._skip_forward)
+
+        # Timeline thumbnail preview.
+        self._thumb_popup = ThumbnailPopup(self)
+        self._thumb_popup.set_thumbnail_size(160, 90)
+        self._thumb_last_hover_ms: int = 0
+        self._thumb_debounce = QTimer(self)
+        self._thumb_debounce.setSingleShot(True)
+        self._thumb_debounce.setInterval(90)
+        self._thumb_debounce.timeout.connect(self._request_fine_thumbnail)
+
+        # Thumb worker thread (completely separate from playback).
+        self._thumb_worker = ThumbnailWorker()
+        self._thumb_media_path: str = ""
+
+        # NOTE: Use QThread's *event loop* (do NOT override run) so queued
+        # invocations + QTimer inside worker work correctly.
+        self._thumb_thread = QThread(self)
+        self._thumb_worker.moveToThread(self._thumb_thread)
+        self._thumb_worker.coarse_ready.connect(self._on_coarse_thumb)
+        self._thumb_worker.fine_ready.connect(self._on_fine_thumb)
+        self._thumb_worker.error.connect(lambda m: log_event("thumb", f"err={m}"))
+        # Start worker timer once the thread event loop is running.
+        try:
+            self._thumb_thread.started.connect(
+                lambda: QMetaObject.invokeMethod(
+                    self._thumb_worker,
+                    "start",
+                    Qt.ConnectionType.QueuedConnection,
+                )
+            )
+        except Exception:
+            pass
+
+        self._thumb_thread.start()
+
+        # Tune config (runtime only).
+        try:
+            cfg = ThumbnailConfig(thumb_w=160, thumb_h=90, coarse_interval_s=15.0, fine_bucket_s=1.0, max_fine_cache=600)
+            self._thumb_worker.set_config(cfg)
+        except Exception:
+            pass
+
+        self.controls.timeline_preview_moved.connect(self._on_timeline_preview_moved)
+        self.controls.timeline_preview_left.connect(self._on_timeline_preview_left)
 
         self.controls.fullscreen_btn.clicked.connect(self._toggle_fullscreen_with_feedback)
 
@@ -128,8 +175,149 @@ class MainWindow(QMainWindow):
         self.controls.force_visible()
 
     def closeEvent(self, event) -> None:  # noqa: N802
+        # Stop worker deterministically in its own thread (prevents
+        # QObject::killTimer warnings on shutdown).
+        try:
+            QMetaObject.invokeMethod(
+                self._thumb_worker,
+                "stop",
+                Qt.ConnectionType.BlockingQueuedConnection,
+            )
+        except Exception:
+            pass
+
+        try:
+            self._thumb_thread.quit()
+            self._thumb_thread.wait(2000)
+        except Exception:
+            pass
+
+        # Ensure worker is deleted in the correct thread context.
+        try:
+            self._thumb_worker.deleteLater()
+        except Exception:
+            pass
         self.controller.shutdown()
         super().closeEvent(event)
+
+    def _thumb_open_media(self, path: str, duration_s: float) -> None:
+        try:
+            QMetaObject.invokeMethod(
+                self._thumb_worker,
+                "open_media",
+                Qt.ConnectionType.QueuedConnection,
+                Q_ARG(str, str(path)),
+                Q_ARG(float, float(duration_s)),
+            )
+        except Exception:
+            # Fallback (still thread-safe via worker lock).
+            try:
+                self._thumb_worker.open_media(str(path), float(duration_s))
+            except Exception:
+                pass
+
+    def _on_timeline_preview_moved(self, value_ms: int, x_local: int, dragging: bool) -> None:
+        # Show popup immediately with coarse thumb if available.
+        v = int(max(0, value_ms))
+        self._thumb_last_hover_ms = v
+
+        try:
+            # Coarse lookup is thread-safe.
+            coarse = self._thumb_worker.get_coarse(v)
+        except Exception:
+            coarse = None
+
+        log_event(
+            "thumb",
+            f"hover value_ms={v} coarse={'Y' if coarse is not None else 'N'} dragging={bool(dragging)}",
+            throttle_key="thumb_hover",
+            throttle_seconds=0.35,
+        )
+
+        self._thumb_popup.set_preview(coarse, v)
+
+        # Position above the timeline (global coordinates).
+        try:
+            g = self.controls.timeline.mapToGlobal(self.controls.timeline.rect().topLeft())
+            gx = int(g.x() + x_local)
+            gy = int(g.y())
+            clamp = self.geometry()
+            self._thumb_popup.show_at(gx, gy, clamp_rect=clamp)
+        except Exception:
+            # Best effort
+            self._thumb_popup.show()
+
+        # Debounce refine requests.
+        self._thumb_debounce.stop()
+        self._thumb_debounce.start()
+
+    def _on_timeline_preview_left(self) -> None:
+        self._thumb_debounce.stop()
+        try:
+            self._thumb_popup.hide()
+        except Exception:
+            pass
+
+    def _request_fine_thumbnail(self) -> None:
+        v = int(self._thumb_last_hover_ms)
+        log_event(
+            "thumb",
+            f"request_fine value_ms={v}",
+            throttle_key="thumb_req_fine",
+            throttle_seconds=0.35,
+        )
+        try:
+            QMetaObject.invokeMethod(
+                self._thumb_worker,
+                "request_fine",
+                Qt.ConnectionType.QueuedConnection,
+                Q_ARG(int, int(v)),
+            )
+        except Exception:
+            try:
+                self._thumb_worker.request_fine(int(v))
+            except Exception:
+                pass
+
+    def _on_coarse_thumb(self, bucket_ms: int, img_obj: object) -> None:
+        # If user is currently hovering near this bucket, refresh instantly.
+        try:
+            if not self._thumb_popup.isVisible():
+                return
+            # Only refresh if popup time is near this bucket.
+            v = int(self._thumb_last_hover_ms)
+            cfg_step = 15000
+            if abs(int(bucket_ms) - int((v // cfg_step) * cfg_step)) <= cfg_step:
+                img = img_obj if isinstance(img_obj, QImage) else None
+                self._thumb_popup.set_preview(img, v)
+        except Exception:
+            pass
+
+    def _on_fine_thumb(self, bucket_ms: int, img_obj: object, actual_pts_s: float) -> None:
+        # If still hovering, swap to refined thumb.
+        try:
+            if not self._thumb_popup.isVisible():
+                return
+            v = int(self._thumb_last_hover_ms)
+            # Fine bucket is 1s.
+            if abs(int(bucket_ms) - int((v // 1000) * 1000)) <= 1000:
+                img = img_obj if isinstance(img_obj, QImage) else None
+                if img is not None:
+                    self._thumb_popup.set_preview(img, v)
+
+                # Diagnostic: how far the decoded frame is from the requested hover time.
+                try:
+                    target_s = float(v) / 1000.0
+                    log_event(
+                        "thumb",
+                        f"fine_ready target={target_s:.3f}s pts={float(actual_pts_s):.3f}s delta={(float(actual_pts_s)-target_s):+.3f}s",
+                        throttle_key="fine_ready",
+                        throttle_seconds=0.35,
+                    )
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
     def _refresh_controls(self) -> None:
         self.controls.set_state(
@@ -162,6 +350,11 @@ class MainWindow(QMainWindow):
         self._update_title()
         self.controller.open_media(file_path)
 
+        # Kick off thumbnail building.
+        self._thumb_media_path = str(file_path)
+        # Duration may still be 0 at this moment; worker will still open container.
+        self._thumb_open_media(self._thumb_media_path, float(self._dur_ms) / 1000.0)
+
     def _update_title(self) -> None:
         if self._current_filename:
             self.setWindowTitle(f"ArjunMediaPlayer — {self._current_filename}")
@@ -187,6 +380,13 @@ class MainWindow(QMainWindow):
     def _on_duration(self, dur_ms: int) -> None:
         self._dur_ms = int(dur_ms)
         self._refresh_controls()
+
+        # If media was opened before duration became known, re-send with duration.
+        try:
+            if self._thumb_media_path:
+                self._thumb_open_media(self._thumb_media_path, float(self._dur_ms) / 1000.0)
+        except Exception:
+            pass
 
     def _on_error(self, message: str) -> None:
         # Phase 1: keep UX minimal.

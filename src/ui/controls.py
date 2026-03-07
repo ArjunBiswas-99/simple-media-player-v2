@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
 from ui.icons import ICONS, IconSpec
 from ui.animated_button import AnimatedToolButton
 from util.debug_log import log_event
+from ui.hover_seek_slider import HoverSeekSlider
 
 
 @dataclass
@@ -51,6 +52,10 @@ class OverlayControls(QWidget):
     scrub_finished = Signal(int)  # position_ms
     volume_changed = Signal(int)  # 0-100
     mute_clicked = Signal()
+
+    # Preview signals for thumbnail hover UX.
+    timeline_preview_moved = Signal(int, int, bool)  # value_ms, x_local, dragging
+    timeline_preview_left = Signal()
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -177,7 +182,7 @@ class OverlayControls(QWidget):
         # provides the depth.
 
         # Row 1: timeline + timer
-        self.timeline = QSlider(Qt.Orientation.Horizontal)
+        self.timeline = HoverSeekSlider(Qt.Orientation.Horizontal)
         self.timeline.setObjectName("timelineSlider")
         self.timeline.setStyleSheet(self._timeline_slider_qss)
         self.timeline.setRange(0, 0)
@@ -312,6 +317,10 @@ class OverlayControls(QWidget):
         self.timeline.sliderPressed.connect(self._on_scrub_start)
         self.timeline.sliderReleased.connect(self._on_scrub_end)
         self.timeline.sliderMoved.connect(self._on_scrub_move)
+
+        # Bubble preview signals to consumers (MainWindow will drive popup).
+        self.timeline.preview_moved.connect(self.timeline_preview_moved.emit)
+        self.timeline.preview_left.connect(self.timeline_preview_left.emit)
         self.volume.valueChanged.connect(self.volume_changed.emit)
         self.mute_btn.clicked.connect(self.mute_clicked.emit)
 
