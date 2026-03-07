@@ -7,6 +7,7 @@ import time
 import os
 from PySide6.QtCore import QTimer, Qt
 from PySide6.QtGui import QAction
+from PySide6.QtGui import QIcon
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QFileDialog
 
@@ -20,6 +21,14 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.setWindowTitle("ArjunMediaPlayer")
         self.setStyleSheet("QMainWindow{background:#0b0b0b;}")
+
+        # Window icon (title bar / Alt-Tab)
+        try:
+            icon_path = Path(__file__).resolve().parent / "Assets" / "Icon.png"
+            if icon_path.exists():
+                self.setWindowIcon(QIcon(str(icon_path)))
+        except Exception:
+            pass
 
         self.pane = VideoPane()
         self.video = self.pane.video
