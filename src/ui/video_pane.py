@@ -86,9 +86,9 @@ class VideoPane(QWidget):
                 color: #ffffff;
                 background: rgba(8, 8, 10, 130);
                 border: 1px solid rgba(255,255,255,24);
-                border-radius: 46px;
-                padding: 18px 22px;
-                font-size: 42px;
+                border-radius: 62px;
+                padding: 26px 32px;
+                font-size: 62px;
                 font-weight: 800;
             }
             """
@@ -110,6 +110,37 @@ class VideoPane(QWidget):
         self._center_hold_timer = QTimer(self)
         self._center_hold_timer.setSingleShot(True)
         self._center_hold_timer.timeout.connect(self._start_center_fade_out)
+
+        # Fullscreen HUD at center (brief feedback on toggle).
+        self.fullscreen_hud = QLabel("", self)
+        self.fullscreen_hud.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.fullscreen_hud.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.fullscreen_hud.setStyleSheet(
+            """
+            QLabel {
+                color: #ffffff;
+                background: rgba(8, 8, 10, 120);
+                border: 1px solid rgba(255,255,255,20);
+                border-radius: 18px;
+                padding: 10px 16px;
+                font-size: 22px;
+                font-weight: 900;
+                letter-spacing: 0.4px;
+            }
+            """
+        )
+        self.fullscreen_hud.hide()
+
+        self._fs_opacity = QGraphicsOpacityEffect(self.fullscreen_hud)
+        self._fs_opacity.setOpacity(0.0)
+        self.fullscreen_hud.setGraphicsEffect(self._fs_opacity)
+
+        self._fs_fade = QPropertyAnimation(self._fs_opacity, b"opacity", self)
+        self._fs_fade.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self._fs_hold_timer = QTimer(self)
+        self._fs_hold_timer.setSingleShot(True)
+        self._fs_hold_timer.timeout.connect(self._start_fs_fade_out)
 
         # "2x" HUD for press-and-hold fast playback.
         self.speed_hud = QLabel("2×", self)
@@ -252,6 +283,8 @@ class VideoPane(QWidget):
             self._position_skip_hud()
         if self.center_hud.isVisible():
             self._position_center_hud()
+        if self.fullscreen_hud.isVisible():
+            self._position_fullscreen_hud()
         if self.speed_hud.isVisible():
             self._position_speed_hud()
         if self.volume_hud.isVisible():
@@ -274,6 +307,12 @@ class VideoPane(QWidget):
         x = (self.width() - self.speed_hud.width()) // 2
         y = max(0, (self.height() // 2) - 92)
         self.speed_hud.move(max(0, x), max(0, y))
+
+    def _position_fullscreen_hud(self) -> None:
+        self.fullscreen_hud.adjustSize()
+        x = (self.width() - self.fullscreen_hud.width()) // 2
+        y = (self.height() - self.fullscreen_hud.height()) // 2
+        self.fullscreen_hud.move(max(0, x), max(0, y))
 
     def show_skip_feedback(self, direction: int, seconds: int) -> None:
         if direction >= 0:
@@ -345,6 +384,29 @@ class VideoPane(QWidget):
         self._speed_fade.setStartValue(0.0)
         self._speed_fade.setEndValue(1.0)
         self._speed_fade.start()
+
+    def show_fullscreen_feedback(self, entering_fullscreen: bool) -> None:
+        # Keep it simple and readable; can be swapped for qtawesome later.
+        self.fullscreen_hud.setText("⛶" if entering_fullscreen else "⛶")
+        self._position_fullscreen_hud()
+        self.fullscreen_hud.show()
+        self.fullscreen_hud.raise_()
+
+        self._fs_hold_timer.stop()
+        self._fs_fade.stop()
+        self._fs_opacity.setOpacity(0.0)
+        self._fs_fade.setDuration(120)
+        self._fs_fade.setStartValue(0.0)
+        self._fs_fade.setEndValue(1.0)
+        self._fs_fade.start()
+        self._fs_hold_timer.start(320)
+
+    def _start_fs_fade_out(self) -> None:
+        self._fs_fade.stop()
+        self._fs_fade.setDuration(420)
+        self._fs_fade.setStartValue(self._fs_opacity.opacity())
+        self._fs_fade.setEndValue(0.0)
+        self._fs_fade.start()
 
     def hide_speed_feedback(self) -> None:
         if not self.speed_hud.isVisible():

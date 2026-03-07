@@ -53,7 +53,7 @@ class MainWindow(QMainWindow):
         self.controls.rewind_clicked.connect(self._skip_backward)
         self.controls.fast_forward_clicked.connect(self._skip_forward)
 
-        self.controls.fullscreen_btn.clicked.connect(self._toggle_fullscreen)
+        self.controls.fullscreen_btn.clicked.connect(self._toggle_fullscreen_with_feedback)
 
         # Click behaviors on video
         self.pane.single_clicked.connect(self._on_video_toggle_play_pause)
@@ -221,7 +221,9 @@ class MainWindow(QMainWindow):
         self.pane.hide_speed_feedback()
 
     def _toggle_fullscreen_with_feedback(self) -> None:
+        entering = not self.isFullScreen()
         self._toggle_fullscreen()
+        self.pane.show_fullscreen_feedback(entering)
         try:
             self.controls.fullscreen_btn.pulse()
         except Exception:
@@ -310,7 +312,7 @@ class MainWindow(QMainWindow):
         self._act_fullscreen = QAction("Fullscreen", self)
         self._act_fullscreen.setCheckable(True)
         self._act_fullscreen.setShortcut(QKeySequence("F"))
-        self._act_fullscreen.triggered.connect(self._toggle_fullscreen)
+        self._act_fullscreen.triggered.connect(self._toggle_fullscreen_with_feedback)
         view.addAction(self._act_fullscreen)
 
         act_top = QAction("Always on Top", self)
