@@ -65,8 +65,14 @@ class _PCMIODevice(QIODevice):
             self._buffer.extend(data)
 
     def bytesAvailable(self) -> int:  # noqa: N802
+        # IMPORTANT:
+        # Even if our internal buffer is empty, we can always synthesize
+        # silence in readData(). Many Qt audio backends will stop pulling if
+        # bytesAvailable() returns 0, which can put QAudioSink into IdleState
+        # and stall the master clock.
         with self._lock:
-            return len(self._buffer) + super().bytesAvailable()
+            buffered = len(self._buffer) + super().bytesAvailable()
+        return buffered + 4096
 
     def readData(self, maxlen: int) -> bytes:  # noqa: N802
         # Qt may request any byte count; we must return frame-aligned data.

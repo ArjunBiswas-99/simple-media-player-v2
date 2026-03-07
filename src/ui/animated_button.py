@@ -74,6 +74,14 @@ class AnimatedToolButton(QToolButton):
         # Netflix-like click feedback: quick expand then settle.
         self._animate_click_bounce()
 
+    def pulse(self) -> None:
+        """Trigger the same visual feedback as a click.
+
+        Used when the underlying action is triggered programmatically (keyboard
+        shortcut, click on video surface, etc.) so the UI stays consistent.
+        """
+        self._animate_click_bounce()
+
     def _animate_to(self, size: QSize, duration: int = 120) -> None:
         self._anim.stop()
         self._anim.setDuration(duration)

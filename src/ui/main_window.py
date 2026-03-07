@@ -56,13 +56,15 @@ class MainWindow(QMainWindow):
         self.controls.fullscreen_btn.clicked.connect(self._toggle_fullscreen)
 
         # Click behaviors on video
-        self.pane.single_clicked.connect(self.controller.toggle_play_pause)
-        self.pane.double_clicked.connect(self._toggle_fullscreen)
+        self.pane.single_clicked.connect(self._on_video_toggle_play_pause)
+        self.pane.double_clicked.connect(self._on_video_toggle_fullscreen)
+        self.pane.hold_fast_forward_started.connect(self._on_video_hold_fast_forward_start)
+        self.pane.hold_fast_forward_ended.connect(self._on_video_hold_fast_forward_end)
         self.pane.user_activity.connect(self._on_user_activity)
 
         # Keyboard shortcuts
-        QShortcut(QKeySequence(Qt.Key.Key_Space), self, activated=self.controller.toggle_play_pause)
-        QShortcut(QKeySequence("F"), self, activated=self._toggle_fullscreen)
+        QShortcut(QKeySequence(Qt.Key.Key_Space), self, activated=self._on_shortcut_toggle_play_pause)
+        QShortcut(QKeySequence("F"), self, activated=self._on_shortcut_toggle_fullscreen)
         QShortcut(QKeySequence(Qt.Key.Key_Left), self, activated=self._skip_backward)
         QShortcut(QKeySequence(Qt.Key.Key_Right), self, activated=self._skip_forward)
         QShortcut(QKeySequence(Qt.Key.Key_Up), self, activated=self._volume_up)
@@ -80,6 +82,8 @@ class MainWindow(QMainWindow):
         self._skip_last_dir = 0
         self._skip_last_ts = 0.0
         self._skip_steps = 0
+
+
 
         self._open_dialog: Optional[QFileDialog] = None
 
@@ -186,6 +190,48 @@ class MainWindow(QMainWindow):
 
         self.controller.seek_ms(int(target))
         self.pane.show_skip_feedback(direction, self._skip_steps * (self._skip_step_ms // 1000))
+
+    def _toggle_play_pause_with_feedback(self) -> None:
+        # Determine what the *next* state will be.
+        next_playing = not self._is_playing
+        self.controller.toggle_play_pause()
+
+        # YouTube-like center HUD.
+        self.pane.show_play_pause_feedback(next_playing)
+
+        # Keep bottom bar feeling responsive even when triggered from keyboard/video.
+        try:
+            self.controls.play_btn.pulse()
+        except Exception:
+            pass
+
+    def _on_video_toggle_play_pause(self) -> None:
+        self._toggle_play_pause_with_feedback()
+
+    def _on_shortcut_toggle_play_pause(self) -> None:
+        self._toggle_play_pause_with_feedback()
+
+    def _on_video_hold_fast_forward_start(self) -> None:
+        # Switch to true 2x mode (rate-aware clock + audio tempo).
+        self.controller.set_playback_rate(2.0)
+        self.pane.show_speed_feedback("2×")
+
+    def _on_video_hold_fast_forward_end(self) -> None:
+        self.controller.set_playback_rate(1.0)
+        self.pane.hide_speed_feedback()
+
+    def _toggle_fullscreen_with_feedback(self) -> None:
+        self._toggle_fullscreen()
+        try:
+            self.controls.fullscreen_btn.pulse()
+        except Exception:
+            pass
+
+    def _on_video_toggle_fullscreen(self) -> None:
+        self._toggle_fullscreen_with_feedback()
+
+    def _on_shortcut_toggle_fullscreen(self) -> None:
+        self._toggle_fullscreen_with_feedback()
 
     def _on_volume_slider_changed(self, vol: int) -> None:
         self._apply_volume(int(vol), show_hud=True)

@@ -20,6 +20,8 @@ class VideoPane(QWidget):
     user_activity = Signal()
     double_clicked = Signal()
     single_clicked = Signal()
+    hold_fast_forward_started = Signal()
+    hold_fast_forward_ended = Signal()
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -73,6 +75,69 @@ class VideoPane(QWidget):
         self._hud_slide = QPropertyAnimation(self.skip_hud, b"pos", self)
         self._hud_slide.setDuration(210)
         self._hud_slide.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        # YouTube-like play/pause HUD at center.
+        self.center_hud = QLabel("", self)
+        self.center_hud.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.center_hud.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.center_hud.setStyleSheet(
+            """
+            QLabel {
+                color: #ffffff;
+                background: rgba(8, 8, 10, 130);
+                border: 1px solid rgba(255,255,255,24);
+                border-radius: 46px;
+                padding: 18px 22px;
+                font-size: 42px;
+                font-weight: 800;
+            }
+            """
+        )
+        self.center_hud.hide()
+
+        self._center_opacity = QGraphicsOpacityEffect(self.center_hud)
+        self._center_opacity.setOpacity(0.0)
+        self.center_hud.setGraphicsEffect(self._center_opacity)
+
+        self._center_fade = QPropertyAnimation(self._center_opacity, b"opacity", self)
+        self._center_fade.setDuration(420)
+        self._center_fade.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self._center_slide = QPropertyAnimation(self.center_hud, b"pos", self)
+        self._center_slide.setDuration(160)
+        self._center_slide.setEasingCurve(QEasingCurve.Type.OutCubic)
+
+        self._center_hold_timer = QTimer(self)
+        self._center_hold_timer.setSingleShot(True)
+        self._center_hold_timer.timeout.connect(self._start_center_fade_out)
+
+        # "2x" HUD for press-and-hold fast playback.
+        self.speed_hud = QLabel("2×", self)
+        self.speed_hud.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents, True)
+        self.speed_hud.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.speed_hud.setStyleSheet(
+            """
+            QLabel {
+                color: #ffffff;
+                background: rgba(8, 8, 10, 150);
+                border: 1px solid rgba(255,255,255,22);
+                border-radius: 16px;
+                padding: 6px 14px;
+                font-size: 18px;
+                font-weight: 800;
+                letter-spacing: 0.6px;
+            }
+            """
+        )
+        self.speed_hud.hide()
+
+        self._speed_opacity = QGraphicsOpacityEffect(self.speed_hud)
+        self._speed_opacity.setOpacity(0.0)
+        self.speed_hud.setGraphicsEffect(self._speed_opacity)
+
+        self._speed_fade = QPropertyAnimation(self._speed_opacity, b"opacity", self)
+        self._speed_fade.setDuration(120)
+        self._speed_fade.setEasingCurve(QEasingCurve.Type.OutCubic)
 
         # VLC-like volume OSD at right-center.
         self.volume_hud = QFrame(self)
@@ -162,6 +227,8 @@ class VideoPane(QWidget):
         self.video.user_activity.connect(self.user_activity)
         self.video.single_clicked.connect(self.single_clicked)
         self.video.double_clicked.connect(self.double_clicked)
+        self.video.hold_fast_forward_started.connect(self.hold_fast_forward_started)
+        self.video.hold_fast_forward_ended.connect(self.hold_fast_forward_ended)
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         super().resizeEvent(event)
@@ -183,6 +250,10 @@ class VideoPane(QWidget):
         # Keep HUD centered near the top.
         if self.skip_hud.isVisible():
             self._position_skip_hud()
+        if self.center_hud.isVisible():
+            self._position_center_hud()
+        if self.speed_hud.isVisible():
+            self._position_speed_hud()
         if self.volume_hud.isVisible():
             self._position_volume_hud()
 
@@ -191,6 +262,18 @@ class VideoPane(QWidget):
         x = (self.width() - self.skip_hud.width()) // 2
         y = 38
         self.skip_hud.move(max(0, x), max(0, y))
+
+    def _position_center_hud(self) -> None:
+        self.center_hud.adjustSize()
+        x = (self.width() - self.center_hud.width()) // 2
+        y = (self.height() - self.center_hud.height()) // 2
+        self.center_hud.move(max(0, x), max(0, y))
+
+    def _position_speed_hud(self) -> None:
+        self.speed_hud.adjustSize()
+        x = (self.width() - self.speed_hud.width()) // 2
+        y = max(0, (self.height() // 2) - 92)
+        self.speed_hud.move(max(0, x), max(0, y))
 
     def show_skip_feedback(self, direction: int, seconds: int) -> None:
         if direction >= 0:
@@ -216,6 +299,60 @@ class VideoPane(QWidget):
         self._hud_fade.setStartValue(1.0)
         self._hud_fade.setEndValue(0.0)
         self._hud_fade.start()
+
+    def show_play_pause_feedback(self, is_playing: bool) -> None:
+        # Unicode icons are simple + dependency-free. We can swap to qtawesome
+        # later if needed.
+        self.center_hud.setText("❚❚" if is_playing else "▶")
+        self._position_center_hud()
+        self.center_hud.show()
+        self.center_hud.raise_()
+
+        end_pos = self.center_hud.pos()
+        start_pos = QPoint(end_pos.x(), end_pos.y() + 8)
+
+        self._center_slide.stop()
+        self._center_slide.setStartValue(start_pos)
+        self._center_slide.setEndValue(end_pos)
+        self._center_slide.start()
+
+        self._center_fade.stop()
+
+        # Fade in -> hold -> fade out (prevents 1-frame flash).
+        self._center_hold_timer.stop()
+        self._center_opacity.setOpacity(0.0)
+        self._center_fade.setDuration(110)
+        self._center_fade.setStartValue(0.0)
+        self._center_fade.setEndValue(1.0)
+        self._center_fade.start()
+        self._center_hold_timer.start(320)
+
+    def _start_center_fade_out(self) -> None:
+        self._center_fade.stop()
+        self._center_fade.setDuration(520)
+        self._center_fade.setStartValue(self._center_opacity.opacity())
+        self._center_fade.setEndValue(0.0)
+        self._center_fade.start()
+
+    def show_speed_feedback(self, text: str = "2×") -> None:
+        self.speed_hud.setText(text)
+        self._position_speed_hud()
+        self.speed_hud.show()
+        self.speed_hud.raise_()
+
+        self._speed_fade.stop()
+        self._speed_opacity.setOpacity(0.0)
+        self._speed_fade.setStartValue(0.0)
+        self._speed_fade.setEndValue(1.0)
+        self._speed_fade.start()
+
+    def hide_speed_feedback(self) -> None:
+        if not self.speed_hud.isVisible():
+            return
+        self._speed_fade.stop()
+        self._speed_fade.setStartValue(self._speed_opacity.opacity())
+        self._speed_fade.setEndValue(0.0)
+        self._speed_fade.start()
 
     def _position_volume_hud(self) -> None:
         x = max(0, self.width() - self.volume_hud.width() - 24)

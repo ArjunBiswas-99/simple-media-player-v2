@@ -7,6 +7,7 @@ from typing import Optional
 
 import av
 import av.error
+import av.filter
 from PySide6.QtCore import QObject, Signal, Slot
 
 from engine.frame_queue import BoundedQueue, DecodedVideo
@@ -67,6 +68,16 @@ class DecoderWorker(QObject):
 
         self._video_tb = 0.0
 
+        # Playback rate support (1.0 normal, 2.0 fast, etc.).
+        # This affects audio tempo filtering; video timing is handled by the UI
+        # controller's rate-aware clock.
+        self._playback_rate = 1.0
+        self._pending_playback_rate: Optional[float] = None
+
+        self._tempo_graph: Optional[av.filter.Graph] = None
+        self._tempo_src: Optional[av.filter.context.FilterContext] = None
+        self._tempo_sink: Optional[av.filter.context.FilterContext] = None
+
     @Slot(str)
     def open(self, path: str) -> None:
         log_event("decoder", f"open requested path={path}")
@@ -84,6 +95,17 @@ class DecoderWorker(QObject):
     def set_playing(self, playing: bool) -> None:
         with self._lock:
             self._playing = bool(playing)
+
+    @Slot(float)
+    def set_playback_rate(self, rate: float) -> None:
+        # Keep it deterministic; Phase 1 supports only a safe range.
+        r = float(rate)
+        if r <= 0:
+            r = 1.0
+        # atempo supports 0.5-2.0; we'll clamp for now.
+        r = max(0.5, min(2.0, r))
+        with self._lock:
+            self._pending_playback_rate = r
 
     @Slot(int, int)
     def set_output_audio_config(self, sample_rate: int, channels: int) -> None:
@@ -149,8 +171,12 @@ class DecoderWorker(QObject):
             with self._lock:
                 out_sr = int(self._out_sample_rate)
                 out_ch = int(self._out_channels)
+                self._playback_rate = float(self._playback_rate) if self._playback_rate else 1.0
             layout = "stereo" if out_ch == 2 else "mono"
             self._audio_resampler = av.audio.resampler.AudioResampler(format="s16", layout=layout, rate=out_sr)
+
+            # (Re)build tempo filter graph based on current playback rate.
+            self._configure_tempo_filter(out_sr, layout)
 
             duration_s = 0.0
             if self._container.duration is not None:
@@ -186,6 +212,36 @@ class DecoderWorker(QObject):
             self._audio_q.clear()
         except Exception as e:
             self.error.emit(f"seek failed: {e}")
+
+    def _configure_tempo_filter(self, sample_rate: int, layout: str) -> None:
+        """Configure/disable atempo filter graph for the current playback rate."""
+
+        rate = float(self._playback_rate)
+        # Disable filter when rate ~ 1.0.
+        if abs(rate - 1.0) < 1e-3:
+            self._tempo_graph = None
+            self._tempo_src = None
+            self._tempo_sink = None
+            return
+
+        try:
+            g = av.filter.Graph()
+            src = g.add_abuffer(sample_rate=int(sample_rate), format="s16", layout=str(layout))
+            tempo = g.add("atempo", args=f"{rate:.3f}")
+            sink = g.add("abuffersink")
+            src.link_to(tempo)
+            tempo.link_to(sink)
+            g.configure()
+            self._tempo_graph = g
+            self._tempo_src = src
+            self._tempo_sink = sink
+            log_event("decoder", f"tempo_filter configured rate={rate:.3f}")
+        except Exception as e:
+            # Fail open: if filter graph can't be built, fall back to normal audio.
+            self._tempo_graph = None
+            self._tempo_src = None
+            self._tempo_sink = None
+            log_event("decoder", f"tempo_filter error: {e}")
 
     @staticmethod
     def _audio_frame_to_packed_s16(af: av.audio.frame.AudioFrame, out_channels: int) -> bytes:
@@ -249,8 +305,10 @@ class DecoderWorker(QObject):
                 playing = self._playing
                 open_path = self._open_path
                 seek_s = self._seek_seconds
+                pending_rate = self._pending_playback_rate
                 self._open_path = None
                 self._seek_seconds = None
+                self._pending_playback_rate = None
 
             if not running:
                 break
@@ -260,6 +318,19 @@ class DecoderWorker(QObject):
 
             if seek_s is not None:
                 self._apply_seek(seek_s)
+
+            if pending_rate is not None:
+                # Apply rate without a seek: flush queues so controller can resync.
+                with self._lock:
+                    self._playback_rate = float(pending_rate)
+
+                self._video_q.clear()
+                self._audio_q.clear()
+
+                # Rebuild filter graph if we have an open stream.
+                if self._astream is not None:
+                    layout = "stereo" if int(self._out_channels) == 2 else "mono"
+                    self._configure_tempo_filter(int(self._out_sample_rate), layout)
 
             if not playing or self._container is None:
                 time.sleep(0.01)
@@ -325,12 +396,33 @@ class DecoderWorker(QObject):
                             for af in frames:
                                 if af is None:
                                     continue
-                                pcm = self._audio_frame_to_packed_s16(af, self._out_channels)
-                                self._audio_q.put_drop_oldest(pcm)
+
+                                # Tempo filter (atempo) if enabled.
+                                if self._tempo_src is not None and self._tempo_sink is not None:
+                                    try:
+                                        self._tempo_src.push(af)
+                                        while True:
+                                            try:
+                                                outf = self._tempo_sink.pull()
+                                            except av.error.BlockingIOError:
+                                                break
+                                            if outf is None:
+                                                break
+                                            pcm = self._audio_frame_to_packed_s16(outf, self._out_channels)
+                                            self._audio_q.put_drop_oldest(pcm)
+                                    except Exception as e:
+                                        # Fail open: if filter breaks, emit unfiltered.
+                                        log_event("decoder", f"tempo_filter runtime error: {e}")
+                                        pcm = self._audio_frame_to_packed_s16(af, self._out_channels)
+                                        self._audio_q.put_drop_oldest(pcm)
+                                else:
+                                    pcm = self._audio_frame_to_packed_s16(af, self._out_channels)
+                                    self._audio_q.put_drop_oldest(pcm)
+
                                 fmt_name = getattr(af.format, "name", "?") if hasattr(af, "format") else "?"
                                 log_event(
                                     "decoder",
-                                    f"audio fmt={fmt_name} planes={len(af.planes)} samples={af.samples} bytes={len(pcm)} qa={self._audio_q.qsize()}",
+                                    f"audio fmt={fmt_name} planes={len(af.planes)} samples={af.samples} qa={self._audio_q.qsize()}",
                                     throttle_key="audio_fmt",
                                     throttle_seconds=0.25,
                                 )

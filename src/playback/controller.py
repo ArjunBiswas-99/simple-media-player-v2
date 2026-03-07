@@ -47,6 +47,13 @@ class PlaybackController(QObject):
         self._duration_ms = 0
         self._volume = 80
 
+        # Playback rate (1.0 normal, 2.0 fast, etc.).
+        # The audio sink clock measures *output time*. To turn it into media
+        # time, we scale by playback rate using anchors.
+        self._playback_rate = 1.0
+        self._rate_anchor_media_s = 0.0
+        self._rate_anchor_audio_s = 0.0
+
         # After seek, drop video frames until we catch up to the new audio clock.
         self._drop_video_until: Optional[float] = None
 
@@ -89,11 +96,44 @@ class PlaybackController(QObject):
 
     def open_media(self, path: str) -> None:
         log_event("controller", f"open_media path={path}")
+        # Reset rate when opening new media.
+        self.set_playback_rate(1.0)
         self.pause()
         self.video_frame_ready.emit(None)
         self._pending_video = None
         self._drop_video_until = None
         self._worker.open(path)
+
+    def set_playback_rate(self, rate: float) -> None:
+        """Set the playback rate (1.0 = normal).
+
+        For Phase 1 we clamp to [0.5, 2.0]. Rate changes flush audio/video
+        buffers to avoid mixing old-rate audio with new-rate audio.
+        """
+
+        r = float(rate)
+        if r <= 0:
+            r = 1.0
+        r = max(0.5, min(2.0, r))
+
+        # Compute current media time before switching.
+        audio_clock = self._audio.clock_seconds()
+        current_media = self._rate_anchor_media_s + (audio_clock - self._rate_anchor_audio_s) * float(self._playback_rate)
+
+        self._playback_rate = r
+
+        # Flush audio sink buffer and anchor clock at current media time.
+        self._audio.reset_clock_and_flush(current_media)
+        audio_clock = self._audio.clock_seconds()
+        self._rate_anchor_media_s = current_media
+        self._rate_anchor_audio_s = audio_clock
+
+        # Reset pending video state; decoder will also flush its queues.
+        self._pending_video = None
+        self._drop_video_until = current_media
+
+        # Tell decoder to tempo-scale audio.
+        self._worker.set_playback_rate(r)
 
     def toggle_play_pause(self) -> None:
         if self._is_playing:
@@ -125,6 +165,12 @@ class PlaybackController(QObject):
         pos_s = max(0.0, float(position_ms) / 1000.0)
         # Reset clock immediately to keep UI responsive.
         self._audio.reset_clock_and_flush(pos_s)
+
+        # Reset rate anchors to the new position.
+        audio_clock = self._audio.clock_seconds()
+        self._rate_anchor_media_s = pos_s
+        self._rate_anchor_audio_s = audio_clock
+
         self._drop_video_until = pos_s
         self._pending_video = None
         self._worker.seek(pos_s)
@@ -160,6 +206,12 @@ class PlaybackController(QObject):
         # (Decoder is already configured to resample to this.)
         self._audio.setup(self._out_cfg)
         self._audio.reset_clock_and_flush(0.0)
+
+        # Reset rate anchors on open.
+        self._playback_rate = 1.0
+        self._rate_anchor_media_s = 0.0
+        self._rate_anchor_audio_s = self._audio.clock_seconds()
+        self._worker.set_playback_rate(1.0)
         self.play()
 
     def _on_error(self, msg: str) -> None:
@@ -184,10 +236,11 @@ class PlaybackController(QObject):
             self._audio.push_pcm(chunk)
 
         audio_clock = self._audio.clock_seconds()
-        self.position_changed.emit(int(audio_clock * 1000.0))
+        media_clock = self._rate_anchor_media_s + (audio_clock - self._rate_anchor_audio_s) * float(self._playback_rate)
+        self.position_changed.emit(int(media_clock * 1000.0))
         log_event(
             "controller",
-            f"tick ac={audio_clock:.3f} qv={self._video_q.qsize()} qa={self._audio_q.qsize()} pending={self._pending_video is not None}",
+            f"tick ac={audio_clock:.3f} mc={media_clock:.3f} rate={self._playback_rate:.2f} qv={self._video_q.qsize()} qa={self._audio_q.qsize()} pending={self._pending_video is not None}",
             throttle_key="tick",
             throttle_seconds=0.25,
         )
@@ -211,15 +264,15 @@ class PlaybackController(QObject):
             return
 
         # Drop if video is too far behind audio.
-        if self._scheduler.should_drop(v.pts_seconds, audio_clock):
+        if self._scheduler.should_drop(v.pts_seconds, media_clock):
             self._pending_video = None
-            log_event("controller", f"drop pts={v.pts_seconds:.3f} ac={audio_clock:.3f}", throttle_key="drop", throttle_seconds=0.15)
+            log_event("controller", f"drop pts={v.pts_seconds:.3f} mc={media_clock:.3f}", throttle_key="drop", throttle_seconds=0.15)
             return
 
         # If frame is early, keep it pending until next tick.
-        if v.pts_seconds > audio_clock:
+        if v.pts_seconds > media_clock:
             self._pending_video = v
-            log_event("controller", f"pending pts={v.pts_seconds:.3f} ac={audio_clock:.3f}", throttle_key="pending", throttle_seconds=0.15)
+            log_event("controller", f"pending pts={v.pts_seconds:.3f} mc={media_clock:.3f}", throttle_key="pending", throttle_seconds=0.15)
             return
 
         self._pending_video = None
@@ -233,5 +286,5 @@ class PlaybackController(QObject):
             QImage.Format.Format_RGB888,
         ).copy()
         self.video_frame_ready.emit(VideoFrame(image=img, pts_seconds=v.pts_seconds))
-        log_event("controller", f"present pts={v.pts_seconds:.3f} ac={audio_clock:.3f}", throttle_key="present", throttle_seconds=0.15)
+        log_event("controller", f"present pts={v.pts_seconds:.3f} mc={media_clock:.3f}", throttle_key="present", throttle_seconds=0.15)
         return
