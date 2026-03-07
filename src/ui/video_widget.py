@@ -62,11 +62,16 @@ class VideoWidget(QWidget):
         self._cache_target_size = None  # (w, h)
         self._cache_scaled: Optional[QImage] = None
 
+        # Suppress an immediate "click" after a context menu closes.
+        # (On Windows, Qt can replay the mouse event that dismissed the menu.)
+        self._suppress_click_until_ts = 0.0
+
     user_activity = Signal()
     single_clicked = Signal()
     double_clicked = Signal()
     hold_fast_forward_started = Signal()
     hold_fast_forward_ended = Signal()
+    context_menu_requested = Signal(object)  # global_pos: QPoint
 
     def set_frame(self, frame: Optional[VideoFrame]) -> None:
         self._frame = frame
@@ -114,6 +119,14 @@ class VideoWidget(QWidget):
 
     def mousePressEvent(self, event) -> None:  # noqa: N802
         if event.button() == Qt.MouseButton.LeftButton:
+            # If a context menu just closed, ignore this press entirely.
+            try:
+                if time.monotonic() < float(self._suppress_click_until_ts):
+                    event.accept()
+                    return
+            except Exception:
+                pass
+
             self._pressed = True
             self._hold_consumed = False
             self._hold_active = False
@@ -123,6 +136,13 @@ class VideoWidget(QWidget):
 
     def mouseReleaseEvent(self, event) -> None:  # noqa: N802
         if event.button() == Qt.MouseButton.LeftButton:
+            suppress = False
+            try:
+                suppress = time.monotonic() < float(self._suppress_click_until_ts)
+            except Exception:
+                suppress = False
+
+            # Always clear press/hold state on release.
             self._pressed = False
             self._hold_timer.stop()
 
@@ -130,6 +150,11 @@ class VideoWidget(QWidget):
                 # End hold gesture (used for "2x while held" behaviors).
                 self._hold_active = False
                 self.hold_fast_forward_ended.emit()
+
+            if suppress:
+                # Menu-dismiss click: do not trigger play/pause or click gestures.
+                event.accept()
+                return
 
             # If hold gesture already fired, do nothing else.
             if not self._hold_consumed:
@@ -171,6 +196,17 @@ class VideoWidget(QWidget):
 
     def mouseDoubleClickEvent(self, event) -> None:  # noqa: N802
         # We implement our own double-click logic in mouseReleaseEvent.
+        event.accept()
+        return
+
+    def contextMenuEvent(self, event) -> None:  # noqa: N802
+        # Right-click context menu request.
+        try:
+            self.context_menu_requested.emit(event.globalPos())
+            # Prevent the menu-dismiss click from toggling playback.
+            self._suppress_click_until_ts = time.monotonic() + 0.25
+        except Exception:
+            pass
         event.accept()
         return
 

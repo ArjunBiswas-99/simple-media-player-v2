@@ -22,6 +22,7 @@ class VideoPane(QWidget):
     single_clicked = Signal()
     hold_fast_forward_started = Signal()
     hold_fast_forward_ended = Signal()
+    context_menu_requested = Signal(object)  # global_pos: QPoint
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
         super().__init__(parent)
@@ -260,6 +261,7 @@ class VideoPane(QWidget):
         self.video.double_clicked.connect(self.double_clicked)
         self.video.hold_fast_forward_started.connect(self.hold_fast_forward_started)
         self.video.hold_fast_forward_ended.connect(self.hold_fast_forward_ended)
+        self.video.context_menu_requested.connect(self.context_menu_requested)
 
     def resizeEvent(self, event) -> None:  # noqa: N802
         super().resizeEvent(event)

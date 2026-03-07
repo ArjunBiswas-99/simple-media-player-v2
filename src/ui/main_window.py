@@ -9,10 +9,11 @@ from PySide6.QtCore import QTimer, Qt
 from PySide6.QtGui import QAction
 from PySide6.QtGui import QIcon
 from PySide6.QtGui import QKeySequence, QShortcut
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QFileDialog
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QFileDialog, QMenu
 
 from playback.controller import PlaybackController
 from ui.controls import ControlsState
+from ui.icons import ICONS, IconSpec
 from ui.video_pane import VideoPane
 
 
@@ -69,6 +70,7 @@ class MainWindow(QMainWindow):
         self.pane.double_clicked.connect(self._on_video_toggle_fullscreen)
         self.pane.hold_fast_forward_started.connect(self._on_video_hold_fast_forward_start)
         self.pane.hold_fast_forward_ended.connect(self._on_video_hold_fast_forward_end)
+        self.pane.context_menu_requested.connect(self._on_video_context_menu)
         self.pane.user_activity.connect(self._on_user_activity)
 
         # Keyboard shortcuts
@@ -228,6 +230,106 @@ class MainWindow(QMainWindow):
     def _on_video_hold_fast_forward_end(self) -> None:
         self.controller.set_playback_rate(1.0)
         self.pane.hide_speed_feedback()
+
+    def _stop_with_feedback(self) -> None:
+        """Stop = pause + seek to start (VLC-like)."""
+        self.controller.pause()
+        self.controller.seek_ms(0)
+        # If you want we can show a HUD later; for now keep it consistent.
+
+    def _on_video_context_menu(self, global_pos) -> None:
+        menu = QMenu(self)
+
+        # Make this particular menu translucent (YouTube-like).
+        # Using RGBA is more reliable than setWindowOpacity across platforms.
+        menu.setStyleSheet(
+            """
+            QMenu {
+                background: rgba(0, 0, 0, 210);
+                color: #ffffff;
+                border: 1px solid rgba(255,255,255,32);
+                padding: 6px;
+            }
+            QMenu::item {
+                padding: 8px 28px 8px 28px;
+                border-radius: 7px;
+                margin: 2px 4px;
+                border-left: 3px solid transparent;
+            }
+            QMenu::item:selected {
+                background: rgba(229, 9, 20, 50);
+                border-left: 3px solid #e50914;
+            }
+            QMenu::separator {
+                height: 1px;
+                margin: 8px 12px;
+                background: rgba(255,255,255,26);
+            }
+            """
+        )
+
+        # Prevent the click that dismisses the menu from being replayed into the
+        # underlying VideoWidget (which would toggle play/pause).
+        try:
+            menu.setAttribute(Qt.WidgetAttribute.WA_NoMouseReplay, True)
+        except Exception:
+            pass
+
+        # Dynamic Play/Pause label.
+        act_play_pause = QAction("Pause" if self._is_playing else "Play", self)
+        act_play_pause.setIcon(ICONS.icon(IconSpec("fa5s.pause" if self._is_playing else "fa5s.play")))
+        act_play_pause.setShortcut(QKeySequence(Qt.Key.Key_Space))
+        act_play_pause.triggered.connect(self._toggle_play_pause_with_feedback)
+        menu.addAction(act_play_pause)
+
+        act_stop = QAction("Stop", self)
+        act_stop.setIcon(ICONS.icon(IconSpec("fa5s.stop")))
+        act_stop.triggered.connect(self._stop_with_feedback)
+        menu.addAction(act_stop)
+
+        menu.addSeparator()
+
+        # For Phase 1 we don't have a playlist yet.
+        # Map Previous/Next to consistent skip steps.
+        act_prev = QAction("Previous", self)
+        act_prev.setIcon(ICONS.icon(IconSpec("fa5s.step-backward")))
+        act_prev.setShortcut(QKeySequence(Qt.Key.Key_Left))
+        act_prev.triggered.connect(self._skip_backward)
+        menu.addAction(act_prev)
+
+        act_next = QAction("Next", self)
+        act_next.setIcon(ICONS.icon(IconSpec("fa5s.step-forward")))
+        act_next.setShortcut(QKeySequence(Qt.Key.Key_Right))
+        act_next.triggered.connect(self._skip_forward)
+        menu.addAction(act_next)
+
+        menu.addSeparator()
+
+        act_fs = QAction("Exit Fullscreen" if self.isFullScreen() else "Fullscreen", self)
+        act_fs.setIcon(ICONS.icon(IconSpec("fa5s.compress" if self.isFullScreen() else "fa5s.expand")))
+        act_fs.setShortcut(QKeySequence("F"))
+        act_fs.triggered.connect(self._toggle_fullscreen_with_feedback)
+        menu.addAction(act_fs)
+
+        act_open = QAction("Open File...", self)
+        act_open.setIcon(ICONS.icon(IconSpec("fa5s.folder-open")))
+        act_open.setShortcut(QKeySequence.Open)
+        act_open.triggered.connect(self._open_file)
+        menu.addAction(act_open)
+
+        menu.addSeparator()
+
+        act_quit = QAction("Quit", self)
+        act_quit.setIcon(ICONS.icon(IconSpec("fa5s.times-circle")))
+        act_quit.setShortcut(QKeySequence.Quit)
+        act_quit.triggered.connect(self.close)
+        menu.addAction(act_quit)
+
+        try:
+            menu.exec(global_pos)
+        except Exception:
+            # Some Qt builds may want QPoint explicitly.
+            menu.exec(menu.mapToGlobal(self.mapFromGlobal(global_pos)))
 
     def _toggle_fullscreen_with_feedback(self) -> None:
         entering = not self.isFullScreen()
