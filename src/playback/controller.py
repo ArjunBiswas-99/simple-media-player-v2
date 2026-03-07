@@ -6,7 +6,7 @@ from PySide6.QtCore import QObject, QThread, QTimer, Signal
 from PySide6.QtGui import QImage
 
 from engine.av_sync import VideoScheduler
-from engine.decoder_worker import DecoderWorker, StreamConfig
+from engine.decoder_worker import DecoderWorker, StreamConfig, AudioTrackInfo
 from engine.frame_queue import BoundedQueue, DecodedVideo
 from playback.audio_output import AudioOutput, PCMConfig
 from playback.clock import AudioClock
@@ -27,6 +27,7 @@ class PlaybackController(QObject):
     position_changed = Signal(int)  # ms
     duration_changed = Signal(int)  # ms
     error_occurred = Signal(str)
+    audio_tracks_changed = Signal(object)  # list[AudioTrackInfo]
 
     # Commands are invoked as direct method calls on the worker.
     # The worker methods are thread-safe (lock-protected) and return immediately.
@@ -81,6 +82,7 @@ class PlaybackController(QObject):
 
         # Worker signals -> controller slots
         self._worker.media_opened.connect(self._on_media_opened)
+        self._worker.audio_tracks_changed.connect(self.audio_tracks_changed)
         self._worker.error.connect(self._on_error)
         self._worker.eof_reached.connect(self._on_eof)
 
@@ -175,6 +177,43 @@ class PlaybackController(QObject):
         self._pending_video = None
         self._worker.seek(pos_s)
         self.position_changed.emit(int(position_ms))
+
+    def select_audio_track(self, index: int) -> None:
+        """Select audio track (0-based).
+
+        We resync by seeking to current media time to ensure A/V alignment.
+        """
+        idx = int(index)
+
+        # Compute current media time to keep switching deterministic.
+        audio_clock = self._audio.clock_seconds()
+        media_clock = self._rate_anchor_media_s + (audio_clock - self._rate_anchor_audio_s) * float(self._playback_rate)
+        media_clock = max(0.0, float(media_clock))
+
+        # Apply track selection + flush audio in worker.
+        self._worker.select_audio_track(idx)
+
+        # Force a resync seek to avoid drift / decoder priming differences.
+        self.seek_ms(int(media_clock * 1000.0))
+
+    def available_audio_output_devices(self) -> list:
+        return self._audio.available_output_devices()
+
+    def default_audio_output_device(self):
+        return self._audio.default_output_device()
+
+    def current_audio_output_device(self):
+        return self._audio.current_output_device()
+
+    def set_audio_output_device(self, dev) -> None:
+        # Keep UI responsive: no seek, just recreate sink and keep current anchor.
+        self._audio.set_output_device(dev)
+
+    def set_stereo_mode(self, mode: str) -> None:
+        self._audio.set_stereo_mode(mode)
+
+    def stereo_mode(self) -> str:
+        return self._audio.stereo_mode()
 
     def shutdown(self) -> None:
         try:

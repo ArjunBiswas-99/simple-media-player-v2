@@ -6,7 +6,7 @@ import time
 
 import os
 from PySide6.QtCore import QTimer, Qt
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QActionGroup
 from PySide6.QtGui import QIcon
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QFileDialog, QMenu
@@ -82,10 +82,16 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence(Qt.Key.Key_Down), self, activated=self._volume_down)
 
         self._is_playing = False
+        self._playback_rate = 1.0
         self._pos_ms = 0
         self._dur_ms = 0
         self._volume = 80
         self._current_filename = ""
+
+        # Audio menu state.
+        self._audio_tracks = []
+        self._audio_track_index = 0
+        self._mute_restore_volume = 80
 
         # Skip accumulator state (YouTube-like quick repeated taps).
         self._skip_step_ms = 5000
@@ -93,6 +99,9 @@ class MainWindow(QMainWindow):
         self._skip_last_dir = 0
         self._skip_last_ts = 0.0
         self._skip_steps = 0
+
+        # Track list updates for Audio menu.
+        self.controller.audio_tracks_changed.connect(self._on_audio_tracks)
 
 
 
@@ -156,6 +165,15 @@ class MainWindow(QMainWindow):
     def _on_state(self, is_playing: bool) -> None:
         self._is_playing = bool(is_playing)
         self._refresh_controls()
+
+    def _on_audio_tracks(self, tracks) -> None:
+        # tracks: list[AudioTrackInfo]
+        try:
+            self._audio_tracks = list(tracks) if tracks is not None else []
+        except Exception:
+            self._audio_tracks = []
+        if self._audio_track_index >= len(self._audio_tracks):
+            self._audio_track_index = 0
 
     def _on_position(self, pos_ms: int) -> None:
         self._pos_ms = int(pos_ms)
@@ -224,11 +242,13 @@ class MainWindow(QMainWindow):
 
     def _on_video_hold_fast_forward_start(self) -> None:
         # Switch to true 2x mode (rate-aware clock + audio tempo).
-        self.controller.set_playback_rate(2.0)
+        self._playback_rate = 2.0
+        self.controller.set_playback_rate(self._playback_rate)
         self.pane.show_speed_feedback("2×")
 
     def _on_video_hold_fast_forward_end(self) -> None:
-        self.controller.set_playback_rate(1.0)
+        self._playback_rate = 1.0
+        self.controller.set_playback_rate(self._playback_rate)
         self.pane.hide_speed_feedback()
 
     def _stop_with_feedback(self) -> None:
@@ -239,6 +259,7 @@ class MainWindow(QMainWindow):
 
     def _set_speed_with_feedback(self, rate: float) -> None:
         r = float(rate)
+        self._playback_rate = r
         self.controller.set_playback_rate(r)
         # Brief HUD feedback like YouTube.
         if abs(r - 1.0) < 1e-3:
@@ -247,6 +268,151 @@ class MainWindow(QMainWindow):
             # Use × glyph for polish.
             label = f"{r:g}×"
             self.pane.show_speed_feedback(label)
+
+        # Keep menu checkmarks in sync if menu is open.
+        try:
+            self._sync_speed_checks()
+        except Exception:
+            pass
+
+    def _sync_speed_checks(self) -> None:
+        if not hasattr(self, "_speed_actions"):
+            return
+        acts = getattr(self, "_speed_actions")
+        for rate, act in acts.items():
+            try:
+                act.setChecked(abs(float(rate) - float(self._playback_rate)) < 1e-3)
+            except Exception:
+                pass
+
+    def _toggle_mute(self) -> None:
+        if self._volume > 0:
+            self._mute_restore_volume = int(self._volume)
+            self._apply_volume(0, show_hud=True)
+        else:
+            self._apply_volume(max(5, int(self._mute_restore_volume or 80)), show_hud=True)
+
+    def _audio_volume_up(self) -> None:
+        self._change_volume_by(+5)
+
+    def _audio_volume_down(self) -> None:
+        self._change_volume_by(-5)
+
+    def _select_audio_track(self, index: int) -> None:
+        self._audio_track_index = int(max(0, index))
+        self.controller.select_audio_track(self._audio_track_index)
+
+    def _select_audio_device_by_index(self, idx: int) -> None:
+        devs = self.controller.available_audio_output_devices()
+        if not devs:
+            return
+        i = int(idx)
+        if i < 0 or i >= len(devs):
+            i = 0
+        self.controller.set_audio_output_device(devs[i])
+
+    def _select_stereo_mode(self, mode: str) -> None:
+        self.controller.set_stereo_mode(mode)
+
+    @staticmethod
+    def _audio_device_id(dev) -> str:
+        try:
+            return str(dev.id())
+        except Exception:
+            try:
+                return str(dev.description())
+            except Exception:
+                return ""
+
+    def _populate_audio_tracks_menu(self, menu: QMenu) -> None:
+        menu.clear()
+        tracks = self._audio_tracks or []
+        if not tracks:
+            a = QAction("No audio tracks", self)
+            a.setEnabled(False)
+            menu.addAction(a)
+            return
+
+        group = QActionGroup(self)
+        group.setExclusive(True)
+
+        for t in tracks:
+            try:
+                idx = int(getattr(t, "index", 0))
+                label = str(getattr(t, "label", f"Track {idx+1}"))
+            except Exception:
+                idx = 0
+                label = "Track"
+            a = QAction(label, self)
+            a.setCheckable(True)
+            a.setChecked(int(idx) == int(self._audio_track_index))
+            group.addAction(a)
+            a.triggered.connect(lambda _checked=False, i=idx: self._select_audio_track(i))
+            menu.addAction(a)
+
+    def _populate_audio_devices_menu(self, menu: QMenu) -> None:
+        menu.clear()
+
+        devs = self.controller.available_audio_output_devices() or []
+        default_dev = self.controller.default_audio_output_device()
+        current_dev = self.controller.current_audio_output_device()
+
+        group = QActionGroup(self)
+        group.setExclusive(True)
+
+        act_default = QAction("System Default", self)
+        act_default.setCheckable(True)
+        is_default = current_dev is None or (
+            default_dev is not None and self._audio_device_id(current_dev) == self._audio_device_id(default_dev)
+        )
+        act_default.setChecked(bool(is_default))
+        group.addAction(act_default)
+        act_default.triggered.connect(lambda: self.controller.set_audio_output_device(None))
+        menu.addAction(act_default)
+        menu.addSeparator()
+
+        if not devs:
+            a = QAction("No audio devices found", self)
+            a.setEnabled(False)
+            menu.addAction(a)
+            return
+
+        for i, d in enumerate(devs):
+            try:
+                name = str(d.description())
+            except Exception:
+                name = f"Device {i+1}"
+
+            a = QAction(name, self)
+            a.setCheckable(True)
+            try:
+                a.setChecked(current_dev is not None and self._audio_device_id(current_dev) == self._audio_device_id(d))
+            except Exception:
+                a.setChecked(False)
+            group.addAction(a)
+            a.triggered.connect(lambda _checked=False, idx=i: self._select_audio_device_by_index(idx))
+            menu.addAction(a)
+
+    def _populate_stereo_mode_menu(self, menu: QMenu) -> None:
+        menu.clear()
+        current = str(self.controller.stereo_mode() or "stereo").lower()
+
+        group = QActionGroup(self)
+        group.setExclusive(True)
+
+        options = [
+            ("Stereo", "stereo"),
+            ("Mono", "mono"),
+            ("Left", "left"),
+            ("Right", "right"),
+        ]
+        for label, mode in options:
+            a = QAction(label, self)
+            a.setCheckable(True)
+            a.setChecked(current == mode)
+            group.addAction(a)
+            a.triggered.connect(lambda _checked=False, m=mode: self._select_stereo_mode(m))
+            menu.addAction(a)
 
     def _on_video_context_menu(self, global_pos) -> None:
         menu = QMenu(self)
@@ -442,11 +608,50 @@ class MainWindow(QMainWindow):
 
         # Speed submenu.
         speed = playback.addMenu("Speed")
+        speed.aboutToShow.connect(self._sync_speed_checks)
+        speed_group = QActionGroup(self)
+        speed_group.setExclusive(True)
+        self._speed_actions = {}
         for rate in (0.5, 1.0, 1.5, 2.0):
             a = QAction(f"{rate:g}×", self)
-            # Mark current speed as checkable later (when we track rate in UI).
+            a.setCheckable(True)
+            speed_group.addAction(a)
+            self._speed_actions[float(rate)] = a
             a.triggered.connect(lambda _checked=False, r=rate: self._set_speed_with_feedback(r))
             speed.addAction(a)
+
+        # Audio menu (dynamic submenus).
+        audio = bar.addMenu("Audio")
+
+        audio_track_menu = audio.addMenu("Audio Track")
+        audio_track_menu.aboutToShow.connect(lambda: self._populate_audio_tracks_menu(audio_track_menu))
+
+        audio_device_menu = audio.addMenu("Audio Device")
+        audio_device_menu.aboutToShow.connect(lambda: self._populate_audio_devices_menu(audio_device_menu))
+
+        stereo_menu = audio.addMenu("Stereo Mode")
+        stereo_menu.aboutToShow.connect(lambda: self._populate_stereo_mode_menu(stereo_menu))
+
+        viz_menu = audio.addMenu("Visualizations")
+        for text in ("Off", "Spectrum", "Waveform"):
+            a = QAction(text, self)
+            a.setEnabled(False)
+            viz_menu.addAction(a)
+
+        audio.addSeparator()
+        act_vol_up = QAction("Increase Volume", self)
+        act_vol_up.triggered.connect(self._audio_volume_up)
+        audio.addAction(act_vol_up)
+
+        act_vol_down = QAction("Decrease Volume", self)
+        act_vol_down.triggered.connect(self._audio_volume_down)
+        audio.addAction(act_vol_down)
+
+        act_mute = QAction("Mute", self)
+        act_mute.setCheckable(True)
+        act_mute.triggered.connect(self._toggle_mute)
+        audio.aboutToShow.connect(lambda: act_mute.setChecked(self._volume <= 0))
+        audio.addAction(act_mute)
 
         # Other menus are placeholders for later phases.
         def add_placeholder_menu(name: str, items: list[str]) -> None:
@@ -456,7 +661,6 @@ class MainWindow(QMainWindow):
                 act.setEnabled(False)
                 menu.addAction(act)
 
-        add_placeholder_menu("Audio", ["Track", "Mute", "Volume", "Delay"])
         add_placeholder_menu("Video", ["Track", "Aspect Ratio", "Crop", "Rotate", "Filters"])
         add_placeholder_menu("Subtitle", ["Track", "Load External...", "Delay"])
         add_placeholder_menu("Tools", ["Media Info", "Diagnostics"])

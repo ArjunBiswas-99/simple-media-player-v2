@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import threading
+from array import array
 from dataclasses import dataclass
 from typing import Optional
 
@@ -112,12 +113,21 @@ class _PCMIODevice(QIODevice):
 class AudioOutput(QObject):
     """Audio sink (master clock)."""
 
+    class StereoMode:
+        STEREO = "stereo"
+        MONO = "mono"
+        LEFT = "left"
+        RIGHT = "right"
+
     def __init__(self, clock: AudioClock, parent: Optional[QObject] = None) -> None:
         super().__init__(parent)
         self._clock = clock
         self._sink: Optional[QAudioSink] = None
         self._device: Optional[_PCMIODevice] = None
         self._volume = 0.8
+
+        self._output_device = None  # QAudioDevice | None (default)
+        self._stereo_mode = AudioOutput.StereoMode.STEREO
 
         # Master clock anchor.
         self._base_seek_seconds = 0.0
@@ -136,6 +146,51 @@ class AudioOutput(QObject):
             return PCMConfig(sample_rate=sr, channels=ch)
         except Exception:
             return PCMConfig(sample_rate=48000, channels=2)
+
+    def available_output_devices(self) -> list:
+        """Return list of QAudioDevice outputs (value types)."""
+        try:
+            return list(QMediaDevices.audioOutputs())
+        except Exception:
+            return []
+
+    def default_output_device(self):
+        try:
+            return QMediaDevices.defaultAudioOutput()
+        except Exception:
+            return None
+
+    def current_output_device(self):
+        return self._output_device
+
+    def set_output_device(self, dev) -> None:
+        """Switch output audio device (recreates sink)."""
+        self._output_device = dev
+        # Recreate sink preserving current time anchor.
+        base = 0.0
+        try:
+            base = float(self._clock.get())
+        except Exception:
+            base = 0.0
+
+        # If we haven't been set up yet, do nothing.
+        cfg = self._current_cfg
+        self.setup(cfg)
+        self.reset_clock_and_flush(base)
+
+    def set_stereo_mode(self, mode: str) -> None:
+        m = str(mode or "").strip().lower()
+        if m not in (
+            AudioOutput.StereoMode.STEREO,
+            AudioOutput.StereoMode.MONO,
+            AudioOutput.StereoMode.LEFT,
+            AudioOutput.StereoMode.RIGHT,
+        ):
+            m = AudioOutput.StereoMode.STEREO
+        self._stereo_mode = m
+
+    def stereo_mode(self) -> str:
+        return str(self._stereo_mode)
 
     def current_config(self) -> PCMConfig:
         return self._current_cfg
@@ -156,7 +211,15 @@ class AudioOutput(QObject):
             except Exception:
                 pass
 
-        self._sink = QAudioSink(fmt)
+        # Create sink for selected device (or system default).
+        try:
+            if self._output_device is not None:
+                self._sink = QAudioSink(self._output_device, fmt)
+            else:
+                self._sink = QAudioSink(fmt)
+        except Exception:
+            # Fallback.
+            self._sink = QAudioSink(fmt)
         try:
             # Smaller buffer for lower latency.
             self._sink.setBufferSize(int(chosen.sample_rate * fmt.bytesPerFrame() * 0.20))
@@ -215,8 +278,43 @@ class AudioOutput(QObject):
         return sec
 
     def push_pcm(self, data: bytes) -> None:
-        if self._device is not None:
-            self._device.push(data)
+        if self._device is None or not data:
+            return
+
+        # Optional stereo routing (VLC-like) without external deps.
+        # Data is s16 packed interleaved: L, R, L, R...
+        try:
+            if int(self._current_cfg.channels) == 2:
+                mode = str(self._stereo_mode)
+                if mode != AudioOutput.StereoMode.STEREO:
+                    samples = array("h")
+                    samples.frombytes(data)
+                    n = len(samples)
+                    if n >= 2:
+                        # Ensure even length.
+                        if (n % 2) == 1:
+                            n -= 1
+                        if mode == AudioOutput.StereoMode.MONO:
+                            for i in range(0, n, 2):
+                                l = int(samples[i])
+                                r = int(samples[i + 1])
+                                m = (l + r) // 2
+                                samples[i] = m
+                                samples[i + 1] = m
+                        elif mode == AudioOutput.StereoMode.LEFT:
+                            for i in range(0, n, 2):
+                                l = samples[i]
+                                samples[i + 1] = l
+                        elif mode == AudioOutput.StereoMode.RIGHT:
+                            for i in range(0, n, 2):
+                                r = samples[i + 1]
+                                samples[i] = r
+                        data = samples.tobytes()
+        except Exception:
+            # Fail open: do not break audio if routing fails.
+            pass
+
+        self._device.push(data)
 
     def stop(self) -> None:
         if self._sink is not None:

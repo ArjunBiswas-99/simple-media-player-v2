@@ -20,6 +20,12 @@ class StreamConfig:
     audio_channels: int
 
 
+@dataclass(frozen=True)
+class AudioTrackInfo:
+    index: int
+    label: str
+
+
 class DecoderWorker(QObject):
     """Decode engine running in a dedicated thread (UI-agnostic).
 
@@ -36,6 +42,7 @@ class DecoderWorker(QObject):
     """
 
     media_opened = Signal(float, object)  # duration_seconds, StreamConfig
+    audio_tracks_changed = Signal(object)  # list[AudioTrackInfo]
     error = Signal(str)
     eof_reached = Signal()
 
@@ -59,6 +66,8 @@ class DecoderWorker(QObject):
         self._container: Optional[av.container.InputContainer] = None
         self._vstream: Optional[av.video.stream.VideoStream] = None
         self._astream: Optional[av.audio.stream.AudioStream] = None
+        self._audio_streams: list[av.audio.stream.AudioStream] = []
+        self._audio_track_index: int = 0
         self._audio_resampler: Optional[av.audio.resampler.AudioResampler] = None
 
         # Desired output PCM config (what we will feed to Qt audio sink).
@@ -130,6 +139,24 @@ class DecoderWorker(QObject):
         with self._lock:
             self._running = False
 
+    @Slot(int)
+    def select_audio_track(self, index: int) -> None:
+        """Select audio track by index (0-based within discovered audio streams)."""
+        idx = int(index)
+        if idx < 0:
+            idx = 0
+        with self._lock:
+            # Will be applied immediately if container is open.
+            self._audio_track_index = idx
+            if self._container is not None:
+                if self._audio_streams and 0 <= idx < len(self._audio_streams):
+                    self._astream = self._audio_streams[idx]
+                elif self._audio_streams:
+                    self._astream = self._audio_streams[0]
+                    self._audio_track_index = 0
+                # Flush audio to avoid mixing.
+                self._audio_q.clear()
+
     def _apply_open(self, path: str) -> None:
         try:
             if self._container is not None:
@@ -158,6 +185,54 @@ class DecoderWorker(QObject):
                 self._vstream = vstreams[0] if vstreams else None
 
             self._astream = next((s for s in self._container.streams if s.type == "audio"), None)
+
+            # Enumerate all audio streams for dynamic track selection.
+            self._audio_streams = [s for s in self._container.streams if s.type == "audio"]
+            with self._lock:
+                idx = int(self._audio_track_index)
+            if self._audio_streams:
+                if idx < 0 or idx >= len(self._audio_streams):
+                    idx = 0
+                self._astream = self._audio_streams[idx]
+                self._audio_track_index = idx
+            else:
+                self._astream = None
+
+            # Emit track list for UI.
+            tracks: list[AudioTrackInfo] = []
+            for i, s in enumerate(self._audio_streams):
+                lang = ""
+                title = ""
+                try:
+                    md = getattr(s, "metadata", None) or {}
+                    lang = str(md.get("language", "") or "").strip()
+                    title = str(md.get("title", "") or "").strip()
+                except Exception:
+                    lang = ""
+                    title = ""
+                codec = ""
+                try:
+                    codec = str(getattr(getattr(s, "codec_context", None), "name", "") or "").strip()
+                except Exception:
+                    codec = ""
+                ch = ""
+                try:
+                    ch = str(int(getattr(getattr(s, "codec_context", None), "channels", 0) or 0))
+                except Exception:
+                    ch = ""
+
+                parts = []
+                if title:
+                    parts.append(title)
+                if lang:
+                    parts.append(lang.upper())
+                if codec:
+                    parts.append(codec)
+                if ch:
+                    parts.append(f"{ch}ch")
+                label = " • ".join(parts) if parts else f"Track {i+1}"
+                tracks.append(AudioTrackInfo(index=i, label=label))
+            self.audio_tracks_changed.emit(tracks)
 
             if self._vstream is None and self._astream is None:
                 raise RuntimeError("No audio/video streams found")
