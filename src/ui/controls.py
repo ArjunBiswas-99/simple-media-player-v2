@@ -46,7 +46,9 @@ class OverlayControls(QWidget):
     play_pause_clicked = Signal()
     rewind_clicked = Signal()
     fast_forward_clicked = Signal()
-    open_clicked = Signal()
+    folder_clicked = Signal()
+    next_file_clicked = Signal()
+    info_clicked = Signal()
     seek_requested = Signal(int)  # position_ms
     scrub_started = Signal(int)  # position_ms
     scrub_finished = Signal(int)  # position_ms
@@ -216,10 +218,8 @@ class OverlayControls(QWidget):
         self.ff_btn.setToolTip("Fast forward")
         self.ff_btn.setIconSize(QSize(18, 18))
 
-        self.open_btn = AnimatedToolButton()
-        self.open_btn.setIcon(ICONS.icon(IconSpec("fa5s.folder-open")))
-        self.open_btn.setToolTip("Open file")
-        self.open_btn.setIconSize(QSize(18, 18))
+        # NOTE: we used to have a right-most "open" button (folder-open).
+        # It has been removed in favor of the dedicated folder button.
 
         self.volume = QSlider(Qt.Orientation.Horizontal)
         self.volume.setObjectName("volumeSlider")
@@ -264,7 +264,6 @@ class OverlayControls(QWidget):
             self.play_btn,
             self.rewind_btn,
             self.ff_btn,
-            self.open_btn,
             self.mute_btn,
             self.info_btn,
             self.next_btn,
@@ -292,7 +291,6 @@ class OverlayControls(QWidget):
         row2.addWidget(self.next_btn)
         row2.addWidget(self.folder_btn)
         row2.addWidget(self.fullscreen_btn)
-        row2.addWidget(self.open_btn)
 
         content_layout = QVBoxLayout()
         content_layout.setContentsMargins(0, 0, 0, 0)
@@ -307,13 +305,17 @@ class OverlayControls(QWidget):
         self.play_btn.clicked.connect(lambda: log_event("ui", "btn:play_pause"))
         self.rewind_btn.clicked.connect(lambda: log_event("ui", "btn:rewind"))
         self.ff_btn.clicked.connect(lambda: log_event("ui", "btn:fast_forward"))
-        self.open_btn.clicked.connect(lambda: log_event("ui", "btn:open"))
         self.mute_btn.clicked.connect(lambda: log_event("ui", "btn:mute"))
+        self.info_btn.clicked.connect(lambda: log_event("ui", "btn:info"))
+        self.next_btn.clicked.connect(lambda: log_event("ui", "btn:next_file"))
+        self.folder_btn.clicked.connect(lambda: log_event("ui", "btn:folder"))
 
         self.play_btn.clicked.connect(self.play_pause_clicked.emit)
         self.rewind_btn.clicked.connect(self.rewind_clicked.emit)
         self.ff_btn.clicked.connect(self.fast_forward_clicked.emit)
-        self.open_btn.clicked.connect(self.open_clicked.emit)
+        self.info_btn.clicked.connect(self.info_clicked.emit)
+        self.next_btn.clicked.connect(self.next_file_clicked.emit)
+        self.folder_btn.clicked.connect(self.folder_clicked.emit)
         self.timeline.sliderPressed.connect(self._on_scrub_start)
         self.timeline.sliderReleased.connect(self._on_scrub_end)
         self.timeline.sliderMoved.connect(self._on_scrub_move)

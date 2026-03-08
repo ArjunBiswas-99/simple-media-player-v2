@@ -117,12 +117,93 @@ class PlaybackController(QObject):
     def open_media(self, path: str) -> None:
         log_event("controller", f"open_media path={path}")
         # Reset rate when opening new media.
+        # IMPORTANT: opening new media must start from 0 and must not inherit
+        # paused-media anchors from the previous file.
         self.set_playback_rate(1.0)
-        self.pause()
+
+        # Stop decoding + audio immediately.
+        self._is_playing = False
+        try:
+            self._worker.set_playing(False)
+        except Exception:
+            pass
+        try:
+            self._audio.pause()
+        except Exception:
+            pass
+
+        # Reset clocks/anchors to 0.
+        self._paused_media_s = None
+        self._rate_anchor_media_s = 0.0
+        self._rate_anchor_audio_s = float(self._audio.clock_seconds())
+        try:
+            self._audio.reset_clock_and_flush(0.0)
+        except Exception:
+            pass
+
+        # Clear any buffered frames from previous media.
+        self._video_q.clear()
+        self._audio_q.clear()
         self.video_frame_ready.emit(None)
         self._pending_video = None
         self._drop_video_until = None
         self._worker.open(path)
+
+    def unload_media(self) -> None:
+        """Unload current media so playback cannot resume until open_media()."""
+        log_event("controller", "unload_media")
+
+        # Stop everything immediately.
+        self._is_playing = False
+        try:
+            self._worker.set_playing(False)
+        except Exception:
+            pass
+        try:
+            self._audio.pause()
+        except Exception:
+            pass
+
+        # Reset clocks/anchors.
+        self._paused_media_s = None
+        self._rate_anchor_media_s = 0.0
+        self._rate_anchor_audio_s = float(self._audio.clock_seconds())
+        try:
+            self._audio.reset_clock_and_flush(0.0)
+        except Exception:
+            pass
+
+        # Clear queued decoded data.
+        self._pending_video = None
+        self._drop_video_until = None
+        self._video_q.clear()
+        self._audio_q.clear()
+
+        # Clear duration.
+        self._duration_ms = 0
+        try:
+            self.duration_changed.emit(0)
+            self.position_changed.emit(0)
+        except Exception:
+            pass
+
+        # Clear frame.
+        try:
+            self.video_frame_ready.emit(None)
+        except Exception:
+            pass
+
+        # Ask worker to close the container.
+        try:
+            self._worker.close_media()
+        except Exception:
+            pass
+
+        # Notify UI state.
+        try:
+            self.playback_state_changed.emit(False)
+        except Exception:
+            pass
 
     def set_playback_rate(self, rate: float) -> None:
         """Set the playback rate (1.0 = normal).
@@ -319,6 +400,9 @@ class PlaybackController(QObject):
         self._rate_anchor_media_s = 0.0
         self._rate_anchor_audio_s = self._audio.clock_seconds()
         self._worker.set_playback_rate(1.0)
+
+        # Defensive: ensure we never resume at old paused position after open.
+        self._paused_media_s = None
         self.play()
 
     def _on_error(self, msg: str) -> None:

@@ -11,6 +11,8 @@ from PySide6.QtGui import QIcon
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QFileDialog, QMenu
 
+import av
+
 from playback.controller import PlaybackController
 from ui.controls import ControlsState
 from ui.icons import ICONS, IconSpec
@@ -42,6 +44,14 @@ class MainWindow(QMainWindow):
         # ---------------- Video view + track state (must exist before menus) ----------------
         self._video_tracks = []
         self._video_track_index = 0
+
+        # Folder navigation state (Next button).
+        self._current_media_path: str = ""
+        self._folder_entries: list[str] = []
+        self._folder_index: int = -1
+
+        # Cached info for the info popover (best-effort).
+        self._media_info: dict[str, str] = {}
 
         # View transform defaults.
         self._video_fit_to_window = True
@@ -76,9 +86,12 @@ class MainWindow(QMainWindow):
         self.controller.duration_changed.connect(self._on_duration)
         self.controller.error_occurred.connect(self._on_error)
 
-        self.controls.play_pause_clicked.connect(self.controller.toggle_play_pause)
-        # Bottom open button
-        self.controls.open_clicked.connect(self._open_file)
+        # Route through our UX handler so we can ignore play when no media is loaded.
+        self.controls.play_pause_clicked.connect(self._toggle_play_pause_with_feedback)
+        # Folder button replaces the old right-most open button.
+        self.controls.folder_clicked.connect(self._open_file)
+        self.controls.next_file_clicked.connect(self._open_next_in_folder)
+        self.controls.info_clicked.connect(self._show_info_popover)
         # Standard scrub UX: pause while dragging, seek on release, resume if needed.
         self._was_playing_before_scrub = False
         self.controls.scrub_started.connect(self._on_scrub_started)
@@ -399,6 +412,8 @@ class MainWindow(QMainWindow):
         if not file_path:
             return
 
+        self._set_current_media_path(str(file_path))
+
         self._current_filename = os.path.basename(file_path)
         self.controls.set_filename(self._current_filename)
         self._update_title()
@@ -408,6 +423,219 @@ class MainWindow(QMainWindow):
         self._thumb_media_path = str(file_path)
         # Duration may still be 0 at this moment; worker will still open container.
         self._thumb_open_media(self._thumb_media_path, float(self._dur_ms) / 1000.0)
+
+    def _set_current_media_path(self, file_path: str) -> None:
+        """Store path and build folder playlist (for Next navigation)."""
+        p = str(file_path)
+        self._current_media_path = p
+        self._media_info = {}
+
+        try:
+            folder = Path(p).resolve().parent
+        except Exception:
+            self._folder_entries = [p]
+            self._folder_index = 0
+            return
+
+        exts = {".mp4", ".mkv", ".avi", ".mov", ".webm", ".wmv", ".m4v", ".flv"}
+        entries: list[str] = []
+        try:
+            for f in folder.iterdir():
+                try:
+                    if not f.is_file():
+                        continue
+                    if f.suffix.lower() not in exts:
+                        continue
+                    entries.append(str(f.resolve()))
+                except Exception:
+                    continue
+        except Exception:
+            entries = [p]
+
+        # Sort alphabetically by filename (case-insensitive).
+        try:
+            entries.sort(key=lambda s: Path(s).name.casefold())
+        except Exception:
+            pass
+
+        self._folder_entries = entries
+        try:
+            rp = str(Path(p).resolve())
+            self._folder_index = self._folder_entries.index(rp)
+        except Exception:
+            # Fallback: try raw string match.
+            try:
+                self._folder_index = self._folder_entries.index(p)
+            except Exception:
+                self._folder_index = 0 if self._folder_entries else -1
+
+    def _open_next_in_folder(self) -> None:
+        """Open next media file in the current file's folder (wrap-around)."""
+        if not self._folder_entries or self._folder_index < 0:
+            self.pane.show_video_osd("Next: no folder")
+            return
+
+        if len(self._folder_entries) == 1:
+            self.pane.show_video_osd("Next: only one file")
+            return
+
+        nxt_i = (int(self._folder_index) + 1) % int(len(self._folder_entries))
+        nxt_path = self._folder_entries[nxt_i]
+        self.pane.show_video_osd(f"Next: {Path(nxt_path).name}")
+        self._on_file_selected(nxt_path)
+
+    def _collect_media_info(self) -> dict[str, str]:
+        """Best-effort media info extraction for the Info popover."""
+        info: dict[str, str] = {}
+        p = str(self._current_media_path or "")
+        if not p:
+            return info
+
+        try:
+            pp = Path(p)
+            info["File"] = pp.name
+            info["Path"] = str(pp)
+        except Exception:
+            info["Path"] = p
+
+        try:
+            if int(self._dur_ms) > 0:
+                info["Duration"] = f"{int(self._dur_ms // 1000)} s"
+        except Exception:
+            pass
+
+        try:
+            c = av.open(p)
+            try:
+                vstreams = [s for s in c.streams if s.type == "video"]
+                astreams = [s for s in c.streams if s.type == "audio"]
+                if vstreams:
+                    vs = vstreams[0]
+                    try:
+                        w = int(getattr(vs.codec_context, "width", 0) or 0)
+                        h = int(getattr(vs.codec_context, "height", 0) or 0)
+                        if w > 0 and h > 0:
+                            info["Resolution"] = f"{w}×{h}"
+                    except Exception:
+                        pass
+
+                    try:
+                        fps = getattr(vs, "average_rate", None)
+                        if fps is not None:
+                            # fps can be Fraction-like.
+                            info["FPS"] = f"{float(fps):.3f}".rstrip("0").rstrip(".")
+                    except Exception:
+                        pass
+
+                    try:
+                        codec = str(getattr(getattr(vs, "codec_context", None), "name", "") or "").strip()
+                        if codec:
+                            info["Video codec"] = codec
+                    except Exception:
+                        pass
+
+                info["Video tracks"] = str(len(vstreams))
+                info["Audio tracks"] = str(len(astreams))
+
+                if astreams:
+                    as0 = astreams[0]
+                    try:
+                        acodec = str(getattr(getattr(as0, "codec_context", None), "name", "") or "").strip()
+                        if acodec:
+                            info["Audio codec"] = acodec
+                    except Exception:
+                        pass
+                    try:
+                        ch = int(getattr(getattr(as0, "codec_context", None), "channels", 0) or 0)
+                        if ch:
+                            info["Audio channels"] = str(ch)
+                    except Exception:
+                        pass
+            finally:
+                try:
+                    c.close()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+        return info
+
+    def _show_info_popover(self) -> None:
+        if not self._current_media_path:
+            self.pane.show_video_osd("Info: no file")
+            return
+
+        if not self._media_info:
+            self._media_info = self._collect_media_info()
+
+        menu = QMenu(self)
+        menu.setStyleSheet(
+            """
+            QMenu {
+                background: rgba(10, 10, 12, 220);
+                color: #ffffff;
+                border: 1px solid rgba(255,255,255,38);
+                border-radius: 12px;
+                padding: 10px;
+            }
+            QMenu::item {
+                padding: 6px 12px;
+                border-radius: 8px;
+                margin: 2px 2px;
+            }
+            QMenu::item:disabled {
+                color: rgba(255,255,255,210);
+            }
+            """
+        )
+        try:
+            menu.setAttribute(Qt.WidgetAttribute.WA_NoMouseReplay, True)
+        except Exception:
+            pass
+
+        # Title line.
+        try:
+            title = Path(self._current_media_path).name
+        except Exception:
+            title = "Media Info"
+        act_title = menu.addAction(f"{title}")
+        act_title.setEnabled(False)
+        menu.addSeparator()
+
+        # Show key/value info.
+        for k, v in (self._media_info or {}).items():
+            if k == "File":
+                continue
+            line = f"{k}: {v}"
+            a = menu.addAction(line)
+            a.setEnabled(False)
+
+        menu.addSeparator()
+        act_copy = menu.addAction("Copy path")
+        act_copy.triggered.connect(lambda: self._copy_to_clipboard(self._current_media_path))
+
+        # Anchor to the info button.
+        try:
+            btn = self.controls.info_btn
+            g = btn.mapToGlobal(btn.rect().bottomRight())
+            menu.exec(g)
+        except Exception:
+            # Fallback: show at mouse.
+            try:
+                menu.exec(self.cursor().pos())
+            except Exception:
+                pass
+
+    def _copy_to_clipboard(self, text: str) -> None:
+        try:
+            from PySide6.QtWidgets import QApplication
+
+            cb = QApplication.clipboard()
+            cb.setText(str(text))
+            self.pane.show_video_osd("Copied")
+        except Exception:
+            pass
 
     def _update_title(self) -> None:
         if self._current_filename:
@@ -656,6 +884,14 @@ class MainWindow(QMainWindow):
         self.pane.show_skip_feedback(direction, self._skip_steps * (self._skip_step_ms // 1000))
 
     def _toggle_play_pause_with_feedback(self) -> None:
+        # If no media is loaded, ignore.
+        if not self._current_media_path:
+            try:
+                self.pane.show_video_osd("No media")
+            except Exception:
+                pass
+            return
+
         # Determine what the *next* state will be.
         next_playing = not self._is_playing
         log_event("ui", f"action:toggle_play_pause next={next_playing}")
@@ -931,7 +1167,7 @@ class MainWindow(QMainWindow):
 
         act_stop = QAction("Stop", self)
         act_stop.setIcon(ICONS.icon(IconSpec("fa5s.stop")))
-        act_stop.triggered.connect(self._stop_with_feedback)
+        act_stop.triggered.connect(self._stop_and_unload_media)
         menu.addAction(act_stop)
 
         menu.addSeparator()
@@ -969,7 +1205,7 @@ class MainWindow(QMainWindow):
         act_quit = QAction("Quit", self)
         act_quit.setIcon(ICONS.icon(IconSpec("fa5s.times-circle")))
         act_quit.setShortcut(QKeySequence.Quit)
-        act_quit.triggered.connect(self.close)
+        act_quit.triggered.connect(self._quit_clean)
         menu.addAction(act_quit)
 
         try:
@@ -977,6 +1213,75 @@ class MainWindow(QMainWindow):
         except Exception:
             # Some Qt builds may want QPoint explicitly.
             menu.exec(menu.mapToGlobal(self.mapFromGlobal(global_pos)))
+
+    def _reset_ui_to_idle(self) -> None:
+        """Clear frame/seek/labels so we don't keep any previous-media state."""
+        # Unload media in controller/decoder so Play cannot resume anything.
+        try:
+            self.controller.unload_media()
+        except Exception:
+            # Best-effort fallback.
+            try:
+                self.controller.pause()
+            except Exception:
+                pass
+            try:
+                self.controller.seek_ms(0)
+            except Exception:
+                pass
+
+        # Clear video frame.
+        try:
+            self.video.set_frame(None)
+        except Exception:
+            pass
+
+        # Clear labels/state.
+        try:
+            self._current_filename = ""
+            self.controls.set_filename("")
+            self._update_title()
+        except Exception:
+            pass
+
+        self._current_media_path = ""
+        self._folder_entries = []
+        self._folder_index = -1
+        self._media_info = {}
+
+        # Reset local UI vars.
+        try:
+            self._pos_ms = 0
+            self._dur_ms = 0
+            self._refresh_controls()
+        except Exception:
+            pass
+
+        # Clear thumbnail state so hover doesn't reference old media.
+        try:
+            self._thumb_media_path = ""
+        except Exception:
+            pass
+        try:
+            self._thumb_popup.hide()
+        except Exception:
+            pass
+
+    def _stop_and_unload_media(self) -> None:
+        """Stop action (context menu): unload current media from the UI.
+
+        This is intentionally stronger than "pause": it clears the frame and
+        wipes all current-file references so the player appears empty.
+        """
+        self._reset_ui_to_idle()
+
+    def _quit_clean(self) -> None:
+        """Quit from context menu: clear UI immediately, then close normally."""
+        try:
+            self._reset_ui_to_idle()
+        except Exception:
+            pass
+        self.close()
 
     def _toggle_fullscreen_with_feedback(self) -> None:
         entering = not self.isFullScreen()

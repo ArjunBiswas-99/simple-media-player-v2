@@ -34,6 +34,16 @@ class _PCMIODevice(QIODevice):
         self._consumed_total = 0
         self._base_seconds = 0.0
 
+        # Some Qt audio backends may still call readData() even after suspend().
+        # If we let readData() advance _consumed_total while "paused", our master
+        # clock will drift forward (causing resume/seek/open to start at the wrong
+        # time). So we gate time advancement here.
+        self._paused = False
+
+    def set_paused(self, paused: bool) -> None:
+        with self._lock:
+            self._paused = bool(paused)
+
     def reset_timeline(self, base_seconds: float) -> None:
         with self._lock:
             self._buffer.clear()
@@ -86,6 +96,12 @@ class _PCMIODevice(QIODevice):
             return b""
 
         with self._lock:
+            # If "paused", synthesize silence but do NOT advance the master clock
+            # and do NOT consume buffered audio.
+            if bool(self._paused):
+                self._clock.set(float(self._base_seconds))
+                return bytes(req)
+
             if not self._buffer:
                 out = bytes(req)  # silence
             else:
@@ -322,6 +338,14 @@ class AudioOutput(QObject):
 
     def pause(self) -> None:
         """Pause pulling audio from the device (keeps buffers)."""
+        # Ensure the master clock does not drift even if the backend keeps
+        # calling readData() while suspended.
+        try:
+            if self._device is not None:
+                self._device.set_paused(True)
+        except Exception:
+            pass
+
         if self._sink is not None:
             try:
                 # Only suspend if currently running.
@@ -332,6 +356,12 @@ class AudioOutput(QObject):
                 pass
 
     def resume(self) -> None:
+        try:
+            if self._device is not None:
+                self._device.set_paused(False)
+        except Exception:
+            pass
+
         if self._sink is not None:
             try:
                 if self._sink.state() in (QAudioSink.State.SuspendedState, QAudioSink.State.IdleState):

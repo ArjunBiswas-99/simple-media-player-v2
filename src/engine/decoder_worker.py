@@ -148,6 +148,46 @@ class DecoderWorker(QObject):
         with self._lock:
             self._running = False
 
+    @Slot()
+    def close_media(self) -> None:
+        """Unload current container/streams.
+
+        This is used for a UI "Stop" that should leave *no media loaded*.
+        """
+        log_event("decoder", "close_media requested")
+        with self._lock:
+            self._playing = False
+            self._open_path = None
+            self._seek_seconds = None
+
+        try:
+            if self._container is not None:
+                try:
+                    self._container.close()
+                except Exception:
+                    pass
+        finally:
+            self._container = None
+            self._vstream = None
+            self._astream = None
+            self._audio_streams = []
+            self._video_streams = []
+            self._audio_resampler = None
+            self._tempo_graph = None
+            self._tempo_src = None
+            self._tempo_sink = None
+            self._video_tb = 0.0
+            # Drop any pending decoded data.
+            self._video_q.clear()
+            self._audio_q.clear()
+
+        # Update UI menus: no tracks.
+        try:
+            self.audio_tracks_changed.emit([])
+            self.video_tracks_changed.emit([])
+        except Exception:
+            pass
+
     @Slot(int)
     def select_audio_track(self, index: int) -> None:
         """Select audio track by index (0-based within discovered audio streams)."""
