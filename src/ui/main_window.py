@@ -398,11 +398,19 @@ class MainWindow(QMainWindow):
 
     def _open_file(self) -> None:
         # Native OS file dialog: normal theme + full navigation.
+        # Keep this in sync with _set_current_media_path()'s extension list.
+        # NOTE: MPEG-2 Program Stream shows up as .mpg/.mpeg; MPEG video-only is often .m2v.
+        filter_str = (
+            "Video Files ("
+            "*.mp4 *.mkv *.mov *.wmv *.ts *.m2ts *.mts *.mpeg *.mpg *.m2v *.mpegv "
+            "*.avi *.webm *.m4v *.flv"
+            ");;All Files (*.*)"
+        )
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open video",
             str(Path.home()),
-            "Video Files (*.mp4);;All Files (*.*)",
+            filter_str,
         )
         if not file_path:
             return
@@ -437,7 +445,23 @@ class MainWindow(QMainWindow):
             self._folder_index = 0
             return
 
-        exts = {".mp4", ".mkv", ".avi", ".mov", ".webm", ".wmv", ".m4v", ".flv"}
+        exts = {
+            ".mp4",
+            ".mkv",
+            ".mov",
+            ".wmv",
+            ".ts",
+            ".m2ts",
+            ".mts",
+            ".mpeg",
+            ".mpg",
+            ".m2v",
+            ".mpegv",
+            ".avi",
+            ".webm",
+            ".m4v",
+            ".flv",
+        }
         entries: list[str] = []
         try:
             for f in folder.iterdir():
